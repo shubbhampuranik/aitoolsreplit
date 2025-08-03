@@ -178,7 +178,7 @@ export default function Tools() {
                       <SelectValue placeholder="All pricing" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All pricing</SelectItem>
+                      <SelectItem value="all">All pricing</SelectItem>
                       <SelectItem value="free">Free</SelectItem>
                       <SelectItem value="freemium">Freemium</SelectItem>
                       <SelectItem value="free_trial">Free Trial</SelectItem>

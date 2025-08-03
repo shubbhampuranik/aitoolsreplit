@@ -423,7 +423,7 @@ export default function Jobs() {
                       <SelectValue placeholder="All types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All types</SelectItem>
+                      <SelectItem value="all">All types</SelectItem>
                       <SelectItem value="remote">Remote</SelectItem>
                       <SelectItem value="onsite">On-site</SelectItem>
                     </SelectContent>
@@ -438,7 +438,7 @@ export default function Jobs() {
                       <SelectValue placeholder="All locations" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All locations</SelectItem>
+                      <SelectItem value="all">All locations</SelectItem>
                       <SelectItem value="san francisco">San Francisco</SelectItem>
                       <SelectItem value="new york">New York</SelectItem>
                       <SelectItem value="london">London</SelectItem>

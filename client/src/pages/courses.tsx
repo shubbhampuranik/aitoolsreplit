@@ -441,7 +441,7 @@ export default function Courses() {
                       <SelectValue placeholder="All levels" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All levels</SelectItem>
+                      <SelectItem value="all">All levels</SelectItem>
                       {skillLevels.map((level) => (
                         <SelectItem key={level.value} value={level.value}>
                           {level.label}
@@ -459,7 +459,7 @@ export default function Courses() {
                       <SelectValue placeholder="All pricing" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All pricing</SelectItem>
+                      <SelectItem value="all">All pricing</SelectItem>
                       <SelectItem value="free">Free</SelectItem>
                       <SelectItem value="paid">Paid</SelectItem>
                     </SelectContent>

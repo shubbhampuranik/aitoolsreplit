@@ -212,7 +212,7 @@ export default function Prompts() {
                       <SelectValue placeholder="All pricing" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All pricing</SelectItem>
+                      <SelectItem value="all">All pricing</SelectItem>
                       <SelectItem value="free">Free</SelectItem>
                       <SelectItem value="paid">Premium</SelectItem>
                     </SelectContent>

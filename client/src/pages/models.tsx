@@ -284,7 +284,7 @@ export default function Models() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -298,7 +298,7 @@ export default function Models() {
                 <SelectValue placeholder="Model Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
                 <SelectItem value="image">Image</SelectItem>
                 <SelectItem value="audio">Audio</SelectItem>
@@ -313,7 +313,7 @@ export default function Models() {
                 <SelectValue placeholder="Access Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Access</SelectItem>
+                <SelectItem value="all">All Access</SelectItem>
                 <SelectItem value="open_source">Open Source</SelectItem>
                 <SelectItem value="api">API</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
