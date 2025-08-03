@@ -54,12 +54,12 @@ interface ToolDetails {
   gallery: string[];
   pricingType: "free" | "freemium" | "paid" | "free_trial";
   pricingDetails: string;
-  category: {
+  category?: {
     id: string;
     name: string;
     slug: string;
   };
-  submittedBy: {
+  submittedBy?: {
     id: string;
     firstName: string;
     lastName: string;
@@ -70,15 +70,15 @@ interface ToolDetails {
   rating: number;
   ratingCount: number;
   featured: boolean;
-  socialLinks: {
+  socialLinks?: {
     website?: string;
     twitter?: string;
     linkedin?: string;
     github?: string;
   };
-  faqs: FAQ[];
-  prosAndCons: ProsAndCons;
-  tags: { name: string; slug: string }[];
+  faqs?: FAQ[];
+  prosAndCons?: ProsAndCons;
+  tags?: { name: string; slug: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -289,30 +289,44 @@ export default function ToolDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Core Features */}
-                {tool.prosAndCons?.pros && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        Core Features
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {tool.prosAndCons.pros.map((pro, index) => (
+                {/* Core Features - Show some default features if none provided */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      Core Features
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {tool.prosAndCons?.pros ? 
+                        tool.prosAndCons.pros.map((pro, index) => (
                           <li key={index} className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                             <span className="text-gray-700 dark:text-gray-300">{pro}</span>
                           </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                )}
+                        )) : (
+                          <>
+                            <li className="flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">Advanced AI-powered capabilities</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">User-friendly interface</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">Reliable performance</span>
+                            </li>
+                          </>
+                        )}
+                    </ul>
+                  </CardContent>
+                </Card>
 
                 {/* Limitations */}
-                {tool.prosAndCons?.cons && (
+                {tool.prosAndCons?.cons && tool.prosAndCons.cons.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -456,10 +470,12 @@ export default function ToolDetailsPage() {
                 <CardTitle>Tool Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Category</div>
-                  <Badge variant="outline">{tool.category.name}</Badge>
-                </div>
+                {tool.category && (
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Category</div>
+                    <Badge variant="outline">{tool.category.name}</Badge>
+                  </div>
+                )}
                 <div>
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Pricing Model</div>
                   <Badge variant={getPricingBadgeVariant(tool.pricingType)}>
@@ -494,47 +510,54 @@ export default function ToolDetailsPage() {
             </Card>
 
             {/* Submitted By */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Submitted By</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={tool.submittedBy.profileImageUrl} />
-                    <AvatarFallback>
-                      {tool.submittedBy.firstName?.[0]}{tool.submittedBy.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      {tool.submittedBy.firstName} {tool.submittedBy.lastName}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Tool Contributor
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tags */}
-            {tool.tags && tool.tags.length > 0 && (
+            {tool.submittedBy && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Tags</CardTitle>
+                  <CardTitle>Submitted By</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {tool.tags.map((tag) => (
-                      <Badge key={tag.slug} variant="outline" className="text-xs">
-                        {tag.name}
-                      </Badge>
-                    ))}
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={tool.submittedBy.profileImageUrl} />
+                      <AvatarFallback>
+                        {tool.submittedBy.firstName?.[0]}{tool.submittedBy.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {tool.submittedBy.firstName} {tool.submittedBy.lastName}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Tool Contributor
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
+
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {tool.tags && tool.tags.length > 0 ? 
+                    tool.tags.map((tag) => (
+                      <Badge key={tag.slug} variant="outline" className="text-xs">
+                        {tag.name}
+                      </Badge>
+                    )) : (
+                      <>
+                        <Badge variant="outline" className="text-xs">AI Tool</Badge>
+                        <Badge variant="outline" className="text-xs">Productivity</Badge>
+                        <Badge variant="outline" className="text-xs">Technology</Badge>
+                      </>
+                    )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Share Tool */}
             <Card>

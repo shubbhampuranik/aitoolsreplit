@@ -251,8 +251,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTool(id: string): Promise<Tool | undefined> {
-    const [tool] = await db.select().from(tools).where(eq(tools.id, id));
-    return tool;
+    const [result] = await db
+      .select({
+        tool: tools,
+        category: categories,
+        submittedBy: users,
+      })
+      .from(tools)
+      .leftJoin(categories, eq(tools.categoryId, categories.id))
+      .leftJoin(users, eq(tools.submittedBy, users.id))
+      .where(eq(tools.id, id));
+
+    if (!result) return undefined;
+
+    return {
+      ...result.tool,
+      category: result.category || undefined,
+      submittedBy: result.submittedBy || undefined,
+    } as Tool & {
+      category?: typeof categories.$inferSelect;
+      submittedBy?: typeof users.$inferSelect;
+    };
   }
 
   async createTool(tool: InsertTool): Promise<Tool> {
