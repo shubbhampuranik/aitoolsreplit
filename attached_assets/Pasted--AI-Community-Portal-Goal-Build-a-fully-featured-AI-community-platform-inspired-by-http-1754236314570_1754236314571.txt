@@ -1,0 +1,157 @@
+ AI Community Portal
+
+
+### Goal:
+
+Build a fully-featured AI community platform inspired by https://www.toolify.ai/, Futurepedia, Product Hunt, and Reddit. The platform allows users to discover 
+AI tools, Ai News, AI prompts, AI courses/tutorials, AI Models and jobs, with a focus on community engagement, prompt marketplace, and personalized content.
+
+It should have a fully functional AI search and Complete Admin Panel for Listing Management across tools, jobs, prompts, jobs and models
+
+Our objective to build an AI portal which can act as a single source of destination for anyone willing to keep up with AI Domain.
+
+### Tech Stack:
+
+* Frontend: Next.js + TailwindCSS
+* Backend: Node.js (Express or NestJS)
+* Database: PostgreSQL
+* Storage: Cloudinary (images/screenshots), optional Firebase for uploads
+* Auth: JWT + OAuth (Google/GitHub)
+* AI: OpenAI API or Cohere (for tagging, summarization)
+* Dev Tools: Cursor, GitHub, Railway/Vercel for deployment
+
+### Core Modules to Build:
+
+#### 1. User System
+
+* Register/login via email, Google, GitHub
+* Profile with avatar, bio, skills, karma score
+* Follow users, categories, tools, and prompts
+* View upvotes, submitted items, saved items
+
+#### 2. AI Tool Listing
+
+* Add/edit tools: name, URL, logo, gallery, short/long description, pricing type, categories (multi), tags, social links, FAQs, pros/cons etc
+* App page with:
+
+  * “I use this” / “I use something else” interaction
+  * Alternatives with comment boxes per item
+  * Reviews, upvotes, share
+  * Auto-suggest alternatives based on tags
+
+#### 3. Prompt Marketplace
+
+* Submit prompts (free or paid), add tags, category (ChatGPT, MidJourney, etc.)
+* Prompt detail page with:
+
+  * Output screenshot gallery
+  * Upvotes, views, reviews, bookmarks
+  * Comments section like Reddit
+  * Remix/fork prompt to modify and reshare
+* Prompt bundles & filters (free, paid, category, trending)
+* Stripe/Gumroad integration for paid prompts
+* Prompt Collaboration Threads (like Reddit posts for group prompt improvement)
+* Community AMAs with Top Prompt Creators
+* AI-based Prompt Quality Scoring System
+* Customizable Prompt Workspace (save & test prompts inside user dashboard)
+* User Reputation System based on karma, verified purchases, and contributions
+
+#### 4. Course Listings
+
+* Add/edit: title, platform, cost, duration, skill level, tags
+* Course detail page with reviews, save, comment
+
+#### 5. Job Board
+
+* Post: title, company, location, salary, tags, apply link
+* Admin approval before going live
+* Bookmark/save jobs
+* Show related tools/courses on job page
+
+#### 6. Blog Module
+
+* Markdown support with image embed
+* Tagged articles
+* Reddit-style discussions under posts
+* Author profile with article list
+* Live Discussion Threads under Launch Calendar or Blog Posts
+* Event Scheduler for Community Sessions, Prompt Battles, and Hackathons
+
+#### 7. Collections
+
+* Users can create, follow, remix tool & prompt collections
+* Public/private visibility
+* Show stats: followers, items, upvotes
+
+### Admin Panel
+
+**Navigation Structure:**
+
+* Dashboard Overview
+* Tools Management
+
+  * View/Approve/Reject Tools
+  * Manage Tool Categories
+  * Manage Alternatives
+  * Moderate Tool Comments/Reviews
+* Prompts Management
+
+  * View/Approve/Reject Prompts
+  * Manage Prompt Categories
+  * Moderate Prompt Comments/Reviews
+* Tutorials Management
+
+  * View/Approve/Reject Tutorials
+  * Manage Tutorial Categories
+  * Moderate Tutorial Comments
+* Jobs Management
+
+  * View/Approve/Reject Jobs
+  * Manage Job Categories
+* Models Management
+
+  * View/Approve/Reject AI Models
+  * Manage Model Categories
+* News Management
+
+  * Add/Edit News Posts
+  * Approve Community Submissions
+  * Manage News Categories
+* Tags Management
+
+  * Create/Edit/Delete/Merge Tags
+  * AI-suggested Tags
+* Featured Listings
+
+  * Feature Tools, Prompts, Tutorials, Jobs, News
+  * Schedule Features by Date
+* Moderation
+
+  * Flagged Content Queue
+  * Moderate Comments Across Modules
+* Insights & Analytics
+
+  * Platform Stats (Submissions, Views, Upvotes)
+  * Top Tools, Prompts, Contributors
+  * AI-Powered Community Insights
+
+### AI Features (via API Integration)
+
+* Auto-tagging of tools, prompts, courses
+* Summarized reviews for tools and prompts
+* AI-enhanced prompt suggestions
+* Personalized feed: based on user follows, past actions
+* Recommend prompts/tools for each job or course
+
+### Community Features
+
+* Threaded comments for tools, prompts, blogs
+* Upvotes/downvotes on all items
+* Flag/report comments
+* Weekly/monthly leaderboards
+* Gamification:
+
+  * Badges for activities (Top Reviewer, Prompt Master)
+  * Karma points
+  * Streaks for daily contributions
+
