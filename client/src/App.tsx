@@ -21,21 +21,29 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      {/* Public routes that work for both authenticated and unauthenticated users */}
+      <Route path="/tools" component={Tools} />
+      <Route path="/models" component={Models} />
+      <Route path="/prompts" component={Prompts} />
+      <Route path="/courses" component={Courses} />
+      <Route path="/jobs" component={Jobs} />
+      <Route path="/news" component={News} />
+      
+      {/* Authenticated-only routes */}
+      {isAuthenticated && (
         <>
-          <Route path="/" component={Home} />
-          <Route path="/tools" component={Tools} />
-          <Route path="/models" component={Models} />
-          <Route path="/prompts" component={Prompts} />
-          <Route path="/courses" component={Courses} />
-          <Route path="/jobs" component={Jobs} />
-          <Route path="/news" component={News} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin" component={AdminDashboard} />
         </>
       )}
+      
+      {/* Home/Landing route */}
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <Route path="/" component={Home} />
+      )}
+      
       <Route component={NotFound} />
     </Switch>
   );
