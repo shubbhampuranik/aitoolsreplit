@@ -92,9 +92,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   const handleVote = (voteType: 'up' | 'down') => (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Vote clicked - isAuthenticated:', isAuthenticated, 'showAuthDialog:', showAuthDialog);
     if (!isAuthenticated) {
-      console.log('Setting showAuthDialog to true');
       setShowAuthDialog(true);
       return;
     }
@@ -113,6 +111,10 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   const handleTryTool = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.open(tool.url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCardClick = () => {
+    window.location.href = `/tools/${tool.id}`;
   };
 
   const getPricingBadgeVariant = (pricingType: string) => {
@@ -147,7 +149,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   if (viewMode === 'list') {
     return (
-      <Card className="tool-card hover:border-primary/20 group cursor-pointer w-full border-l-4 border-l-transparent hover:border-l-primary transition-all">
+      <Card className="tool-card hover:border-primary/20 group cursor-pointer w-full border-l-4 border-l-transparent hover:border-l-primary transition-all" onClick={handleCardClick}>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
             {/* Voting Section */}
@@ -258,7 +260,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   }
 
   return (
-    <Card className="tool-card hover:border-primary/20 group cursor-pointer h-full border-l-4 border-l-transparent hover:border-l-primary transition-all">
+    <Card className="tool-card hover:border-primary/20 group cursor-pointer h-full border-l-4 border-l-transparent hover:border-l-primary transition-all" onClick={handleCardClick}>
       <CardContent className="p-6 h-full flex flex-col">
         {/* Header with voting and logo */}
         <div className="flex items-start justify-between mb-4">

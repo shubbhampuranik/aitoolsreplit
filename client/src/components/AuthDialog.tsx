@@ -22,72 +22,16 @@ export default function AuthDialog({
   title = "Join the AI Community",
   description = "Sign up to vote, bookmark tools, and connect with other AI enthusiasts"
 }: AuthDialogProps) {
-  console.log('AuthDialog render - open:', open);
-  
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth login
     window.location.href = "/api/login";
   };
 
-  // If Dialog component has issues, render a simple modal for debugging
-  if (open) {
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          maxWidth: '400px',
-          width: '90%'
-        }}>
-          <h2 style={{marginBottom: '10px'}}>Join the AI Community</h2>
-          <p style={{marginBottom: '20px'}}>Sign up to vote, bookmark tools, and connect with other AI enthusiasts</p>
-          <button 
-            onClick={handleGoogleSignIn}
-            style={{
-              backgroundColor: '#4285f4',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginRight: '10px'
-            }}
-          >
-            Continue with Google
-          </button>
-          <button 
-            onClick={() => onOpenChange(false)}
-            style={{
-              backgroundColor: '#gray',
-              color: 'black',
-              border: '1px solid #ccc',
-              padding: '10px 20px',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Use the beautiful shadcn Dialog component now that auth is working
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader className="text-center space-y-3">
           <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
           <DialogDescription className="text-base">

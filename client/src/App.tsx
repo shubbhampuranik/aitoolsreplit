@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Tools from "@/pages/tools";
+import ToolDetails from "@/pages/tool-details";
 import Models from "@/pages/models";
 import Prompts from "@/pages/prompts";
 import Courses from "@/pages/courses";
@@ -23,6 +24,7 @@ function Router() {
     <Switch>
       {/* Public routes that work for both authenticated and unauthenticated users */}
       <Route path="/tools" component={Tools} />
+      <Route path="/tools/:toolId" component={ToolDetails} />
       <Route path="/models" component={Models} />
       <Route path="/prompts" component={Prompts} />
       <Route path="/courses" component={Courses} />
