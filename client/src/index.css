@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom styles for the AI community portal */
+.hero-gradient {
+  background: linear-gradient(135deg, hsl(207, 90%, 97%) 0%, hsl(0, 0%, 100%) 50%, hsl(210, 40%, 98%) 100%);
+}
+
+.category-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.category-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.1);
+}
+
+.tool-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.tool-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
+}
+
+.bookmark-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.tool-card:hover .bookmark-btn {
+  opacity: 1;
+}
+
+.stats-counter {
+  font-variant-numeric: tabular-nums;
+}
+
+.bg-pattern {
+  background-image: radial-gradient(circle at 25px 25px, rgba(37, 99, 235, 0.05) 2px, transparent 0),
+                    radial-gradient(circle at 75px 75px, rgba(37, 99, 235, 0.05) 2px, transparent 0);
+  background-size: 100px 100px;
+}
+
+/* Improved focus states for accessibility */
+.focus-ring:focus {
+  outline: 2px solid hsl(207, 90%, 54%);
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Community feed styles */
+.activity-item {
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.activity-item:hover {
+  border-left-color: hsl(207, 90%, 54%);
+}
+
+/* Tag styles */
+.tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.tag-blue {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.tag-green {
+  @apply bg-green-100 text-green-800;
+}
+
+.tag-purple {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.tag-orange {
+  @apply bg-orange-100 text-orange-800;
+}
+
+.tag-pink {
+  @apply bg-pink-100 text-pink-800;
+}
+
+.tag-yellow {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.tag-gray {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: hsl(0, 0%, 0%);
+    --primary: hsl(210, 100%, 40%);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .category-hover,
+  .tool-card,
+  .activity-item {
+    transition: none;
+  }
+  
+  .loading-shimmer {
+    animation: none;
+  }
+}
