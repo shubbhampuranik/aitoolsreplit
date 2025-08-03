@@ -634,21 +634,21 @@ export class DatabaseStorage implements IStorage {
 
   // Comments
   async getComments(itemType: string, itemId: string): Promise<Comment[]> {
-    return await db
+    const result = await db
       .select()
       .from(comments)
       .where(and(eq(comments.itemType, itemType as any), eq(comments.itemId, itemId)))
       .orderBy(desc(comments.createdAt));
+    return result as Comment[];
   }
 
   async createComment(comment: InsertComment): Promise<Comment> {
-    const [newComment] = await db.insert(comments).values(comment).returning();
-    return newComment;
+    const result = await db.insert(comments).values(comment).returning();
+    return result[0] as Comment;
   }
 
   // Collections
   async getCollections(userId?: string, isPublic?: boolean): Promise<Collection[]> {
-    let query = db.select().from(collections);
     const conditions = [];
 
     if (userId) {
@@ -660,10 +660,17 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      return await db
+        .select()
+        .from(collections)
+        .where(and(...conditions))
+        .orderBy(desc(collections.createdAt));
     }
 
-    return await query.orderBy(desc(collections.createdAt));
+    return await db
+      .select()
+      .from(collections)
+      .orderBy(desc(collections.createdAt));
   }
 
   async getCollection(id: string): Promise<Collection | undefined> {
@@ -711,13 +718,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserBookmarks(userId: string, itemType?: string): Promise<any[]> {
-    let query = db.select().from(bookmarks).where(eq(bookmarks.userId, userId));
+    const conditions = [eq(bookmarks.userId, userId)];
 
     if (itemType) {
-      query = query.where(eq(bookmarks.itemType, itemType as any));
+      conditions.push(eq(bookmarks.itemType, itemType as any));
     }
 
-    return await query.orderBy(desc(bookmarks.createdAt));
+    return await db
+      .select()
+      .from(bookmarks)
+      .where(and(...conditions))
+      .orderBy(desc(bookmarks.createdAt));
   }
 
   async voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
