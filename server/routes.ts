@@ -456,11 +456,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { itemType, itemId, voteType } = req.body;
       const userId = req.user.claims.sub;
       
-      const hasVoted = await storage.toggleVote(userId, itemType, itemId, voteType);
-      res.json({ voted: hasVoted });
+      const result = await storage.voteOnItem(userId, itemType, itemId, voteType);
+      res.json({
+        userVote: result.userVote,
+        upvotes: result.upvotes,
+        downvotes: result.downvotes || 0
+      });
     } catch (error) {
-      console.error("Error toggling vote:", error);
-      res.status(500).json({ message: "Failed to toggle vote" });
+      console.error("Error voting:", error);
+      res.status(500).json({ message: "Failed to vote" });
     }
   });
 

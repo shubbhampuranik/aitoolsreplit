@@ -147,6 +147,11 @@ export interface IStorage {
   toggleBookmark(userId: string, itemType: string, itemId: string): Promise<boolean>;
   getUserBookmarks(userId: string, itemType?: string): Promise<any[]>;
   toggleVote(userId: string, itemType: string, itemId: string, voteType: number): Promise<boolean>;
+  voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
+    userVote: 'up' | 'down' | null;
+    upvotes: number;
+    downvotes: number;
+  }>;
   
   // Search
   searchAll(query: string, limit?: number): Promise<{
@@ -713,6 +718,106 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(desc(bookmarks.createdAt));
+  }
+
+  async voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
+    userVote: 'up' | 'down' | null;
+    upvotes: number;
+    downvotes: number;
+  }> {
+    const voteValue = voteType === 'up' ? 1 : -1;
+    
+    // Check existing vote
+    const existing = await db
+      .select()
+      .from(votes)
+      .where(
+        and(
+          eq(votes.userId, userId),
+          eq(votes.itemType, itemType as any),
+          eq(votes.itemId, itemId)
+        )
+      );
+
+    if (existing.length > 0) {
+      if (existing[0].voteType === voteValue) {
+        // Remove vote if clicking same button
+        await db
+          .delete(votes)
+          .where(
+            and(
+              eq(votes.userId, userId),
+              eq(votes.itemType, itemType as any),
+              eq(votes.itemId, itemId)
+            )
+          );
+      } else {
+        // Update vote if clicking different button
+        await db
+          .update(votes)
+          .set({ voteType: voteValue })
+          .where(
+            and(
+              eq(votes.userId, userId),
+              eq(votes.itemType, itemType as any),
+              eq(votes.itemId, itemId)
+            )
+          );
+      }
+    } else {
+      // Create new vote
+      await db.insert(votes).values({
+        userId,
+        itemType: itemType as any,
+        itemId,
+        voteType: voteValue,
+      });
+    }
+
+    // Get updated vote counts
+    const upvotes = await db
+      .select({ count: count() })
+      .from(votes)
+      .where(
+        and(
+          eq(votes.itemType, itemType as any),
+          eq(votes.itemId, itemId),
+          eq(votes.voteType, 1)
+        )
+      );
+
+    const downvotes = await db
+      .select({ count: count() })
+      .from(votes)
+      .where(
+        and(
+          eq(votes.itemType, itemType as any),
+          eq(votes.itemId, itemId),
+          eq(votes.voteType, -1)
+        )
+      );
+
+    // Get current user's vote
+    const currentVote = await db
+      .select()
+      .from(votes)
+      .where(
+        and(
+          eq(votes.userId, userId),
+          eq(votes.itemType, itemType as any),
+          eq(votes.itemId, itemId)
+        )
+      );
+
+    const userVote = currentVote.length > 0 
+      ? (currentVote[0].voteType === 1 ? 'up' : 'down')
+      : null;
+
+    return {
+      userVote,
+      upvotes: upvotes[0]?.count || 0,
+      downvotes: downvotes[0]?.count || 0,
+    };
   }
 
   async toggleVote(userId: string, itemType: string, itemId: string, voteType: number): Promise<boolean> {

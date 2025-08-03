@@ -34,10 +34,10 @@ interface Category {
 }
 
 export default function Tools() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('popular');
-  const [pricingFilter, setPricingFilter] = useState<string>('');
+  const [pricingFilter, setPricingFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const { data: categories } = useQuery<Category[]>({
@@ -51,7 +51,7 @@ export default function Tools() {
       if (selectedCategory) params.append('categoryId', selectedCategory);
       if (searchQuery) params.append('search', searchQuery);
       if (sortBy) params.append('sort', sortBy);
-      if (pricingFilter) params.append('pricingType', pricingFilter);
+      if (pricingFilter && pricingFilter !== 'all') params.append('pricingType', pricingFilter);
       params.append('limit', '50');
       
       const response = await fetch(`/api/tools?${params.toString()}`, {
@@ -74,7 +74,7 @@ export default function Tools() {
   });
 
   const filteredTools = tools?.filter(tool => {
-    if (pricingFilter && tool.pricingType !== pricingFilter) return false;
+    if (pricingFilter && pricingFilter !== 'all' && tool.pricingType !== pricingFilter) return false;
     return true;
   });
 
@@ -303,7 +303,7 @@ export default function Tools() {
               <div className={
                 viewMode === 'grid' 
                   ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6"
-                  : "space-y-4"
+                  : "space-y-6"
               }>
                 {sortedTools.map((tool) => (
                   <ToolCard 
@@ -325,7 +325,7 @@ export default function Tools() {
                   </p>
                   <Button variant="outline" onClick={() => {
                     setSelectedCategory('');
-                    setPricingFilter('');
+                    setPricingFilter('all');
                     setSearchQuery('');
                   }}>
                     Clear Filters
