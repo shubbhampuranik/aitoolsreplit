@@ -130,7 +130,7 @@ export default function Tools() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Sidebar Filters */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
@@ -218,7 +218,7 @@ export default function Tools() {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-4">
@@ -275,7 +275,7 @@ export default function Tools() {
 
             {/* Tools Grid/List */}
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <CardContent className="p-6">
@@ -302,7 +302,7 @@ export default function Tools() {
             ) : sortedTools && sortedTools.length > 0 ? (
               <div className={
                 viewMode === 'grid' 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6"
                   : "space-y-4"
               }>
                 {sortedTools.map((tool) => (

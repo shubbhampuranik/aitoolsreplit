@@ -110,7 +110,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   if (viewMode === 'list') {
     return (
-      <Card className="tool-card hover:border-primary/20 group cursor-pointer">
+      <Card className="tool-card hover:border-primary/20 group cursor-pointer w-full">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
             {/* Logo */}
@@ -193,8 +193,8 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   }
 
   return (
-    <Card className="tool-card hover:border-primary/20 group cursor-pointer">
-      <CardContent className="p-6">
+    <Card className="tool-card hover:border-primary/20 group cursor-pointer h-full">
+      <CardContent className="p-6 h-full flex flex-col">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center">
@@ -251,7 +251,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
           )}
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center space-x-2">
             <Badge variant={getPricingBadgeVariant(tool.pricingType)}>
               {getPricingLabel(tool.pricingType)}
