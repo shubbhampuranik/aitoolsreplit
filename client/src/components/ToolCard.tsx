@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import AuthDialog from "./AuthDialog";
 
 interface Tool {
   id: string;
@@ -35,6 +36,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [currentUpvotes, setCurrentUpvotes] = useState(tool.upvotes);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const voteMutation = useMutation({
     mutationFn: async (voteType: 'up' | 'down') => {
@@ -89,10 +91,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   const handleVote = (voteType: 'up' | 'down') => (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to vote on tools.",
-      });
+      setShowAuthDialog(true);
       return;
     }
     voteMutation.mutate(voteType);
@@ -101,10 +100,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to bookmark tools.",
-      });
+      setShowAuthDialog(true);
       return;
     }
     bookmarkMutation.mutate();
@@ -362,6 +358,13 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
           </Button>
         </div>
       </CardContent>
+      
+      <AuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        title="Join the AI Community"
+        description="Sign up to vote, bookmark tools, and connect with other AI enthusiasts"
+      />
     </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import SearchBar from "@/components/SearchBar";
 import ToolCard from "@/components/ToolCard";
@@ -39,20 +39,23 @@ export default function Tools() {
   const [sortBy, setSortBy] = useState<string>('popular');
   const [pricingFilter, setPricingFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [allTools, setAllTools] = useState<Tool[]>([]);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
   const { data: tools, isLoading } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", selectedCategory, searchQuery, sortBy, pricingFilter],
+    queryKey: ["/api/tools", selectedCategory, searchQuery, sortBy, pricingFilter, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory) params.append('categoryId', selectedCategory);
       if (searchQuery) params.append('search', searchQuery);
       if (sortBy) params.append('sort', sortBy);
       if (pricingFilter && pricingFilter !== 'all') params.append('pricingType', pricingFilter);
-      params.append('limit', '50');
+      params.append('limit', '24');
+      params.append('offset', ((currentPage - 1) * 24).toString());
       
       const response = await fetch(`/api/tools?${params.toString()}`, {
         credentials: 'include'
@@ -61,6 +64,17 @@ export default function Tools() {
       return response.json();
     },
   });
+
+  // Handle pagination data accumulation with useEffect
+  useEffect(() => {
+    if (tools) {
+      if (currentPage === 1) {
+        setAllTools(tools);
+      } else {
+        setAllTools(prev => [...prev, ...tools]);
+      }
+    }
+  }, [tools, currentPage]);
 
   const { data: featuredTools } = useQuery<Tool[]>({
     queryKey: ["/api/tools", "featured"],
@@ -73,7 +87,9 @@ export default function Tools() {
     },
   });
 
-  const filteredTools = tools?.filter(tool => {
+  const displayTools = currentPage === 1 ? tools : allTools;
+
+  const filteredTools = displayTools?.filter(tool => {
     if (pricingFilter && pricingFilter !== 'all' && tool.pricingType !== pricingFilter) return false;
     return true;
   });
@@ -92,6 +108,16 @@ export default function Tools() {
         return 0;
     }
   });
+
+  const handleLoadMore = () => {
+    setCurrentPage(prev => prev + 1);
+  };
+
+  // Reset pagination when filters change
+  const resetPagination = () => {
+    setCurrentPage(1);
+    setAllTools([]);
+  };
 
   return (
     <Layout>
@@ -149,7 +175,10 @@ export default function Tools() {
                       variant={selectedCategory === '' ? 'default' : 'ghost'}
                       size="sm"
                       className="w-full justify-start"
-                      onClick={() => setSelectedCategory('')}
+                      onClick={() => {
+                        setSelectedCategory('');
+                        resetPagination();
+                      }}
                     >
                       All Categories
                     </Button>
@@ -159,7 +188,10 @@ export default function Tools() {
                         variant={selectedCategory === category.id ? 'default' : 'ghost'}
                         size="sm"
                         className="w-full justify-between"
-                        onClick={() => setSelectedCategory(category.id)}
+                        onClick={() => {
+                          setSelectedCategory(category.id);
+                          resetPagination();
+                        }}
                       >
                         <span>{category.name}</span>
                         <Badge variant="secondary" className="text-xs">
@@ -173,7 +205,10 @@ export default function Tools() {
                 {/* Pricing */}
                 <div>
                   <h3 className="font-semibold mb-3">Pricing</h3>
-                  <Select value={pricingFilter} onValueChange={setPricingFilter}>
+                  <Select value={pricingFilter} onValueChange={(value) => {
+                    setPricingFilter(value);
+                    resetPagination();
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="All pricing" />
                     </SelectTrigger>
@@ -327,6 +362,7 @@ export default function Tools() {
                     setSelectedCategory('');
                     setPricingFilter('all');
                     setSearchQuery('');
+                    resetPagination();
                   }}>
                     Clear Filters
                   </Button>
@@ -335,10 +371,15 @@ export default function Tools() {
             )}
 
             {/* Load More */}
-            {sortedTools && sortedTools.length >= 50 && (
+            {sortedTools && tools && tools.length >= 24 && (
               <div className="text-center mt-8">
-                <Button variant="outline" size="lg">
-                  Load More Tools
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={handleLoadMore}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : "Load More Tools"}
                 </Button>
               </div>
             )}
