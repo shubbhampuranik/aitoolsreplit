@@ -22,14 +22,21 @@ export default function AuthDialog({
   title = "Join the AI Community",
   description = "Sign up to vote, bookmark tools, and connect with other AI enthusiasts"
 }: AuthDialogProps) {
+  console.log('AuthDialog render - open:', open);
+  
+  // Always render to see if the component is working
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth login
     window.location.href = "/api/login";
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <>
+      <div style={{position: 'fixed', top: 0, left: 0, background: 'red', color: 'white', padding: '10px', zIndex: 99999}}>
+        Debug: AuthDialog open={open.toString()}
+      </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center space-y-3">
           <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
           <DialogDescription className="text-base">
@@ -109,5 +116,6 @@ export default function AuthDialog({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

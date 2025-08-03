@@ -37,6 +37,14 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [currentUpvotes, setCurrentUpvotes] = useState(tool.upvotes);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  
+  console.log('ToolCard render - showAuthDialog:', showAuthDialog, 'isAuthenticated:', isAuthenticated);
+  
+  // Test the dialog with a simple button for debugging
+  const testDialog = () => {
+    console.log('Test dialog clicked');
+    setShowAuthDialog(true);
+  };
 
   const voteMutation = useMutation({
     mutationFn: async (voteType: 'up' | 'down') => {
@@ -90,7 +98,9 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   const handleVote = (voteType: 'up' | 'down') => (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Vote clicked, isAuthenticated:', isAuthenticated);
     if (!isAuthenticated) {
+      console.log('Setting showAuthDialog to true');
       setShowAuthDialog(true);
       return;
     }
@@ -99,7 +109,9 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Bookmark clicked, isAuthenticated:', isAuthenticated);
     if (!isAuthenticated) {
+      console.log('Setting showAuthDialog to true');
       setShowAuthDialog(true);
       return;
     }
@@ -348,14 +360,23 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
           <Badge variant={getPricingBadgeVariant(tool.pricingType)} className="px-3 py-1">
             {getPricingLabel(tool.pricingType)}
           </Badge>
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="bg-primary hover:bg-primary/90 text-white font-medium"
-            onClick={handleTryTool}
-          >
-            Try for free
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={testDialog}
+            >
+              Test Dialog
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="bg-primary hover:bg-primary/90 text-white font-medium"
+              onClick={handleTryTool}
+            >
+              Try for free
+            </Button>
+          </div>
         </div>
       </CardContent>
       
