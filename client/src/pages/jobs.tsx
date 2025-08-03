@@ -79,7 +79,14 @@ export default function Jobs() {
   });
 
   const { data: featuredJobs } = useQuery<Job[]>({
-    queryKey: ["/api/jobs", { featured: true, limit: 3 }],
+    queryKey: ["/api/jobs", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/jobs?featured=true&limit=3', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured jobs');
+      return response.json();
+    },
   });
 
   const filteredJobs = jobs?.filter(job => {

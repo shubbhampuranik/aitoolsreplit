@@ -43,7 +43,14 @@ export default function Landing() {
   });
 
   const { data: featuredTools } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", { featured: true, limit: 6 }],
+    queryKey: ["/api/tools", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/tools?featured=true&limit=6', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured tools');
+      return response.json();
+    },
   });
 
   const handleLogin = () => {

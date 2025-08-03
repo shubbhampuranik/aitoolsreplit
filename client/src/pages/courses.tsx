@@ -79,7 +79,14 @@ export default function Courses() {
   });
 
   const { data: featuredCourses } = useQuery<Course[]>({
-    queryKey: ["/api/courses", { featured: true, limit: 3 }],
+    queryKey: ["/api/courses", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/courses?featured=true&limit=3', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured courses');
+      return response.json();
+    },
   });
 
   const filteredCourses = courses?.filter(course => {

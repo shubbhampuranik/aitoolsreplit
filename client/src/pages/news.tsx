@@ -86,7 +86,14 @@ export default function News() {
   });
 
   const { data: featuredPosts } = useQuery<Post[]>({
-    queryKey: ["/api/posts", { featured: true, limit: 3 }],
+    queryKey: ["/api/posts", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/posts?featured=true&limit=3', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured posts');
+      return response.json();
+    },
   });
 
   const sortedPosts = posts?.sort((a, b) => {
