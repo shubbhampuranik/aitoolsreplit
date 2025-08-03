@@ -92,7 +92,9 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   const handleVote = (voteType: 'up' | 'down') => (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Vote clicked - isAuthenticated:', isAuthenticated, 'showAuthDialog:', showAuthDialog);
     if (!isAuthenticated) {
+      console.log('Setting showAuthDialog to true');
       setShowAuthDialog(true);
       return;
     }
