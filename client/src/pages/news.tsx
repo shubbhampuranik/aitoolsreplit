@@ -69,12 +69,20 @@ export default function News() {
   });
 
   const { data: posts, isLoading } = useQuery<Post[]>({
-    queryKey: ["/api/posts", { 
-      categoryId: selectedCategory || undefined,
-      search: searchQuery || undefined,
-      status: "approved",
-      limit: 50 
-    }],
+    queryKey: ["/api/posts", selectedCategory, searchQuery, "approved"],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('status', 'approved');
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/posts?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      return response.json();
+    },
   });
 
   const { data: featuredPosts } = useQuery<Post[]>({

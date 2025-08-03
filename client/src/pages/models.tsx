@@ -177,7 +177,7 @@ export default function Models() {
   });
 
   const { data: models, isLoading } = useQuery<Model[]>({
-    queryKey: ["/api/models"],
+    queryKey: ["/api/models", selectedCategory, searchQuery, modelTypeFilter, accessTypeFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory) params.append('categoryId', selectedCategory);

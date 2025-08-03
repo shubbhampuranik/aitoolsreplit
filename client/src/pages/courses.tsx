@@ -62,12 +62,20 @@ export default function Courses() {
   });
 
   const { data: courses, isLoading } = useQuery<Course[]>({
-    queryKey: ["/api/courses", { 
-      categoryId: selectedCategory || undefined,
-      search: searchQuery || undefined,
-      skillLevel: skillLevelFilter || undefined,
-      limit: 50 
-    }],
+    queryKey: ["/api/courses", selectedCategory, searchQuery, skillLevelFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      if (skillLevelFilter) params.append('skillLevel', skillLevelFilter);
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/courses?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch courses');
+      return response.json();
+    },
   });
 
   const { data: featuredCourses } = useQuery<Course[]>({

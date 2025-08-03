@@ -47,16 +47,32 @@ export default function Prompts() {
   });
 
   const { data: prompts, isLoading } = useQuery<Prompt[]>({
-    queryKey: ["/api/prompts", { 
-      categoryId: selectedCategory || undefined,
-      search: searchQuery || undefined,
-      isFree: priceFilter === 'free' ? true : priceFilter === 'paid' ? false : undefined,
-      limit: 50 
-    }],
+    queryKey: ["/api/prompts", selectedCategory, searchQuery, priceFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      if (priceFilter === 'free') params.append('isFree', 'true');
+      if (priceFilter === 'paid') params.append('isFree', 'false');
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/prompts?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch prompts');
+      return response.json();
+    },
   });
 
   const { data: featuredPrompts } = useQuery<Prompt[]>({
-    queryKey: ["/api/prompts", { featured: true, limit: 3 }],
+    queryKey: ["/api/prompts", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/prompts?featured=true&limit=3', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured prompts');
+      return response.json();
+    },
   });
 
   const filteredPrompts = prompts?.filter(prompt => {

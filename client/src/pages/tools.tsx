@@ -45,11 +45,13 @@ export default function Tools() {
   });
 
   const { data: tools, isLoading } = useQuery<Tool[]>({
-    queryKey: ["/api/tools"],
+    queryKey: ["/api/tools", selectedCategory, searchQuery, sortBy, pricingFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory) params.append('categoryId', selectedCategory);
       if (searchQuery) params.append('search', searchQuery);
+      if (sortBy) params.append('sort', sortBy);
+      if (pricingFilter) params.append('pricingType', pricingFilter);
       params.append('limit', '50');
       
       const response = await fetch(`/api/tools?${params.toString()}`, {

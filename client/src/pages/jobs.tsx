@@ -61,12 +61,21 @@ export default function Jobs() {
   });
 
   const { data: jobs, isLoading } = useQuery<Job[]>({
-    queryKey: ["/api/jobs", { 
-      categoryId: selectedCategory || undefined,
-      search: searchQuery || undefined,
-      remote: remoteFilter === 'remote' ? true : remoteFilter === 'onsite' ? false : undefined,
-      limit: 50 
-    }],
+    queryKey: ["/api/jobs", selectedCategory, searchQuery, remoteFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      if (remoteFilter === 'remote') params.append('remote', 'true');
+      if (remoteFilter === 'onsite') params.append('remote', 'false');
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/jobs?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch jobs');
+      return response.json();
+    },
   });
 
   const { data: featuredJobs } = useQuery<Job[]>({
