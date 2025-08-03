@@ -25,11 +25,13 @@ interface Tool {
   name: string;
   description: string;
   logoUrl?: string;
+  url: string;
   pricingType: string;
   rating: string;
   upvotes: number;
   views: number;
   featured: boolean;
+  createdAt?: string;
 }
 
 interface Stats {
@@ -37,6 +39,7 @@ interface Stats {
   promptsCount: number;
   coursesCount: number;
   jobsCount: number;
+  modelsCount: number;
   usersCount: number;
 }
 
@@ -70,7 +73,14 @@ export default function Home() {
   });
 
   const { data: featuredTools } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", { featured: true, limit: 6 }],
+    queryKey: ["/api/tools", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/tools?featured=true&limit=6', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured tools');
+      return response.json();
+    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         return false;
@@ -80,7 +90,14 @@ export default function Home() {
   });
 
   const { data: recentTools } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", { limit: 4, status: "approved" }],
+    queryKey: ["/api/tools", "recent"],
+    queryFn: async () => {
+      const response = await fetch('/api/tools?limit=5', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch recent tools');
+      return response.json();
+    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         return false;
@@ -106,7 +123,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Welcome back, {user?.firstName || 'AI Explorer'}! 👋
+              Welcome back, AI Explorer!
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Discover the latest AI tools, trending prompts, and connect with the community
@@ -118,13 +135,21 @@ export default function Home() {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
             <Card className="text-center">
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-primary">
                   {stats?.toolsCount?.toLocaleString() || "25K+"}
                 </div>
                 <div className="text-sm text-muted-foreground">Tools</div>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold text-primary">
+                  {stats?.modelsCount?.toLocaleString() || "5K+"}
+                </div>
+                <div className="text-sm text-muted-foreground">Models</div>
               </CardContent>
             </Card>
             <Card className="text-center">

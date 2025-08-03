@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Tools from "@/pages/tools";
+import Models from "@/pages/models";
 import Prompts from "@/pages/prompts";
 import Courses from "@/pages/courses";
 import Jobs from "@/pages/jobs";
@@ -26,6 +27,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/tools" component={Tools} />
+          <Route path="/models" component={Models} />
           <Route path="/prompts" component={Prompts} />
           <Route path="/courses" component={Courses} />
           <Route path="/jobs" component={Jobs} />

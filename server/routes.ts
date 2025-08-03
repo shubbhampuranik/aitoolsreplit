@@ -287,6 +287,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Models routes
+  app.get('/api/models', async (req, res) => {
+    try {
+      const {
+        categoryId,
+        featured,
+        modelType,
+        accessType,
+        status,
+        limit = 50,
+        offset = 0,
+        search,
+      } = req.query;
+
+      const models = await storage.getModels({
+        categoryId: categoryId as string,
+        featured: featured === 'true',
+        modelType: modelType as string,
+        accessType: accessType as string,
+        status: status as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        search: search as string,
+      });
+
+      res.json(models);
+    } catch (error) {
+      console.error("Error fetching models:", error);
+      res.status(500).json({ message: "Failed to fetch models" });
+    }
+  });
+
+  app.get('/api/models/:id', async (req, res) => {
+    try {
+      const model = await storage.getModel(req.params.id);
+      if (!model) {
+        return res.status(404).json({ message: "Model not found" });
+      }
+      res.json(model);
+    } catch (error) {
+      console.error("Error fetching model:", error);
+      res.status(500).json({ message: "Failed to fetch model" });
+    }
+  });
+
   // Posts
   app.get('/api/posts', async (req, res) => {
     try {

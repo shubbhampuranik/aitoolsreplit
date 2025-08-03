@@ -161,6 +161,40 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// AI Models
+export const modelTypeEnum = pgEnum("model_type", ["language", "image", "audio", "video", "multimodal", "code"]);
+export const accessTypeEnum = pgEnum("access_type", ["open_source", "api", "closed", "research"]);
+
+export const models = pgTable("models", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  shortDescription: varchar("short_description", { length: 300 }),
+  developer: varchar("developer", { length: 100 }).notNull(),
+  modelType: modelTypeEnum("model_type").default("language"),
+  accessType: accessTypeEnum("access_type").default("api"),
+  parameters: varchar("parameters", { length: 50 }), // e.g., "7B", "175B"
+  url: text("url"),
+  paperUrl: text("paper_url"),
+  demoUrl: text("demo_url"),
+  licenseType: varchar("license_type", { length: 100 }),
+  pricingDetails: text("pricing_details"),
+  capabilities: text("capabilities").array(),
+  limitations: text("limitations").array(),
+  categoryId: varchar("category_id").references(() => categories.id),
+  submittedBy: varchar("submitted_by").references(() => users.id),
+  status: statusEnum("status").default("pending"),
+  upvotes: integer("upvotes").default(0),
+  views: integer("views").default(0),
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
+  ratingCount: integer("rating_count").default(0),
+  featured: boolean("featured").default(false),
+  releaseDate: timestamp("release_date"),
+  benchmarkScores: jsonb("benchmark_scores"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // News/Blog posts
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -327,6 +361,20 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
   bookmarks: many(bookmarks),
 }));
 
+export const modelsRelations = relations(models, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [models.categoryId],
+    references: [categories.id],
+  }),
+  submitter: one(users, {
+    fields: [models.submittedBy],
+    references: [users.id],
+  }),
+  comments: many(comments),
+  bookmarks: many(bookmarks),
+  votes: many(votes),
+}));
+
 export const postsRelations = relations(posts, ({ one, many }) => ({
   category: one(categories, {
     fields: [posts.categoryId],
@@ -369,6 +417,7 @@ export type Tool = typeof tools.$inferSelect;
 export type Prompt = typeof prompts.$inferSelect;
 export type Course = typeof courses.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
+export type Model = typeof models.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Collection = typeof collections.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
@@ -422,6 +471,16 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
   views: true,
 });
 
+export const insertModelSchema = createInsertSchema(models).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  upvotes: true,
+  views: true,
+  rating: true,
+  ratingCount: true,
+});
+
 export const insertPostSchema = createInsertSchema(posts).omit({
   id: true,
   createdAt: true,
@@ -452,6 +511,7 @@ export type InsertTool = z.infer<typeof insertToolSchema>;
 export type InsertPrompt = z.infer<typeof insertPromptSchema>;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type InsertJob = z.infer<typeof insertJobSchema>;
+export type InsertModel = z.infer<typeof insertModelSchema>;
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;

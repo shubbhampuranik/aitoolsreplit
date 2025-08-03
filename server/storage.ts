@@ -6,6 +6,7 @@ import {
   courses,
   jobs,
   posts,
+  models,
   comments,
   collections,
   tags,
@@ -21,6 +22,7 @@ import {
   type Prompt,
   type Course,
   type Job,
+  type Model,
   type Post,
   type Comment,
   type Collection,
@@ -29,6 +31,7 @@ import {
   type InsertPrompt,
   type InsertCourse,
   type InsertJob,
+  type InsertModel,
   type InsertPost,
   type InsertComment,
   type InsertCollection,
@@ -101,6 +104,21 @@ export interface IStorage {
   createJob(job: InsertJob): Promise<Job>;
   updateJob(id: string, updates: Partial<Job>): Promise<Job>;
   
+  // Models
+  getModels(params?: {
+    categoryId?: string;
+    featured?: boolean;
+    modelType?: string;
+    accessType?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }): Promise<Model[]>;
+  getModel(id: string): Promise<Model | undefined>;
+  createModel(model: InsertModel): Promise<Model>;
+  updateModel(id: string, updates: Partial<Model>): Promise<Model>;
+  
   // Posts
   getPosts(params?: {
     categoryId?: string;
@@ -145,6 +163,7 @@ export interface IStorage {
     promptsCount: number;
     coursesCount: number;
     jobsCount: number;
+    modelsCount: number;
     usersCount: number;
   }>;
 }
@@ -456,6 +475,83 @@ export class DatabaseStorage implements IStorage {
     return updatedJob;
   }
 
+  // Models
+  async getModels(params: {
+    categoryId?: string;
+    featured?: boolean;
+    modelType?: string;
+    accessType?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  } = {}): Promise<Model[]> {
+    const {
+      categoryId,
+      featured,
+      modelType,
+      accessType,
+      status = "approved",
+      limit = 50,
+      offset = 0,
+      search,
+    } = params;
+
+    let query = db.select().from(models);
+    const conditions = [eq(models.status, status as any)];
+
+    if (categoryId) {
+      conditions.push(eq(models.categoryId, categoryId));
+    }
+
+    if (featured !== undefined) {
+      conditions.push(eq(models.featured, featured));
+    }
+
+    if (modelType) {
+      conditions.push(eq(models.modelType, modelType as any));
+    }
+
+    if (accessType) {
+      conditions.push(eq(models.accessType, accessType as any));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(models.name, `%${search}%`),
+          ilike(models.description, `%${search}%`),
+          ilike(models.developer, `%${search}%`)
+        )!
+      );
+    }
+
+    return await query
+      .where(and(...conditions))
+      .orderBy(desc(models.upvotes), desc(models.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getModel(id: string): Promise<Model | undefined> {
+    const [model] = await db.select().from(models).where(eq(models.id, id));
+    return model;
+  }
+
+  async createModel(model: InsertModel): Promise<Model> {
+    const [newModel] = await db.insert(models).values(model).returning();
+    return newModel;
+  }
+
+  async updateModel(id: string, updates: Partial<Model>): Promise<Model> {
+    const [updatedModel] = await db
+      .update(models)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(models.id, id))
+      .returning();
+    return updatedModel;
+  }
+
   // Posts
   async getPosts(params: {
     categoryId?: string;
@@ -676,11 +772,12 @@ export class DatabaseStorage implements IStorage {
     prompts: Prompt[];
     courses: Course[];
     jobs: Job[];
+    models: Model[];
     posts: Post[];
   }> {
     const searchCondition = `%${query}%`;
 
-    const [toolResults, promptResults, courseResults, jobResults, postResults] = await Promise.all([
+    const [toolResults, promptResults, courseResults, jobResults, modelResults, postResults] = await Promise.all([
       db
         .select()
         .from(tools)
@@ -736,6 +833,20 @@ export class DatabaseStorage implements IStorage {
         .limit(limit),
       db
         .select()
+        .from(models)
+        .where(
+          and(
+            eq(models.status, "approved"),
+            or(
+              ilike(models.name, searchCondition),
+              ilike(models.description, searchCondition),
+              ilike(models.developer, searchCondition)
+            )!
+          )
+        )
+        .limit(limit),
+      db
+        .select()
         .from(posts)
         .where(
           and(
@@ -754,6 +865,7 @@ export class DatabaseStorage implements IStorage {
       prompts: promptResults,
       courses: courseResults,
       jobs: jobResults,
+      models: modelResults,
       posts: postResults,
     };
   }
@@ -764,9 +876,10 @@ export class DatabaseStorage implements IStorage {
     promptsCount: number;
     coursesCount: number;
     jobsCount: number;
+    modelsCount: number;
     usersCount: number;
   }> {
-    const [toolsCount, promptsCount, coursesCount, jobsCount, usersCount] = await Promise.all([
+    const [toolsCount, promptsCount, coursesCount, jobsCount, modelsCount, usersCount] = await Promise.all([
       db
         .select({ count: count() })
         .from(tools)
@@ -783,6 +896,10 @@ export class DatabaseStorage implements IStorage {
         .select({ count: count() })
         .from(jobs)
         .where(eq(jobs.status, "approved")),
+      db
+        .select({ count: count() })
+        .from(models)
+        .where(eq(models.status, "approved")),
       db.select({ count: count() }).from(users),
     ]);
 
@@ -791,6 +908,7 @@ export class DatabaseStorage implements IStorage {
       promptsCount: promptsCount[0].count,
       coursesCount: coursesCount[0].count,
       jobsCount: jobsCount[0].count,
+      modelsCount: modelsCount[0].count,
       usersCount: usersCount[0].count,
     };
   }

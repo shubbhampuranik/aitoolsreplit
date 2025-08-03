@@ -13,6 +13,7 @@ interface Tool {
   id: string;
   name: string;
   description: string;
+  url: string;
   logoUrl?: string;
   pricingType: string;
   rating: string;
@@ -20,6 +21,7 @@ interface Tool {
   views: number;
   featured: boolean;
   categoryId?: string;
+  createdAt?: string;
 }
 
 interface Category {
@@ -43,15 +45,30 @@ export default function Tools() {
   });
 
   const { data: tools, isLoading } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", { 
-      categoryId: selectedCategory || undefined,
-      search: searchQuery || undefined,
-      limit: 50 
-    }],
+    queryKey: ["/api/tools"],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/tools?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch tools');
+      return response.json();
+    },
   });
 
   const { data: featuredTools } = useQuery<Tool[]>({
-    queryKey: ["/api/tools", { featured: true, limit: 3 }],
+    queryKey: ["/api/tools", "featured"],
+    queryFn: async () => {
+      const response = await fetch('/api/tools?featured=true&limit=3', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch featured tools');
+      return response.json();
+    },
   });
 
   const filteredTools = tools?.filter(tool => {
