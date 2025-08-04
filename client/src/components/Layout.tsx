@@ -156,6 +156,12 @@ export default function Layout({ children }: LayoutProps) {
                         <Bookmark className="mr-2 h-4 w-4" />
                         Bookmarks
                       </DropdownMenuItem>
+                      <Link href="/admin">
+                        <DropdownMenuItem>
+                          <Settings className="mr-2 h-4 w-4" />
+                          Admin Panel
+                        </DropdownMenuItem>
+                      </Link>
                       <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
