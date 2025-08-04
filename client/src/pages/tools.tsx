@@ -151,7 +151,7 @@ export default function Tools() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-gray-900 dark:text-white truncate">{tool.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{tool.developer || 'AI Tool'}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">AI Tool</p>
                       </div>
                       <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                         Featured
@@ -186,23 +186,24 @@ export default function Tools() {
         <div className="mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex-1 max-w-md">
-              <SearchBar 
-                placeholder="Search AI tools..." 
-                value={searchQuery}
-                onChange={setSearchQuery}
-                className="w-full"
-              />
+              <div className="w-full">
+                <SearchBar 
+                  placeholder="Search AI tools..." 
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+              </div>
             </div>
             <div className="flex items-center gap-4">
-              <Select value={selectedCategory} onValueChange={(value) => {
-                setSelectedCategory(value);
+              <Select value={selectedCategory || "all"} onValueChange={(value) => {
+                setSelectedCategory(value === "all" ? "" : value);
                 resetPagination();
               }}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories?.slice(0, 10).map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -321,7 +322,8 @@ export default function Tools() {
                 setSelectedCategory('');
                 setPricingFilter('all');
                 setSearchQuery('');
-                resetPagination();
+                setCurrentPage(1);
+                setAllTools([]);
               }}>
                 Clear Filters
               </Button>
