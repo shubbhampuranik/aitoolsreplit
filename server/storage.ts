@@ -743,11 +743,48 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(bookmarks.itemType, itemType as any));
     }
 
-    return await db
-      .select()
+    const userBookmarks = await db
+      .select({
+        bookmark: bookmarks,
+        tool: tools,
+        prompt: prompts,
+        course: courses,
+        job: jobs,
+        model: models,
+        post: posts,
+      })
       .from(bookmarks)
+      .leftJoin(tools, and(
+        eq(bookmarks.itemType, 'tool'),
+        eq(bookmarks.itemId, tools.id)
+      ))
+      .leftJoin(prompts, and(
+        eq(bookmarks.itemType, 'prompt'),
+        eq(bookmarks.itemId, prompts.id)
+      ))
+      .leftJoin(courses, and(
+        eq(bookmarks.itemType, 'course'),
+        eq(bookmarks.itemId, courses.id)
+      ))
+      .leftJoin(jobs, and(
+        eq(bookmarks.itemType, 'job'),
+        eq(bookmarks.itemId, jobs.id)
+      ))
+      .leftJoin(models, and(
+        eq(bookmarks.itemType, 'model'),
+        eq(bookmarks.itemId, models.id)
+      ))
+      .leftJoin(posts, and(
+        eq(bookmarks.itemType, 'post'),
+        eq(bookmarks.itemId, posts.id)
+      ))
       .where(and(...conditions))
       .orderBy(desc(bookmarks.createdAt));
+
+    return userBookmarks.map(row => ({
+      ...row.bookmark,
+      item: row.tool || row.prompt || row.course || row.job || row.model || row.post
+    }));
   }
 
   async voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
@@ -827,6 +864,45 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+    // Update the actual item's upvote count in the respective table
+    const upvoteCount = upvotes[0]?.count || 0;
+    
+    try {
+      if (itemType === 'tool') {
+        await db
+          .update(tools)
+          .set({ upvotes: upvoteCount })
+          .where(eq(tools.id, itemId));
+      } else if (itemType === 'prompt') {
+        await db
+          .update(prompts)
+          .set({ upvotes: upvoteCount })
+          .where(eq(prompts.id, itemId));
+      } else if (itemType === 'course') {
+        await db
+          .update(courses)
+          .set({ upvotes: upvoteCount })
+          .where(eq(courses.id, itemId));
+      } else if (itemType === 'job') {
+        await db
+          .update(jobs)
+          .set({ upvotes: upvoteCount })
+          .where(eq(jobs.id, itemId));
+      } else if (itemType === 'model') {
+        await db
+          .update(models)
+          .set({ upvotes: upvoteCount })
+          .where(eq(models.id, itemId));
+      } else if (itemType === 'post') {
+        await db
+          .update(posts)
+          .set({ upvotes: upvoteCount })
+          .where(eq(posts.id, itemId));
+      }
+    } catch (error) {
+      console.error('Error updating item upvote count:', error);
+    }
+
     // Get current user's vote
     const currentVote = await db
       .select()
@@ -845,7 +921,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       userVote,
-      upvotes: upvotes[0]?.count || 0,
+      upvotes: upvoteCount,
       downvotes: downvotes[0]?.count || 0,
     };
   }

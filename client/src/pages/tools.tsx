@@ -156,25 +156,71 @@ export default function Tools() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Sidebar Filters */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
+        {/* Filters and Content */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar */}
+          <div className="lg:w-64 space-y-4">
+            {/* Sort & Filter Controls */}
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popular">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Popular
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="newest">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Newest
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="rating">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4" />
+                      Top Rated
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-8 px-3"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="h-8 px-3"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="w-5 h-5" />
-                  Filters
-                </CardTitle>
+                <CardTitle className="text-lg">Filters</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* Categories */}
                 <div>
-                  <h3 className="font-semibold mb-3">Categories</h3>
-                  <div className="space-y-2">
+                  <h4 className="font-medium mb-3">Categories</h4>
+                  <div className="space-y-1">
                     <Button
                       variant={selectedCategory === '' ? 'default' : 'ghost'}
                       size="sm"
-                      className="w-full justify-start"
+                      className="w-full justify-start h-8"
                       onClick={() => {
                         setSelectedCategory('');
                         resetPagination();
@@ -187,14 +233,14 @@ export default function Tools() {
                         key={category.id}
                         variant={selectedCategory === category.id ? 'default' : 'ghost'}
                         size="sm"
-                        className="w-full justify-between"
+                        className="w-full justify-start h-8"
                         onClick={() => {
                           setSelectedCategory(category.id);
                           resetPagination();
                         }}
                       >
-                        <span>{category.name}</span>
-                        <Badge variant="secondary" className="text-xs">
+                        <span className="truncate">{category.name}</span>
+                        <Badge variant="secondary" className="ml-auto text-xs">
                           {category.toolCount}
                         </Badge>
                       </Button>
@@ -204,12 +250,12 @@ export default function Tools() {
 
                 {/* Pricing */}
                 <div>
-                  <h3 className="font-semibold mb-3">Pricing</h3>
+                  <h4 className="font-medium mb-3">Pricing</h4>
                   <Select value={pricingFilter} onValueChange={(value) => {
                     setPricingFilter(value);
                     resetPagination();
                   }}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-8">
                       <SelectValue placeholder="All pricing" />
                     </SelectTrigger>
                     <SelectContent>
@@ -253,58 +299,16 @@ export default function Tools() {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-4">
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
+          <div className="flex-1">
+            {/* Results Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {selectedCategory ? categories?.find(c => c.id === selectedCategory)?.name || 'Tools' : 'All Tools'}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {sortedTools?.length || 0} tools found
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popular">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        Popular
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="newest">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        Newest
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="rating">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4" />
-                        Rating
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="name">A-Z</SelectItem>
-                  </SelectContent>
-                </Select>
+                </p>
               </div>
             </div>
 
