@@ -229,7 +229,7 @@ export const collections = pgTable("collections", {
 });
 
 // Comments
-export const commentTypeEnum = pgEnum("comment_type", ["tool", "prompt", "course", "job", "post"]);
+export const commentTypeEnum = pgEnum("comment_type", ["tool", "prompt", "course", "job", "post", "model"]);
 
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
