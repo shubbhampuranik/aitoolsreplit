@@ -184,20 +184,50 @@ export default function Tools() {
 
         {/* Search and Filters */}
         <div className="mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 max-w-md">
-              <div className="w-full">
-                <SearchBar 
-                  placeholder="Search AI tools..." 
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                />
-              </div>
-            </div>
+          <SearchBar 
+            placeholder="Search AI tools..." 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            showFilters={true}
+            categories={categories}
+            onSearch={(query, filters) => {
+              setSearchQuery(query);
+              
+              // Handle category filters
+              if (filters?.categories?.length) {
+                const categoryMatch = categories?.find(c => filters.categories?.includes(c.name));
+                if (categoryMatch) {
+                  setSelectedCategory(categoryMatch.id);
+                }
+              } else {
+                setSelectedCategory('');
+              }
+              
+              // Handle pricing filters
+              if (filters?.pricing?.length) {
+                const pricingMap: Record<string, string> = {
+                  'Free': 'free',
+                  'Freemium': 'freemium', 
+                  'Free Trial': 'free_trial',
+                  'Paid': 'paid'
+                };
+                const pricingValue = filters.pricing[0];
+                setPricingFilter(pricingMap[pricingValue] || 'all');
+              } else {
+                setPricingFilter('all');
+              }
+              
+              setCurrentPage(1);
+              setAllTools([]);
+            }}
+          />
+          
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mt-4">
             <div className="flex items-center gap-4">
               <Select value={selectedCategory || "all"} onValueChange={(value) => {
                 setSelectedCategory(value === "all" ? "" : value);
-                resetPagination();
+                setCurrentPage(1);
+                setAllTools([]);
               }}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Categories" />
@@ -214,10 +244,11 @@ export default function Tools() {
 
               <Select value={pricingFilter} onValueChange={(value) => {
                 setPricingFilter(value);
-                resetPagination();
+                setCurrentPage(1);
+                setAllTools([]);
               }}>
                 <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Pricing" />
+                  <SelectValue placeholder="Pricing Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All pricing</SelectItem>
@@ -237,34 +268,25 @@ export default function Tools() {
                   <SelectItem value="rating">Top Rated</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
 
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 px-2"
+              >
+                <Grid3X3 className="w-4 h-4" />
               </Button>
-
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Search
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 px-2"
+              >
+                <List className="w-4 h-4" />
               </Button>
-
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="h-8 px-2"
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="h-8 px-2"
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>

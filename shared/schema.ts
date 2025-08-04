@@ -38,6 +38,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   skills: text("skills").array(),
   karmaScore: integer("karma_score").default(0),
+  stripeCustomerId: varchar("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -283,6 +284,18 @@ export const collectionItems = pgTable("collection_items", {
   addedAt: timestamp("added_at").defaultNow(),
 });
 
+// Prompt purchases table for tracking paid prompt transactions
+export const promptPurchases = pgTable("prompt_purchases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  promptId: varchar("prompt_id").references(() => prompts.id).notNull(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("usd"),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, completed, failed
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   tools: many(tools),
@@ -294,6 +307,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   bookmarks: many(bookmarks),
   votes: many(votes),
+  promptPurchases: many(promptPurchases),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -332,6 +346,7 @@ export const promptsRelations = relations(prompts, ({ one, many }) => ({
   comments: many(comments),
   bookmarks: many(bookmarks),
   votes: many(votes),
+  purchases: many(promptPurchases),
 }));
 
 export const coursesRelations = relations(courses, ({ one, many }) => ({
@@ -409,6 +424,17 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   replies: many(comments),
 }));
 
+export const promptPurchasesRelations = relations(promptPurchases, ({ one }) => ({
+  user: one(users, {
+    fields: [promptPurchases.userId],
+    references: [users.id],
+  }),
+  prompt: one(prompts, {
+    fields: [promptPurchases.promptId],
+    references: [prompts.id],
+  }),
+}));
+
 // Schema types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -422,6 +448,8 @@ export type Post = typeof posts.$inferSelect;
 export type Collection = typeof collections.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
+export type PromptPurchase = typeof promptPurchases.$inferSelect;
+export type InsertPromptPurchase = typeof promptPurchases.$inferInsert;
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({

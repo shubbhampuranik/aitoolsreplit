@@ -511,6 +511,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Prompt Marketplace Routes
+  app.get("/api/admin/prompts", isAuthenticated, async (req, res) => {
+    try {
+      const prompts = await storage.getAllPromptsForAdmin();
+      res.json(prompts);
+    } catch (error) {
+      console.error("Error fetching admin prompts:", error);
+      res.status(500).json({ message: "Failed to fetch prompts" });
+    }
+  });
+
+  app.post("/api/admin/prompts", isAuthenticated, async (req, res) => {
+    try {
+      const promptData = req.body;
+      const prompt = await storage.createPrompt(promptData);
+      res.json(prompt);
+    } catch (error) {
+      console.error("Error creating prompt:", error);
+      res.status(500).json({ message: "Failed to create prompt" });
+    }
+  });
+
+  app.patch("/api/admin/prompts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const promptData = req.body;
+      const prompt = await storage.updatePrompt(id, promptData);
+      res.json(prompt);
+    } catch (error) {
+      console.error("Error updating prompt:", error);
+      res.status(500).json({ message: "Failed to update prompt" });
+    }
+  });
+
+  app.delete("/api/admin/prompts/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePrompt(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting prompt:", error);
+      res.status(500).json({ message: "Failed to delete prompt" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

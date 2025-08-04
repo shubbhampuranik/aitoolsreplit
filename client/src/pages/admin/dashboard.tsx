@@ -30,7 +30,8 @@ import {
   Briefcase,
   BookOpen,
   Brain,
-  Newspaper
+  Newspaper,
+  DollarSign,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";

@@ -16,6 +16,7 @@ interface SearchBarProps {
   onChange?: (value: string) => void;
   onSearch?: (query: string, filters?: SearchFilters) => void;
   showFilters?: boolean;
+  categories?: Array<{id: string; name: string}>;
 }
 
 interface SearchFilters {
@@ -29,7 +30,8 @@ export default function SearchBar({
   value = "",
   onChange,
   onSearch,
-  showFilters = true 
+  showFilters = true,
+  categories = []
 }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState(value);
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -117,27 +119,27 @@ export default function SearchBar({
                 <div>
                   <h5 className="text-sm font-medium mb-2">Categories</h5>
                   <div className="space-y-2">
-                    {['Writing', 'Image Generation', 'Code Assistant', 'Video', 'Audio'].map((category) => (
-                      <div key={category} className="flex items-center space-x-2">
+                    {categories.slice(0, 8).map((category) => (
+                      <div key={category.id} className="flex items-center space-x-2">
                         <Checkbox
-                          id={category}
-                          checked={filters.categories?.includes(category) || false}
+                          id={category.id}
+                          checked={filters.categories?.includes(category.name) || false}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               setFilters(prev => ({
                                 ...prev,
-                                categories: [...(prev.categories || []), category]
+                                categories: [...(prev.categories || []), category.name]
                               }));
                             } else {
                               setFilters(prev => ({
                                 ...prev,
-                                categories: prev.categories?.filter(c => c !== category)
+                                categories: prev.categories?.filter(c => c !== category.name)
                               }));
                             }
                           }}
                         />
-                        <label htmlFor={category} className="text-sm">
-                          {category}
+                        <label htmlFor={category.id} className="text-sm">
+                          {category.name}
                         </label>
                       </div>
                     ))}

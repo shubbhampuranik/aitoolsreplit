@@ -1123,6 +1123,62 @@ export class DatabaseStorage implements IStorage {
       usersCount: usersCount[0].count,
     };
   }
+
+  // Prompt marketplace operations
+  async getAllPromptsForAdmin(): Promise<Prompt[]> {
+    return await db.select().from(prompts).orderBy(desc(prompts.createdAt));
+  }
+
+  async createPrompt(promptData: InsertPrompt): Promise<Prompt> {
+    const [prompt] = await db.insert(prompts).values(promptData).returning();
+    return prompt;
+  }
+
+  async updatePrompt(id: string, promptData: Partial<InsertPrompt>): Promise<Prompt> {
+    const [prompt] = await db
+      .update(prompts)
+      .set({ ...promptData, updatedAt: new Date() })
+      .where(eq(prompts.id, id))
+      .returning();
+    return prompt;
+  }
+
+  async deletePrompt(id: string): Promise<void> {
+    await db.delete(prompts).where(eq(prompts.id, id));
+  }
+
+  async createPromptPurchase(purchaseData: InsertPromptPurchase): Promise<PromptPurchase> {
+    const [purchase] = await db.insert(promptPurchases).values(purchaseData).returning();
+    return purchase;
+  }
+
+  async updatePromptPurchaseStatus(paymentIntentId: string, status: string): Promise<void> {
+    await db
+      .update(promptPurchases)
+      .set({ status })
+      .where(eq(promptPurchases.stripePaymentIntentId, paymentIntentId));
+  }
+
+  async getUserPromptPurchases(userId: string): Promise<PromptPurchase[]> {
+    return await db
+      .select()
+      .from(promptPurchases)
+      .where(eq(promptPurchases.userId, userId));
+  }
+
+  async hasUserPurchasedPrompt(userId: string, promptId: string): Promise<boolean> {
+    const [purchase] = await db
+      .select()
+      .from(promptPurchases)
+      .where(
+        and(
+          eq(promptPurchases.userId, userId),
+          eq(promptPurchases.promptId, promptId),
+          eq(promptPurchases.status, "completed")
+        )
+      );
+    return !!purchase;
+  }
 }
 
 export const storage = new DatabaseStorage();
