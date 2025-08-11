@@ -6,6 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Star, 
   Eye, 
@@ -23,7 +28,18 @@ import {
   ThumbsDown,
   Heart,
   BarChart3,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Image as ImageIcon,
+  Video,
+  Monitor,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  MessageCircle
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -103,6 +119,13 @@ export default function ToolDetailsPage() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [activeTab, setActiveTab] = useState("about");
+  const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [currentVideo, setCurrentVideo] = useState(0);
+  const [showAlternativeDialog, setShowAlternativeDialog] = useState(false);
+  const [userUsageStat, setUserUsageStat] = useState(0);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, title: "", content: "" });
 
   const { data: tool, isLoading } = useQuery<ToolDetails>({
     queryKey: ["/api/tools", toolId],
@@ -114,6 +137,50 @@ export default function ToolDetailsPage() {
 
   const { data: reviews = [] } = useQuery<Review[]>({
     queryKey: ["/api/tools", toolId, "reviews"],
+  });
+
+  // Fetch YouTube videos for the tool
+  const { data: videos = [] } = useQuery({
+    queryKey: ["/api/tools", toolId, "videos"],
+    queryFn: async () => {
+      // Mock YouTube video data - in real app, you'd integrate with YouTube API
+      return [
+        {
+          id: "dQw4w9WgXcQ",
+          title: `How to use ${tool?.name || 'this tool'} - Complete Tutorial`,
+          thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg`,
+          duration: "12:34",
+          views: "1.2M",
+          channel: "AI Tools Academy"
+        },
+        {
+          id: "9bZkp7q19f0",
+          title: `${tool?.name || 'Tool'} Tips and Tricks for Beginners`,
+          thumbnail: `https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg`,
+          duration: "8:45",
+          views: "856K",
+          channel: "Tech Reviews"
+        },
+        {
+          id: "kJQP7kiw5Fk",
+          title: `Advanced ${tool?.name || 'Tool'} Features You Should Know`,
+          thumbnail: `https://img.youtube.com/vi/kJQP7kiw5Fk/maxresdefault.jpg`,
+          duration: "15:22",
+          views: "432K",
+          channel: "Pro AI User"
+        }
+      ];
+    },
+    enabled: !!tool
+  });
+
+  // Mock usage statistics
+  const { data: usageStats = { userCount: 0, currentUserUses: false } } = useQuery({
+    queryKey: ["/api/tools", toolId, "usage"],
+    queryFn: async () => ({
+      userCount: Math.floor(Math.random() * 10000) + 1000,
+      currentUserUses: false
+    })
   });
 
   // Vote mutation
@@ -152,6 +219,50 @@ export default function ToolDetailsPage() {
       toast({
         title: "Error",
         description: "Failed to update bookmark",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Usage mutation
+  const usageMutation = useMutation({
+    mutationFn: async (uses: boolean) => {
+      return apiRequest("POST", "/api/tools/usage", { toolId, uses });
+    },
+    onSuccess: (data) => {
+      setUserUsageStat(data.userCount);
+      toast({
+        title: "Thanks for your input!",
+        description: "Your usage status has been recorded",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update usage status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Review submission mutation
+  const reviewMutation = useMutation({
+    mutationFn: async (reviewData: { rating: number; title: string; content: string }) => {
+      return apiRequest("POST", `/api/tools/${toolId}/reviews`, reviewData);
+    },
+    onSuccess: () => {
+      setShowReviewDialog(false);
+      setNewReview({ rating: 5, title: "", content: "" });
+      queryClient.invalidateQueries({ queryKey: ["/api/tools", toolId, "reviews"] });
+      toast({
+        title: "Review submitted!",
+        description: "Thanks for sharing your experience",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to submit review",
         variant: "destructive",
       });
     },
@@ -209,6 +320,38 @@ export default function ToolDetailsPage() {
     bookmarkMutation.mutate({ entityId: tool.id, entityType: 'tool' });
   };
 
+  const handleUseThis = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    usageMutation.mutate(true);
+  };
+
+  const handleUseSomethingElse = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    setShowAlternativeDialog(true);
+  };
+
+  const submitReview = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    if (!newReview.title.trim() || !newReview.content.trim()) {
+      toast({
+        title: "Please fill in all fields",
+        description: "Title and content are required",
+        variant: "destructive",
+      });
+      return;
+    }
+    reviewMutation.mutate(newReview);
+  };
+
   const getPricingColor = (type: string) => {
     switch (type) {
       case "free": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
@@ -217,6 +360,25 @@ export default function ToolDetailsPage() {
       case "free_trial": return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
       default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
+  };
+
+  // Carousel navigation functions
+  const nextScreenshot = () => {
+    setCurrentScreenshot((prev) => (prev + 1) % (tool?.gallery?.length || 1));
+  };
+
+  const prevScreenshot = () => {
+    setCurrentScreenshot((prev) => 
+      prev === 0 ? (tool?.gallery?.length || 1) - 1 : prev - 1
+    );
+  };
+
+  const nextVideo = () => {
+    setCurrentVideo((prev) => (prev + 1) % videos.length);
+  };
+
+  const prevVideo = () => {
+    setCurrentVideo((prev) => prev === 0 ? videos.length - 1 : prev - 1);
   };
 
   return (
@@ -316,29 +478,36 @@ export default function ToolDetailsPage() {
 
                     <Separator className="my-6" />
 
-                    {/* Quick Stats */}
-                    <div className="space-y-3">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Quick Stats</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Category</span>
-                          <span className="font-medium">{tool.category?.name || 'General'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Rating</span>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">{tool.rating}</span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Views</span>
-                          <span className="font-medium">{tool.views.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Votes</span>
-                          <span className="font-medium">{tool.upvotes}</span>
-                        </div>
+                    {/* Product Hunt-style Engagement */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Monitor className="w-4 h-4" />
+                        <span className="text-gray-600 dark:text-gray-400">Do you use {tool.name}?</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleUseThis}
+                          className="flex items-center justify-between h-10"
+                        >
+                          <span className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            I use this
+                          </span>
+                          <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {usageStats.userCount}
+                          </span>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleUseSomethingElse}
+                          className="h-10"
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          I use something else
+                        </Button>
                       </div>
                     </div>
 
@@ -364,259 +533,553 @@ export default function ToolDetailsPage() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content with Tabs */}
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Main Content */}
+            {/* Left Column - Tabbed Content */}
             <div className="lg:col-span-2">
-              <div className="space-y-8">
-                {/* About Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5" />
-                      About {tool.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {tool.description}
-                    </p>
-                  </CardContent>
-                </Card>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="grid grid-cols-5 w-full">
+                  <TabsTrigger value="about">About</TabsTrigger>
+                  <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
+                  <TabsTrigger value="videos">Videos</TabsTrigger>
+                  <TabsTrigger value="similar">Similar</TabsTrigger>
+                  <TabsTrigger value="faq">FAQ</TabsTrigger>
+                </TabsList>
 
-                {/* Screenshots */}
-                {tool.gallery && tool.gallery.length > 0 && (
+                <TabsContent value="about" className="space-y-6">
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Screenshots</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {tool.gallery.slice(0, 4).map((image, index) => (
-                          <div key={index} className="aspect-video">
-                            <img 
-                              src={image} 
-                              alt={`${tool.name} screenshot ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                            />
-                          </div>
-                        ))}
+                    <CardContent className="p-6">
+                      <div className="prose dark:prose-invert max-w-none">
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                          {tool.description}
+                        </p>
+                        
+                        {tool.pricingDetails && (
+                          <>
+                            <h3 className="text-xl font-semibold mt-8 mb-4">Pricing</h3>
+                            <p className="text-gray-600 dark:text-gray-400">{tool.pricingDetails}</p>
+                          </>
+                        )}
+
+                        <h3 className="text-xl font-semibold mt-8 mb-4">Key Features</h3>
+                        <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400">
+                          <li>Advanced AI-powered capabilities</li>
+                          <li>User-friendly interface</li>
+                          <li>Integration with popular tools</li>
+                          <li>Real-time processing</li>
+                          <li>Comprehensive analytics</li>
+                        </ul>
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                </TabsContent>
 
-                {/* Alternatives Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" />
-                      Similar to {tool.name} ({alternatives.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {alternatives.length > 0 ? (
-                        alternatives.map((alt, index) => (
-                          <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
-                                {index + 1}
-                              </div>
-                              <img 
-                                src={alt.logoUrl || "/api/placeholder/40/40"} 
-                                alt={alt.name}
-                                className="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-semibold text-gray-900 dark:text-white hover:text-primary cursor-pointer">
-                                    {alt.name}
-                                  </h3>
-                                  {alt.featured && (
-                                    <Badge className="bg-yellow-500 text-white text-xs">
-                                      Featured
-                                    </Badge>
-                                  )}
-                                  <Badge className={getPricingColor(alt.pricingType)} variant="secondary">
-                                    {alt.pricingType.replace('_', ' ')}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                                  {alt.description}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span>{alt.rating}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <ThumbsUp className="w-3 h-3" />
-                                <span>{alt.upvotes}</span>
-                              </div>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.open(alt.url, '_blank')}
+                <TabsContent value="screenshots" className="space-y-6">
+                  {tool.gallery && tool.gallery.length > 0 ? (
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="relative">
+                          <div className="aspect-video mb-4">
+                            <img 
+                              src={tool.gallery[currentScreenshot]} 
+                              alt={`${tool.name} screenshot ${currentScreenshot + 1}`}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                            />
+                          </div>
+                          {tool.gallery.length > 1 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80"
+                                onClick={prevScreenshot}
                               >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Visit
+                                <ChevronLeft className="w-4 h-4" />
                               </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80"
+                                onClick={nextScreenshot}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                              <div className="flex justify-center gap-2 mt-4">
+                                {tool.gallery.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    className={`w-2 h-2 rounded-full transition-colors ${
+                                      index === currentScreenshot 
+                                        ? 'bg-primary' 
+                                        : 'bg-gray-300 dark:bg-gray-600'
+                                    }`}
+                                    onClick={() => setCurrentScreenshot(index)}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <ImageIcon className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                        <p className="text-gray-500 dark:text-gray-400">No screenshots available yet</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="videos" className="space-y-6">
+                  {videos.length > 0 ? (
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="relative">
+                          <div className="aspect-video mb-4 bg-black rounded-lg overflow-hidden">
+                            <iframe
+                              src={`https://www.youtube.com/embed/${videos[currentVideo].id}`}
+                              title={videos[currentVideo].title}
+                              className="w-full h-full"
+                              allowFullScreen
+                            />
+                          </div>
+                          {videos.length > 1 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80"
+                                onClick={prevVideo}
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80"
+                                onClick={nextVideo}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          <div className="mt-4">
+                            <h3 className="font-semibold text-lg mb-2">{videos[currentVideo].title}</h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                              <span>{videos[currentVideo].channel}</span>
+                              <span>{videos[currentVideo].duration}</span>
+                              <span>{videos[currentVideo].views} views</span>
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p>No alternatives found yet.</p>
+                          {videos.length > 1 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+                              {videos.map((video, index) => (
+                                <div
+                                  key={video.id}
+                                  className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                                    index === currentVideo
+                                      ? 'bg-primary/10 border border-primary/20'
+                                      : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  }`}
+                                  onClick={() => setCurrentVideo(index)}
+                                >
+                                  <div className="relative flex-shrink-0">
+                                    <img 
+                                      src={video.thumbnail}
+                                      alt={video.title}
+                                      className="w-20 h-12 object-cover rounded"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Play className="w-6 h-6 text-white drop-shadow-lg" />
+                                    </div>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+                                      {video.title}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      {video.duration}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <Video className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                        <p className="text-gray-500 dark:text-gray-400">No videos available yet</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
 
-                {/* Reviews Section */}
-                <Card>
-                  <CardHeader>
+                <TabsContent value="similar" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5" />
+                        Similar to {tool.name} ({alternatives.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {alternatives.length > 0 ? (
+                          alternatives.map((alt, index) => (
+                            <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
+                                  {index + 1}
+                                </div>
+                                <img 
+                                  src={alt.logoUrl || "/api/placeholder/40/40"} 
+                                  alt={alt.name}
+                                  className="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white hover:text-primary cursor-pointer">
+                                      {alt.name}
+                                    </h3>
+                                    {alt.featured && (
+                                      <Badge className="bg-yellow-500 text-white text-xs">
+                                        Featured
+                                      </Badge>
+                                    )}
+                                    <Badge className={getPricingColor(alt.pricingType)} variant="secondary">
+                                      {alt.pricingType.replace('_', ' ')}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                    {alt.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span>{alt.rating}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-3 h-3" />
+                                  <span>{alt.upvotes}</span>
+                                </div>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => window.open(alt.url, '_blank')}
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  Visit
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-12">
+                            <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                            <p className="text-gray-500 dark:text-gray-400">No alternatives found yet.</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="faq" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5" />
+                        Frequently Asked Questions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger>What is {tool.name} used for?</AccordionTrigger>
+                          <AccordionContent>
+                            {tool.name} is designed for {tool.description.toLowerCase()}. It provides users with powerful AI capabilities to enhance their workflow and productivity.
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-2">
+                          <AccordionTrigger>How much does {tool.name} cost?</AccordionTrigger>
+                          <AccordionContent>
+                            {tool.name} offers a {tool.pricingType} pricing model. {tool.pricingDetails || "Check the official website for detailed pricing information."}
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-3">
+                          <AccordionTrigger>Is {tool.name} suitable for beginners?</AccordionTrigger>
+                          <AccordionContent>
+                            Yes, {tool.name} is designed with user-friendliness in mind. It offers an intuitive interface that makes it accessible for users of all skill levels, from beginners to experts.
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-4">
+                          <AccordionTrigger>What platforms does {tool.name} support?</AccordionTrigger>
+                          <AccordionContent>
+                            {tool.name} is a web-based tool that works across all modern browsers and operating systems. It's accessible from any device with an internet connection.
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-5">
+                          <AccordionTrigger>How can I get support for {tool.name}?</AccordionTrigger>
+                          <AccordionContent>
+                            You can get support through the official {tool.name} website, documentation, community forums, or by contacting their customer support team directly.
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Right Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Reviews Summary */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                       <Star className="w-5 h-5" />
                       Reviews ({reviews.length})
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {reviews.length > 0 ? (
-                        reviews.slice(0, 5).map((review) => (
-                          <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0 last:pb-0">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage src={review.author.profileImageUrl} />
-                                <AvatarFallback>
-                                  {review.author.firstName[0]}{review.author.lastName[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="font-semibold text-gray-900 dark:text-white">
-                                    {review.author.firstName} {review.author.lastName}
-                                  </span>
-                                  <div className="flex items-center">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <Star 
-                                        key={star}
-                                        className={`w-3 h-3 ${
-                                          star <= review.rating 
-                                            ? 'fill-yellow-400 text-yellow-400' 
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(review.createdAt).toLocaleDateString()}
-                                  </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowReviewDialog(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Write Review
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {reviews.length > 0 ? (
+                      reviews.slice(0, 3).map((review) => (
+                        <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0 last:pb-0">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={review.author.profileImageUrl} />
+                              <AvatarFallback className="text-xs">
+                                {review.author.firstName[0]}{review.author.lastName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm text-gray-900 dark:text-white">
+                                  {review.author.firstName} {review.author.lastName}
+                                </span>
+                                <div className="flex items-center">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star 
+                                      key={star}
+                                      className={`w-3 h-3 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} 
+                                    />
+                                  ))}
                                 </div>
-                                {review.title && (
-                                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                                    {review.title}
-                                  </h4>
-                                )}
-                                <p className="text-gray-700 dark:text-gray-300 mb-3">
-                                  {review.content}
-                                </p>
-                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                  <button className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300">
-                                    <ThumbsUp className="w-3 h-3" />
-                                    Helpful ({review.helpful})
-                                  </button>
-                                </div>
+                              </div>
+                              <h4 className="font-medium text-sm mb-1">{review.title}</h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                {review.content}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                <button className="flex items-center gap-1 hover:text-primary">
+                                  <ThumbsUp className="w-3 h-3" />
+                                  <span>{review.helpful}</span>
+                                </button>
+                                <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          <Star className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p>No reviews yet. Be the first to review!</p>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Right Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="space-y-6">
-                {/* Submitted By */}
-                {tool.submittedBy && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Submitted by</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={tool.submittedBy.profileImageUrl} />
-                          <AvatarFallback>
-                            {tool.submittedBy.firstName[0]}{tool.submittedBy.lastName[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-semibold text-gray-900 dark:text-white">
-                            {tool.submittedBy.firstName} {tool.submittedBy.lastName}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(tool.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6">
+                        <Star className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No reviews yet</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Be the first to review!</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Related Tools */}
+              {/* Related Tools */}
+              {alternatives.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Related Tools</CardTitle>
+                    <CardTitle className="text-lg">Related Tools</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {alternatives.slice(0, 4).map((alt) => (
-                        <div key={alt.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors">
+                      {alternatives.slice(0, 3).map((alt) => (
+                        <div key={alt.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
                           <img 
                             src={alt.logoUrl || "/api/placeholder/32/32"} 
                             alt={alt.name}
-                            className="w-8 h-8 rounded object-cover"
+                            className="w-8 h-8 rounded object-cover border border-gray-200 dark:border-gray-700"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                            <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
                               {alt.name}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {alt.rating} ★
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{alt.rating}</span>
+                              </div>
+                              <Badge className={getPricingColor(alt.pricingType)} variant="secondary" className="text-xs px-1 py-0">
+                                {alt.pricingType}
+                              </Badge>
                             </div>
                           </div>
                         </div>
                       ))}
+                      {alternatives.length > 3 && (
+                        <Button variant="outline" size="sm" className="w-full mt-3">
+                          View All {alternatives.length} Alternatives
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Auth Dialog */}
-      <AuthDialog 
-        open={showAuthDialog} 
-        onOpenChange={setShowAuthDialog}
-      />
+        {/* Dialogs */}
+        <AuthDialog 
+          open={showAuthDialog} 
+          onOpenChange={setShowAuthDialog} 
+        />
+
+        {/* Review Dialog */}
+        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Write a Review for {tool.name}</DialogTitle>
+              <DialogDescription>
+                Share your experience with {tool.name} to help others make informed decisions.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Rating</label>
+                <div className="flex gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                      className="p-1"
+                    >
+                      <Star 
+                        className={`w-6 h-6 ${star <= newReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Review Title</label>
+                <Input
+                  value={newReview.title}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Summarize your experience in a few words"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Your Review</label>
+                <Textarea
+                  value={newReview.content}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
+                  placeholder="Tell others about your experience with this tool..."
+                  rows={4}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitReview}
+                disabled={reviewMutation.isPending}
+              >
+                {reviewMutation.isPending ? "Submitting..." : "Submit Review"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Alternative Tools Dialog */}
+        <Dialog open={showAlternativeDialog} onOpenChange={setShowAlternativeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>What do you use instead?</DialogTitle>
+              <DialogDescription>
+                Help others discover alternatives to {tool.name} by sharing what you use.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {alternatives.map((alt) => (
+                <div 
+                  key={alt.id} 
+                  className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  onClick={() => {
+                    usageMutation.mutate(false);
+                    setShowAlternativeDialog(false);
+                  }}
+                >
+                  <img 
+                    src={alt.logoUrl || "/api/placeholder/32/32"} 
+                    alt={alt.name}
+                    className="w-8 h-8 rounded object-cover border border-gray-200 dark:border-gray-700"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">{alt.name}</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                      {alt.description}
+                    </p>
+                  </div>
+                  <Badge className={getPricingColor(alt.pricingType)} variant="secondary">
+                    {alt.pricingType}
+                  </Badge>
+                </div>
+              ))}
+              {alternatives.length === 0 && (
+                <div className="text-center py-8">
+                  <Search className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                  <p className="text-gray-500 dark:text-gray-400">No alternatives available yet</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAlternativeDialog(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Auth Dialog */}
+        <AuthDialog
+          open={showAuthDialog}
+          onOpenChange={setShowAuthDialog}
+          mode="general"
+          toolName={tool.name}
+        />
+      </div>
     </Layout>
   );
 }
