@@ -936,7 +936,7 @@ export default function ToolDetailsPage() {
                                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                                 <span className="text-xs text-gray-500 dark:text-gray-400">{alt.rating}</span>
                               </div>
-                              <Badge className={getPricingColor(alt.pricingType)} variant="secondary" className="text-xs px-1 py-0">
+                              <Badge className={`${getPricingColor(alt.pricingType)} text-xs px-1 py-0`} variant="secondary">
                                 {alt.pricingType}
                               </Badge>
                             </div>
