@@ -284,24 +284,24 @@ export default function ToolDetailsPage() {
                         📄 Overview
                       </button>
                       <button 
-                        onClick={() => scrollToSection('product-details')}
+                        onClick={() => scrollToSection('features')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          activeTab === 'product-details' 
+                          activeTab === 'features' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
-                        🖼️ Product Details
+                        ⚡ Features
                       </button>
                       <button 
-                        onClick={() => scrollToSection('comparisons')}
+                        onClick={() => scrollToSection('pros-cons')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          activeTab === 'comparisons' 
+                          activeTab === 'pros-cons' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
-                        ⚖️ Comparisons
+                        ⚖️ Pros and Cons
                       </button>
                       <button 
                         onClick={() => scrollToSection('reviews')}
@@ -311,7 +311,27 @@ export default function ToolDetailsPage() {
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
-                        👥 Reviews and Ratings ({reviews.length})
+                        👥 Reviews ({reviews.length})
+                      </button>
+                      <button 
+                        onClick={() => scrollToSection('alternatives')}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                          activeTab === 'alternatives' 
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        🔄 Alternatives
+                      </button>
+                      <button 
+                        onClick={() => scrollToSection('qna')}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                          activeTab === 'qna' 
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        ❓ Q&A
                       </button>
                     </nav>
                   </CardContent>
@@ -410,9 +430,10 @@ export default function ToolDetailsPage() {
                 </div>
               </div>
 
-              {/* Content Sections */}
-              <div className="space-y-6">
-                {activeTab === 'overview' && (
+              {/* Content Sections - All sections visible with smooth scroll navigation */}
+              <div className="space-y-8">
+                {/* Overview Section */}
+                <section id="overview" className="scroll-mt-6">
                   <div className="space-y-6">
                     <Card>
                       <CardHeader>
@@ -485,13 +506,17 @@ export default function ToolDetailsPage() {
                       ))}
                     </div>
                   </div>
-                )}
+                </section>
 
-                {activeTab === 'screenshots' && (
+                {/* Features Section */}
+                <section id="features" className="scroll-mt-6">
                   <Card>
-                    <CardContent className="p-6">
+                    <CardHeader>
+                      <CardTitle>Key Features</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       {tool.gallery && tool.gallery.length > 0 ? (
-                        <div className="relative">
+                        <div className="relative mb-6">
                           <div className="aspect-video mb-4">
                             <img 
                               src={tool.gallery[currentScreenshot]} 
@@ -521,57 +546,103 @@ export default function ToolDetailsPage() {
                           )}
                         </div>
                       ) : (
-                        <div className="text-center py-12">
+                        <div className="text-center py-12 mb-6">
                           <Camera className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                           <p className="text-gray-500 dark:text-gray-400">No screenshots available</p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {activeTab === 'comparisons' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Compare {tool.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4">
-                        {alternatives.slice(0, 6).map((alt) => (
-                          <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                            <img 
-                              src={alt.logoUrl || "/api/placeholder/40/40"} 
-                              alt={alt.name}
-                              className="w-10 h-10 rounded object-cover"
-                            />
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                              <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <Button variant="outline" size="sm">
-                              Compare
-                            </Button>
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">AI-Powered</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Advanced artificial intelligence capabilities</p>
+                            </div>
                           </div>
-                        ))}
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">Easy to Use</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Intuitive user interface and workflow</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                </section>
 
-                {activeTab === 'reviews' && (
+                {/* Pros and Cons Section */}
+                <section id="pros-cons" className="scroll-mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Pros and Cons</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-medium text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Pros
+                          </h4>
+                          <ul className="space-y-2">
+                            <li className="flex items-start gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                              <span>Powerful AI capabilities</span>
+                            </li>
+                            <li className="flex items-start gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                              <span>User-friendly interface</span>
+                            </li>
+                            <li className="flex items-start gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                              <span>Regular updates and improvements</span>
+                            </li>
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                            <XCircle className="w-4 h-4" />
+                            Cons
+                          </h4>
+                          <ul className="space-y-2">
+                            <li className="flex items-start gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                              <span>Learning curve for new users</span>
+                            </li>
+                            <li className="flex items-start gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                              <span>Premium features require subscription</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+
+                {/* Reviews Section */}
+                <section id="reviews" className="scroll-mt-6">
                   <div className="space-y-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reviews and Ratings</h2>
                     {reviews.map((review) => (
                       <Card key={review.id}>
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
                             <img 
-                              src={review.user.profileImageUrl || "/api/placeholder/40/40"} 
-                              alt={review.user.firstName || 'User'}
+                              src={review.user?.profileImageUrl || "/api/placeholder/40/40"} 
+                              alt={review.user?.firstName || 'User'}
                               className="w-10 h-10 rounded-full object-cover"
                             />
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="font-medium text-gray-900 dark:text-white">
-                                  {review.user.firstName || 'Anonymous User'}
+                                  {review.user?.firstName || 'Anonymous User'}
                                 </span>
                                 <div className="flex items-center gap-1">
                                   {[...Array(5)].map((_, i) => (
@@ -594,7 +665,61 @@ export default function ToolDetailsPage() {
                       </Card>
                     ))}
                   </div>
-                )}
+                </section>
+
+                {/* Alternatives Section */}
+                <section id="alternatives" className="scroll-mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Compare {tool.name} with Alternatives</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4">
+                        {alternatives.slice(0, 6).map((alt) => (
+                          <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <img 
+                              src={alt.logoUrl || "/api/placeholder/40/40"} 
+                              alt={alt.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{alt.shortDescription}</p>
+                            </div>
+                            <Button variant="outline" size="sm">
+                              Compare
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+
+                {/* Q&A Section */}
+                <section id="qna" className="scroll-mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Frequently Asked Questions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">How do I get started with {tool.name}?</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Getting started is easy! Simply sign up for an account and follow the onboarding process.</p>
+                        </div>
+                        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">What are the pricing options?</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">We offer flexible pricing plans to suit different needs, including free and premium tiers.</p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Is there customer support available?</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Yes, we provide comprehensive customer support through multiple channels including email and live chat.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
               </div>
             </div>
 
