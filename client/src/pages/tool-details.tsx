@@ -81,7 +81,7 @@ export default function ToolDetailsPage() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   
-  const [activeTab, setActiveTab] = useState('about');
+  const [activeTab, setActiveTab] = useState('overview');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showAlternativeDialog, setShowAlternativeDialog] = useState(false);
@@ -249,6 +249,17 @@ export default function ToolDetailsPage() {
     );
   };
 
+  const scrollToSection = (sectionId: string) => {
+    setActiveTab(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <Layout>
       <div className="bg-white dark:bg-gray-900 min-h-screen">
@@ -263,7 +274,7 @@ export default function ToolDetailsPage() {
                   <CardContent className="p-4">
                     <nav className="space-y-1">
                       <button 
-                        onClick={() => setActiveTab('overview')}
+                        onClick={() => scrollToSection('overview')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                           activeTab === 'overview' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
@@ -273,9 +284,9 @@ export default function ToolDetailsPage() {
                         📄 Overview
                       </button>
                       <button 
-                        onClick={() => setActiveTab('screenshots')}
+                        onClick={() => scrollToSection('product-details')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          activeTab === 'screenshots' 
+                          activeTab === 'product-details' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
@@ -283,7 +294,7 @@ export default function ToolDetailsPage() {
                         🖼️ Product Details
                       </button>
                       <button 
-                        onClick={() => setActiveTab('comparisons')}
+                        onClick={() => scrollToSection('comparisons')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                           activeTab === 'comparisons' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
@@ -293,7 +304,7 @@ export default function ToolDetailsPage() {
                         ⚖️ Comparisons
                       </button>
                       <button 
-                        onClick={() => setActiveTab('reviews')}
+                        onClick={() => scrollToSection('reviews')}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                           activeTab === 'reviews' 
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
