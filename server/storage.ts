@@ -234,11 +234,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(tools.featured, featured));
     }
 
-    if (search) {
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
       conditions.push(
         or(
-          ilike(tools.name, `%${search}%`),
-          ilike(tools.description, `%${search}%`)
+          ilike(tools.name, `%${searchTerm}%`),
+          ilike(tools.description, `%${searchTerm}%`)
         )!
       );
     }

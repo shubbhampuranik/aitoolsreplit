@@ -59,8 +59,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tools = await storage.getTools({
         categoryId: categoryId as string,
-        featured: featured === 'true',
-        status: status as string,
+        featured: featured === 'true' ? true : featured === 'false' ? false : undefined,
+        status: (status as string) || undefined,
         limit: parseInt(limit as string),
         offset: parseInt(offset as string),
         search: search as string,
