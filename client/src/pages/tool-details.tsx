@@ -126,6 +126,7 @@ export default function ToolDetailsPage() {
   const [userUsageStat, setUserUsageStat] = useState(0);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, title: "", content: "" });
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const { data: tool, isLoading } = useQuery<ToolDetails>({
     queryKey: ["/api/tools", toolId],
@@ -188,7 +189,7 @@ export default function ToolDetailsPage() {
     mutationFn: async ({ type, entityId, entityType }: { type: 'up' | 'down'; entityId: string; entityType: string }) => {
       return apiRequest("POST", "/api/votes", { type, entityId, entityType });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setUserVote(data.userVote);
       queryClient.invalidateQueries({ queryKey: ["/api/tools", toolId] });
     },
@@ -206,7 +207,7 @@ export default function ToolDetailsPage() {
     mutationFn: async ({ entityId, entityType }: { entityId: string; entityType: string }) => {
       return apiRequest("POST", "/api/bookmarks", { entityId, entityType });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setIsBookmarked(data.bookmarked);
       toast({
         title: data.bookmarked ? "Bookmarked!" : "Removed from bookmarks",
@@ -229,7 +230,7 @@ export default function ToolDetailsPage() {
     mutationFn: async (uses: boolean) => {
       return apiRequest("POST", "/api/tools/usage", { toolId, uses });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setUserUsageStat(data.userCount);
       toast({
         title: "Thanks for your input!",
@@ -263,6 +264,29 @@ export default function ToolDetailsPage() {
       toast({
         title: "Error",
         description: "Failed to submit review",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Follow mutation
+  const followMutation = useMutation({
+    mutationFn: async ({ entityId, entityType }: { entityId: string; entityType: string }) => {
+      return apiRequest("POST", "/api/follows", { entityId, entityType });
+    },
+    onSuccess: (data: any) => {
+      setIsFollowing(data.following);
+      toast({
+        title: data.following ? "Following!" : "Unfollowed",
+        description: data.following 
+          ? "You'll get notified about updates" 
+          : "You won't receive updates anymore",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
         variant: "destructive",
       });
     },
@@ -334,6 +358,14 @@ export default function ToolDetailsPage() {
       return;
     }
     setShowAlternativeDialog(true);
+  };
+
+  const handleFollow = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    followMutation.mutate({ entityId: tool.id, entityType: 'tool' });
   };
 
   const submitReview = () => {
@@ -432,6 +464,37 @@ export default function ToolDetailsPage() {
                         <span>{new Date(tool.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
+
+                    {/* Product Hunt-style Usage Question */}
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Monitor className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <span className="font-medium text-gray-900 dark:text-white">Do you use {tool.name}?</span>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleUseThis}
+                          className="flex items-center gap-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-300 dark:hover:border-blue-600"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          I use this
+                          <Badge variant="secondary" className="ml-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                            {usageStats.userCount}
+                          </Badge>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleUseSomethingElse}
+                          className="flex items-center gap-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-orange-900 hover:border-orange-300 dark:hover:border-orange-600"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          I use something else
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -478,56 +541,104 @@ export default function ToolDetailsPage() {
 
                     <Separator className="my-6" />
 
-                    {/* Product Hunt-style Engagement */}
+                    {/* Follow Tool Feature */}
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Monitor className="w-4 h-4" />
-                        <span className="text-gray-600 dark:text-gray-400">Do you use {tool.name}?</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleUseThis}
-                          className="flex items-center justify-between h-10"
-                        >
-                          <span className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4" />
-                            I use this
-                          </span>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                            {usageStats.userCount}
-                          </span>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleUseSomethingElse}
-                          className="h-10"
-                        >
-                          <Search className="w-4 h-4 mr-2" />
-                          I use something else
-                        </Button>
+                      <Button 
+                        variant={isFollowing ? "default" : "outline"} 
+                        className="w-full bg-green-500 hover:bg-green-600 text-white font-medium h-12"
+                        onClick={handleFollow}
+                        disabled={followMutation.isPending}
+                      >
+                        {isFollowing ? (
+                          <>
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-5 h-5 mr-2" />
+                            Follow Tool
+                          </>
+                        )}
+                      </Button>
+                      
+                      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Get notified about updates
                       </div>
                     </div>
 
-                    {tool.tags && tool.tags.length > 0 && (
-                      <>
-                        <Separator className="my-6" />
-                        <div className="space-y-3">
-                          <h3 className="font-semibold text-gray-900 dark:text-white">Tags</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {tool.tags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {tag.name}
-                              </Badge>
-                            ))}
-                          </div>
+                    <Separator className="my-6" />
+
+                    {/* Stats and Quick Actions */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">{tool.upvotes}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Upvotes</div>
                         </div>
-                      </>
-                    )}
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">{Math.floor(tool.views / 1000)}k</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Views</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="my-6" />
+
+                    {/* Review Action */}
+                    <div className="space-y-4">
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900"
+                        onClick={() => setShowReviewDialog(true)}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Write Review
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
+
+                {/* Related Tools */}
+                {alternatives.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Related Tools</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {alternatives.slice(0, 3).map((alt) => (
+                          <div key={alt.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                            <img 
+                              src={alt.logoUrl || "/api/placeholder/32/32"} 
+                              alt={alt.name}
+                              className="w-8 h-8 rounded object-cover border border-gray-200 dark:border-gray-700"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                {alt.name}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{alt.rating}</span>
+                                </div>
+                                <Badge className={`${getPricingColor(alt.pricingType)} text-xs px-1 py-0`} variant="secondary">
+                                  {alt.pricingType}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {alternatives.length > 3 && (
+                          <Button variant="outline" size="sm" className="w-full mt-3">
+                            View All {alternatives.length} Alternatives
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </div>
