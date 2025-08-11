@@ -39,7 +39,9 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
-  MessageCircle
+  MessageCircle,
+  Hash,
+  Video as VideoIcon
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,11 +54,13 @@ interface Alternative {
   id: string;
   name: string;
   description: string;
+  shortDescription: string;
   logoUrl?: string;
   url: string;
   pricingType: string;
   rating: number;
   upvotes: number;
+  views: number;
   featured: boolean;
   categoryId?: string;
 }
@@ -495,6 +499,257 @@ export default function ToolDetailsPage() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Tabs Navigation - Moved here directly below usage section */}
+                    <div className="mt-6">
+                      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                        <TabsList className="grid grid-cols-5 w-full">
+                          <TabsTrigger value="about">About</TabsTrigger>
+                          <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
+                          <TabsTrigger value="videos">Videos</TabsTrigger>
+                          <TabsTrigger value="similar">Similar</TabsTrigger>
+                          <TabsTrigger value="faq">FAQ</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="about" className="space-y-6">
+                          <Card>
+                            <CardContent className="p-6">
+                              <div className="prose dark:prose-invert max-w-none">
+                                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                                  {tool.description}
+                                </p>
+                                
+                                {tool.pricingDetails && (
+                                  <>
+                                    <h3 className="text-xl font-semibold mt-8 mb-4">Pricing</h3>
+                                    <p className="text-gray-600 dark:text-gray-400">{tool.pricingDetails}</p>
+                                  </>
+                                )}
+
+                                <h3 className="text-xl font-semibold mt-8 mb-4">Key Features</h3>
+                                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400">
+                                  <li>Advanced AI-powered capabilities</li>
+                                  <li>User-friendly interface</li>
+                                  <li>Integration with popular tools</li>
+                                  <li>Real-time processing</li>
+                                  <li>Comprehensive analytics</li>
+                                </ul>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+
+                        <TabsContent value="screenshots" className="space-y-6">
+                          {tool.gallery && tool.gallery.length > 0 ? (
+                            <Card>
+                              <CardContent className="p-6">
+                                <div className="relative">
+                                  <div className="aspect-video mb-4">
+                                    <img 
+                                      src={tool.gallery[currentScreenshot]} 
+                                      alt={`${tool.name} screenshot ${currentScreenshot + 1}`}
+                                      className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                                    />
+                                  </div>
+                                  {tool.gallery.length > 1 && (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                                        onClick={prevScreenshot}
+                                      >
+                                        <ChevronLeft className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                                        onClick={nextScreenshot}
+                                      >
+                                        <ChevronRight className="w-4 h-4" />
+                                      </Button>
+                                      <div className="flex justify-center gap-2 mt-4">
+                                        {tool.gallery.map((_, index) => (
+                                          <button
+                                            key={index}
+                                            className={`w-2 h-2 rounded-full ${
+                                              index === currentScreenshot ? 'bg-blue-500' : 'bg-gray-300'
+                                            }`}
+                                            onClick={() => setCurrentScreenshot(index)}
+                                          />
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ) : (
+                            <Card>
+                              <CardContent className="p-6">
+                                <div className="text-center py-8">
+                                  <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                                  <p className="text-gray-500 dark:text-gray-400">No screenshots available</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </TabsContent>
+
+                        <TabsContent value="videos" className="space-y-6">
+                          {videos.length > 0 ? (
+                            <Card>
+                              <CardContent className="p-6">
+                                <div className="relative">
+                                  <div className="aspect-video mb-4">
+                                    <iframe
+                                      src={typeof videos[currentVideo] === 'string' ? videos[currentVideo] : videos[currentVideo]?.id}
+                                      title={`${tool.name} video ${currentVideo + 1}`}
+                                      className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700"
+                                      allowFullScreen
+                                    />
+                                  </div>
+                                  {videos.length > 1 && (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                                        onClick={prevVideo}
+                                      >
+                                        <ChevronLeft className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                                        onClick={nextVideo}
+                                      >
+                                        <ChevronRight className="w-4 h-4" />
+                                      </Button>
+                                      <div className="flex justify-center gap-2 mt-4">
+                                        {videos.map((_, index) => (
+                                          <button
+                                            key={index}
+                                            className={`w-2 h-2 rounded-full ${
+                                              index === currentVideo ? 'bg-blue-500' : 'bg-gray-300'
+                                            }`}
+                                            onClick={() => setCurrentVideo(index)}
+                                          />
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ) : (
+                            <Card>
+                              <CardContent className="p-6">
+                                <div className="text-center py-8">
+                                  <VideoIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                                  <p className="text-gray-500 dark:text-gray-400">No videos available</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </TabsContent>
+
+                        <TabsContent value="similar" className="space-y-6">
+                          {alternatives.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {alternatives.map((alt, index) => (
+                                <Card key={alt.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                                  <CardContent className="p-4">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        <Hash className="w-3 h-3" />
+                                        #{index + 1}
+                                      </div>
+                                      <Badge className={`${getPricingColor(alt.pricingType)} text-xs`} variant="secondary">
+                                        {alt.pricingType}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                      <img 
+                                        src={alt.logoUrl || "/api/placeholder/48/48"} 
+                                        alt={alt.name}
+                                        className="w-12 h-12 rounded object-cover border border-gray-200 dark:border-gray-700"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                          {alt.name}
+                                        </h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                                          {alt.shortDescription}
+                                        </p>
+                                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                          <div className="flex items-center gap-1">
+                                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                            <span>{alt.rating}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <Eye className="w-3 h-3" />
+                                            <span>{Math.floor(alt.views / 1000)}k</span>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <ThumbsUp className="w-3 h-3" />
+                                            <span>{alt.upvotes}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          ) : (
+                            <Card>
+                              <CardContent className="p-6">
+                                <div className="text-center py-8">
+                                  <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                                  <p className="text-gray-500 dark:text-gray-400">No similar tools found</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </TabsContent>
+
+                        <TabsContent value="faq" className="space-y-6">
+                          <Card>
+                            <CardContent className="p-6">
+                              <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="item-1">
+                                  <AccordionTrigger>What is {tool.name}?</AccordionTrigger>
+                                  <AccordionContent>
+                                    {tool.name} is an AI-powered tool designed to help users with various tasks. It offers advanced features and capabilities to enhance productivity and efficiency.
+                                  </AccordionContent>
+                                </AccordionItem>
+                                <AccordionItem value="item-2">
+                                  <AccordionTrigger>How do I get started?</AccordionTrigger>
+                                  <AccordionContent>
+                                    Getting started with {tool.name} is easy. Simply sign up for an account, choose your plan, and begin exploring the features. The intuitive interface makes it simple to start using right away.
+                                  </AccordionContent>
+                                </AccordionItem>
+                                <AccordionItem value="item-3">
+                                  <AccordionTrigger>What are the pricing options?</AccordionTrigger>
+                                  <AccordionContent>
+                                    {tool.name} offers flexible pricing options including {tool.pricingType} plans. Check the pricing section above for detailed information about available plans and features.
+                                  </AccordionContent>
+                                </AccordionItem>
+                                <AccordionItem value="item-4">
+                                  <AccordionTrigger>Is there customer support?</AccordionTrigger>
+                                  <AccordionContent>
+                                    Yes, {tool.name} provides comprehensive customer support through various channels including email, chat, and documentation to help you get the most out of the platform.
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </Accordion>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -644,19 +899,12 @@ export default function ToolDetailsPage() {
           </div>
         </div>
 
-        {/* Main Content with Tabs */}
+        {/* Reviews Section */}
         <div className="container mx-auto px-4 pt-0 pb-8 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Tabbed Content */}
+            {/* Left Column - Reviews */}
             <div className="lg:col-span-2">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid grid-cols-5 w-full">
-                  <TabsTrigger value="about">About</TabsTrigger>
-                  <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
-                  <TabsTrigger value="videos">Videos</TabsTrigger>
-                  <TabsTrigger value="similar">Similar</TabsTrigger>
-                  <TabsTrigger value="faq">FAQ</TabsTrigger>
-                </TabsList>
+              <div className="space-y-6">
 
                 <TabsContent value="about" className="space-y-6">
                   <Card>
@@ -1065,6 +1313,8 @@ export default function ToolDetailsPage() {
               )}
             </div>
           </div>
+        </div>
+        
         </div>
 
         {/* Dialogs */}
