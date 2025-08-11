@@ -88,6 +88,7 @@ export default function ToolDetailsPage() {
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
   const [newReview, setNewReview] = useState({ title: '', content: '', rating: 5 });
 
   // Fetch tool data
@@ -262,14 +263,32 @@ export default function ToolDetailsPage() {
     }
   };
 
-  const openMediaModal = (url: string, type: 'image' | 'video') => {
+  const openMediaModal = (url: string, type: 'image' | 'video', index: number = 0) => {
     setSelectedMedia({ url, type });
+    setModalImageIndex(index);
     setShowGalleryModal(true);
   };
 
   const closeMediaModal = () => {
     setShowGalleryModal(false);
     setSelectedMedia(null);
+    setModalImageIndex(0);
+  };
+
+  const nextModalImage = () => {
+    if (tool?.gallery && modalImageIndex < tool.gallery.length - 1) {
+      const newIndex = modalImageIndex + 1;
+      setModalImageIndex(newIndex);
+      setSelectedMedia({ url: tool.gallery[newIndex], type: 'image' });
+    }
+  };
+
+  const prevModalImage = () => {
+    if (tool?.gallery && modalImageIndex > 0) {
+      const newIndex = modalImageIndex - 1;
+      setModalImageIndex(newIndex);
+      setSelectedMedia({ url: tool.gallery[newIndex], type: 'image' });
+    }
   };
 
   return (
@@ -281,7 +300,7 @@ export default function ToolDetailsPage() {
             
             {/* Left Navigation Sidebar */}
             <div className="lg:col-span-1 order-2 lg:order-1">
-              <div className="space-y-4">
+              <div className="sticky top-4 space-y-4">
                 <Card>
                   <CardContent className="p-4">
                     <nav className="space-y-1">
@@ -594,7 +613,7 @@ export default function ToolDetailsPage() {
                             <div 
                               key={index}
                               className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                              onClick={() => openMediaModal(url, 'image')}
+                              onClick={() => openMediaModal(url, 'image', index)}
                             >
                               <div className="aspect-video">
                                 <img 
@@ -615,7 +634,7 @@ export default function ToolDetailsPage() {
                           {tool.gallery.length > 3 && (
                             <div 
                               className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-100 dark:bg-gray-800"
-                              onClick={() => openMediaModal(tool.gallery[3], 'image')}
+                              onClick={() => openMediaModal(tool.gallery[3], 'image', 3)}
                             >
                               <div className="aspect-video flex items-center justify-center">
                                 <div className="text-center">
@@ -879,7 +898,7 @@ export default function ToolDetailsPage() {
                   {selectedMedia.type === 'image' ? (
                     <img 
                       src={selectedMedia.url} 
-                      alt="Gallery image"
+                      alt={`Gallery image ${modalImageIndex + 1}`}
                       className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
                     />
                   ) : (
@@ -891,6 +910,32 @@ export default function ToolDetailsPage() {
                   )}
                 </div>
               )}
+              
+              {/* Navigation Buttons */}
+              {tool?.gallery && tool.gallery.length > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-900"
+                    onClick={prevModalImage}
+                    disabled={modalImageIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-900"
+                    onClick={nextModalImage}
+                    disabled={modalImageIndex === tool.gallery.length - 1}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              
+              {/* Close Button */}
               <Button
                 variant="outline"
                 size="icon"
@@ -899,6 +944,13 @@ export default function ToolDetailsPage() {
               >
                 <XCircle className="w-4 h-4" />
               </Button>
+              
+              {/* Image Counter */}
+              {tool?.gallery && tool.gallery.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                  {modalImageIndex + 1} / {tool.gallery.length}
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
