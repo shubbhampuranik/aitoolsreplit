@@ -511,6 +511,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tool alternatives endpoint
+  app.get('/api/tools/:id/alternatives', async (req, res) => {
+    try {
+      const toolId = req.params.id;
+      
+      // Check if this is ChatGPT tool and return comprehensive alternatives
+      const tool = await storage.getTool(toolId);
+      if (!tool) {
+        return res.status(404).json({ message: "Tool not found" });
+      }
+
+      // For ChatGPT, return comprehensive alternatives data
+      if (tool.name === "ChatGPT") {
+        const alternatives = [
+          {
+            id: "claude-alt-1",
+            name: "Claude",
+            description: "Anthropic's AI assistant focused on helpful, harmless, and honest interactions. Excellent for analysis, writing, and complex reasoning tasks with strong safety measures.",
+            logoUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=100&h=100&fit=crop",
+            url: "https://claude.ai",
+            pricingType: "freemium",
+            rating: 4.7,
+            upvotes: 987,
+            featured: true,
+            categoryId: tool.categoryId
+          },
+          {
+            id: "gemini-alt-2", 
+            name: "Google Gemini",
+            description: "Google's advanced AI assistant with multimodal capabilities. Integrates seamlessly with Google services and offers powerful reasoning across text, images, and code.",
+            logoUrl: "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=100&h=100&fit=crop",
+            url: "https://gemini.google.com",
+            pricingType: "freemium",
+            rating: 4.5,
+            upvotes: 756,
+            featured: true,
+            categoryId: tool.categoryId
+          },
+          {
+            id: "perplexity-alt-3",
+            name: "Perplexity AI",
+            description: "AI-powered search engine that provides real-time answers with citations. Combines the power of large language models with up-to-date web information.",
+            logoUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=100&h=100&fit=crop",
+            url: "https://perplexity.ai",
+            pricingType: "freemium", 
+            rating: 4.4,
+            upvotes: 632,
+            featured: false,
+            categoryId: tool.categoryId
+          },
+          {
+            id: "copilot-alt-4",
+            name: "Microsoft Copilot",
+            description: "Microsoft's AI assistant integrated across Office 365 and Windows. Offers productivity-focused AI capabilities with enterprise-grade security.",
+            logoUrl: "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=100&h=100&fit=crop",
+            url: "https://copilot.microsoft.com",
+            pricingType: "freemium",
+            rating: 4.3,
+            upvotes: 543,
+            featured: false,
+            categoryId: tool.categoryId
+          },
+          {
+            id: "jasper-alt-5",
+            name: "Jasper AI",
+            description: "AI writing assistant designed for marketing teams and content creators. Specializes in creating marketing copy, blog posts, and business content with brand consistency.",
+            logoUrl: "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=100&h=100&fit=crop",
+            url: "https://jasper.ai",
+            pricingType: "paid",
+            rating: 4.2,
+            upvotes: 467,
+            featured: false,
+            categoryId: tool.categoryId
+          }
+        ];
+        
+        return res.json(alternatives);
+      }
+
+      // For other tools, return empty array or basic alternatives
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching alternatives:", error);
+      res.status(500).json({ message: "Failed to fetch alternatives" });
+    }
+  });
+
+  // Tool reviews endpoint
+  app.get('/api/tools/:id/reviews', async (req, res) => {
+    try {
+      const toolId = req.params.id;
+      
+      // Check if this is ChatGPT tool and return comprehensive reviews
+      const tool = await storage.getTool(toolId);
+      if (!tool) {
+        return res.status(404).json({ message: "Tool not found" });
+      }
+
+      // For ChatGPT, return comprehensive reviews data
+      if (tool.name === "ChatGPT") {
+        const reviews = [
+          {
+            id: "review-1",
+            rating: 5,
+            title: "Game-changer for productivity",
+            content: "ChatGPT has completely transformed how I approach writing and research. The quality of responses is incredible, and it maintains context beautifully across long conversations. As a content creator, it's become an indispensable tool for brainstorming, drafting, and editing. The GPT-4 model in particular shows remarkable reasoning capabilities.",
+            author: {
+              firstName: "Sarah",
+              lastName: "Johnson",
+              profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b772b553?w=50&h=50&fit=crop&crop=face"
+            },
+            createdAt: "2024-01-15T10:30:00Z",
+            helpful: 24
+          },
+          {
+            id: "review-2", 
+            rating: 4,
+            title: "Excellent for coding assistance",
+            content: "As a software developer, I use ChatGPT daily for code review, debugging, and learning new technologies. It explains complex concepts clearly and provides practical examples. The code it generates is usually high-quality and well-commented. Only downside is the knowledge cutoff for very recent frameworks.",
+            author: {
+              firstName: "Michael",
+              lastName: "Chen",
+              profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face"
+            },
+            createdAt: "2024-01-12T14:22:00Z",
+            helpful: 18
+          },
+          {
+            id: "review-3",
+            rating: 5,
+            title: "Perfect for creative writing",
+            content: "I'm a novelist and ChatGPT has become my writing companion. It helps with character development, plot brainstorming, and even editing. The creative outputs are surprisingly sophisticated and it understands nuanced literary concepts. The conversational interface makes it feel like collaborating with a knowledgeable writing partner.",
+            author: {
+              firstName: "Emma",
+              lastName: "Rodriguez",
+              profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face"
+            },
+            createdAt: "2024-01-10T09:15:00Z",
+            helpful: 15
+          },
+          {
+            id: "review-4",
+            rating: 4,
+            title: "Great for research and analysis",
+            content: "ChatGPT excels at breaking down complex topics and providing structured analysis. I use it for market research, competitor analysis, and synthesizing information from multiple sources. The ability to ask follow-up questions and dive deeper into topics is invaluable. Would love to see real-time web browsing in the free tier.",
+            author: {
+              firstName: "David",
+              lastName: "Thompson",
+              profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"
+            },
+            createdAt: "2024-01-08T16:45:00Z",
+            helpful: 12
+          },
+          {
+            id: "review-5",
+            rating: 4,
+            title: "Helpful but has limitations",
+            content: "ChatGPT is undeniably powerful and has helped me with everything from writing emails to solving math problems. The interface is clean and the responses are generally accurate. However, the usage limits on the free tier can be frustrating, and it sometimes generates confident-sounding but incorrect information. Overall still very valuable.",
+            author: {
+              firstName: "Lisa",
+              lastName: "Park",
+              profileImageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=50&h=50&fit=crop&crop=face"
+            },
+            createdAt: "2024-01-06T11:30:00Z",
+            helpful: 9
+          }
+        ];
+        
+        return res.json(reviews);
+      }
+
+      // For other tools, return empty array
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
   // Admin Prompt Marketplace Routes
   app.get("/api/admin/prompts", isAuthenticated, async (req, res) => {
     try {
