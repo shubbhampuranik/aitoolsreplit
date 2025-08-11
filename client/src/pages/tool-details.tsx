@@ -41,7 +41,14 @@ type Tool = {
   description: string;
   logoUrl: string;
   url: string;
-  category: string;
+  category?: {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+    slug: string;
+  } | string;
   subcategories: string[];
   pricingType: string;
   pricingDetails?: string;
@@ -352,7 +359,7 @@ export default function ToolDetailsPage() {
                       </div>
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                      {tool.ratingCount} Reviews and Ratings • {tool.category?.name || tool.category}
+                      {tool.ratingCount} Reviews and Ratings • {typeof tool.category === 'object' ? tool.category?.name : tool.category}
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                       {tool.shortDescription}
