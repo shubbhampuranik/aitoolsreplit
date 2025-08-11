@@ -463,14 +463,14 @@ export default function ToolDetailsPage() {
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               <img 
-                                src={review.user.profileImageUrl || "/api/placeholder/48/48"} 
-                                alt={review.user.firstName || 'User'}
+                                src={review.user?.profileImageUrl || "/api/placeholder/48/48"} 
+                                alt={review.user?.firstName || 'User'}
                                 className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                               />
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="font-medium text-gray-900 dark:text-white">
-                                    {review.user.firstName || 'Anonymous User'}
+                                    {review.user?.firstName || 'Anonymous User'}
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <div className="flex">
