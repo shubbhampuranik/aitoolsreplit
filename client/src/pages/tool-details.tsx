@@ -86,6 +86,8 @@ export default function ToolDetailsPage() {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showAlternativeDialog, setShowAlternativeDialog] = useState(false);
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
   const [newReview, setNewReview] = useState({ title: '', content: '', rating: 5 });
 
   // Fetch tool data
@@ -260,6 +262,16 @@ export default function ToolDetailsPage() {
     }
   };
 
+  const openMediaModal = (url: string, type: 'image' | 'video') => {
+    setSelectedMedia({ url, type });
+    setShowGalleryModal(true);
+  };
+
+  const closeMediaModal = () => {
+    setShowGalleryModal(false);
+    setSelectedMedia(null);
+  };
+
   return (
     <Layout>
       <div className="bg-white dark:bg-gray-900 min-h-screen">
@@ -292,6 +304,16 @@ export default function ToolDetailsPage() {
                         }`}
                       >
                         ⚡ Features
+                      </button>
+                      <button 
+                        onClick={() => scrollToSection('gallery')}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                          activeTab === 'gallery' 
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        🖼️ Gallery
                       </button>
                       <button 
                         onClick={() => scrollToSection('pros-cons')}
@@ -515,43 +537,7 @@ export default function ToolDetailsPage() {
                       <CardTitle>Key Features</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {tool.gallery && tool.gallery.length > 0 ? (
-                        <div className="relative mb-6">
-                          <div className="aspect-video mb-4">
-                            <img 
-                              src={tool.gallery[currentScreenshot]} 
-                              alt={`${tool.name} screenshot`}
-                              className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                            />
-                          </div>
-                          {tool.gallery.length > 1 && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80"
-                                onClick={prevScreenshot}
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80"
-                                onClick={nextScreenshot}
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12 mb-6">
-                          <Camera className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                          <p className="text-gray-500 dark:text-gray-400">No screenshots available</p>
-                        </div>
-                      )}
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex items-start gap-3">
                             <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -571,8 +557,85 @@ export default function ToolDetailsPage() {
                               <p className="text-sm text-gray-600 dark:text-gray-400">Intuitive user interface and workflow</p>
                             </div>
                           </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                              <Monitor className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">Cross-Platform</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Works seamlessly across all devices and platforms</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                              <ExternalLink className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">API Integration</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Robust API for custom integrations and workflows</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </section>
+
+                {/* Gallery Section */}
+                <section id="gallery" className="scroll-mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Screenshots & Videos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {tool.gallery && tool.gallery.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {tool.gallery.slice(0, 3).map((url, index) => (
+                            <div 
+                              key={index}
+                              className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                              onClick={() => openMediaModal(url, 'image')}
+                            >
+                              <div className="aspect-video">
+                                <img 
+                                  src={url} 
+                                  alt={`${tool.name} screenshot ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="w-12 h-12 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center">
+                                    <ExternalLink className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {tool.gallery.length > 3 && (
+                            <div 
+                              className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-100 dark:bg-gray-800"
+                              onClick={() => openMediaModal(tool.gallery[3], 'image')}
+                            >
+                              <div className="aspect-video flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                                    +{tool.gallery.length - 3}
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-500">
+                                    more
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <Camera className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                          <p className="text-gray-500 dark:text-gray-400">No screenshots available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
@@ -803,6 +866,39 @@ export default function ToolDetailsPage() {
                   Submit Review
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Gallery Media Modal */}
+        <Dialog open={showGalleryModal} onOpenChange={closeMediaModal}>
+          <DialogContent className="max-w-4xl w-full p-0">
+            <div className="relative">
+              {selectedMedia && (
+                <div className="w-full">
+                  {selectedMedia.type === 'image' ? (
+                    <img 
+                      src={selectedMedia.url} 
+                      alt="Gallery image"
+                      className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                    />
+                  ) : (
+                    <video 
+                      src={selectedMedia.url} 
+                      controls
+                      className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                    />
+                  )}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-900"
+                onClick={closeMediaModal}
+              >
+                <XCircle className="w-4 h-4" />
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
