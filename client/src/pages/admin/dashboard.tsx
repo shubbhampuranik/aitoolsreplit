@@ -66,6 +66,7 @@ interface Review {
   helpful: number;
   createdAt: string;
   updatedAt: string;
+  reportReason?: string;
   tool?: {
     id: string;
     name: string;
@@ -140,8 +141,20 @@ export default function AdminDashboard() {
     },
   });
 
+  // Query for reported reviews specifically
+  const { data: reportedReviewsData, isLoading: reportedReviewsLoading, error: reportedReviewsError } = useQuery<Review[]>({
+    queryKey: ["/api/admin/reviews/"],
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error as Error)) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
   // Ensure reviews is always an array
   const reviews = Array.isArray(reviewsData) ? reviewsData : [];
+  const reportedReviews = Array.isArray(reportedReviewsData) ? reportedReviewsData.filter(review => review.reportReason) : [];
 
   // Mock data for pending items - in real app this would come from API
   const pendingItems: PendingItem[] = [
@@ -795,66 +808,86 @@ export default function AdminDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-medium">Review by Alex Johnson</span>
-                            <Badge variant="destructive" className="text-xs">Spam</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            "This is fake spam content with inappropriate links..."
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Tool: ChatGPT</span>
-                            <span>Reported by: 3 users</span>
-                            <span>2 hours ago</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                            Remove
-                          </Button>
-                          <Button size="sm" variant="ghost">
-                            Keep
-                          </Button>
-                        </div>
-                      </div>
+                  {reportedReviewsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Loading Reported Reviews...</h3>
+                      <p className="text-muted-foreground">Please wait while we fetch reported reviews.</p>
                     </div>
-                    
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-medium">Review by Sarah Wilson</span>
-                            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">Inappropriate</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            "Contains offensive language and personal attacks..."
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Tool: Claude AI</span>
-                            <span>Reported by: 1 user</span>
-                            <span>5 hours ago</span>
+                  ) : reportedReviews.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Shield className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-semibold mb-2">No Reported Reviews</h3>
+                      <p>All reviews are clean - no reports to moderate.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reportedReviews.map((review) => (
+                        <div 
+                          key={review.id} 
+                          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium">
+                                  Review by {review.author?.firstName} {review.author?.lastName}
+                                </span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {review.reportReason || 'Reported'}
+                                </Badge>
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-3 h-3 ${
+                                        i < review.rating
+                                          ? "text-yellow-500 fill-current"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <h4 className="font-medium text-sm mb-1">{review.title}</h4>
+                              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                                {review.content}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                {review.tool && <span>Tool: {review.tool.name}</span>}
+                                <span>•</span>
+                                <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+                                <span>•</span>
+                                <span>{review.helpful} helpful votes</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => handleRejectReview(review.id)}
+                                disabled={rejectReviewMutation.isPending}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Remove
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="text-green-600 border-green-200 hover:bg-green-50"
+                                onClick={() => handleApproveReview(review.id)}
+                                disabled={approveReviewMutation.isPending}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Keep
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                            Remove
-                          </Button>
-                          <Button size="sm" variant="ghost">
-                            Keep
-                          </Button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Shield className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>No more reported reviews at the moment.</p>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
