@@ -8,6 +8,14 @@ The application provides both public browsing for non-authenticated users and fu
 
 ## Recent Changes (January 2025)
 
+### Review System Enhancement (January 2025)
+- **NProgress Loading Indicators**: Added smooth progress bars across the application for better user experience during page navigation
+- **Reported Reviews Admin Interface**: Complete admin panel with reported reviews tab, moderation actions (Remove/Keep), and color-coded review statuses
+- **Comprehensive Review Data**: Generated 10 realistic dummy reviews with proper pagination testing functionality
+- **User Reviews Title Update**: Changed "Learn from top reviewers" to "User Reviews" for cleaner, more straightforward messaging
+- **Database Integration**: Added getReportedReviews API endpoint with proper authentication and storage methods
+- **Admin Moderation Tools**: Implemented review reporting system with reason tracking and admin oversight capabilities
+
 ### Tool Details Page Complete Restructuring (January 2025)
 - **TrustRadius-Style Layout**: Complete rewrite following professional B2B software review site structure
 - **4-Column Grid System**: Clean organized layout with left navigation, main content, and right actions
