@@ -31,7 +31,8 @@ import {
   XCircle,
   Plus,
   Search,
-  Camera
+  Camera,
+  MessageSquare
 } from "lucide-react";
 
 type Tool = {
@@ -103,10 +104,28 @@ export default function ToolDetailsPage() {
     enabled: !!toolId
   });
 
+  // Calculate review statistics
+  const reviewStats = {
+    totalReviews: reviews.length,
+    averageRating: reviews.length > 0 
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+      : 0,
+    ratingCounts: reviews.reduce((counts, review) => {
+      counts[review.rating] = (counts[review.rating] || 0) + 1;
+      return counts;
+    }, {} as Record<number, number>)
+  };
+
   // Fetch alternatives
   const { data: alternatives = [] } = useQuery<Tool[]>({
     queryKey: [`/api/tools/${toolId}/alternatives`],
     enabled: !!toolId
+  });
+
+  // Fetch user data
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    enabled: !!isAuthenticated
   });
 
   // Fetch user interactions
@@ -116,7 +135,7 @@ export default function ToolDetailsPage() {
   });
 
   // Fetch usage stats
-  const { data: usageStats = { userCount: 0 } } = useQuery({
+  const { data: usageStats = { userCount: 0 } } = useQuery<{ userCount: number }>({
     queryKey: [`/api/tools/${toolId}/usage-stats`],
     enabled: !!toolId
   });
@@ -710,43 +729,173 @@ export default function ToolDetailsPage() {
 
                 {/* Reviews Section */}
                 <section id="reviews" className="scroll-mt-6">
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reviews and Ratings</h2>
-                    {reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <img 
-                              src={review.user?.profileImageUrl || "/api/placeholder/40/40"} 
-                              alt={review.user?.firstName || 'User'}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                  {review.user?.firstName || 'Anonymous User'}
-                                </span>
-                                <div className="flex items-center gap-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-gray-300 dark:text-gray-600"
-                                      }`}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="grid md:grid-cols-2 gap-8">
+                        {/* Left: Rating Summary */}
+                        <div>
+                          <div className="text-center mb-6">
+                            <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
+                              {reviewStats.averageRating.toFixed(1)}
+                            </div>
+                            <div className="flex items-center justify-center gap-1 mb-2">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-5 h-5 ${
+                                    i < Math.round(reviewStats.averageRating)
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300 dark:text-gray-600"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Based on {reviewStats.totalReviews} reviews
+                            </p>
+                          </div>
+
+                          {/* Rating Breakdown */}
+                          <div className="space-y-2">
+                            {[5, 4, 3, 2, 1].map((rating) => {
+                              const count = reviewStats.ratingCounts[rating] || 0;
+                              const percentage = reviewStats.totalReviews > 0 ? (count / reviewStats.totalReviews) * 100 : 0;
+                              
+                              return (
+                                <div key={rating} className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1 w-12">
+                                    {[...Array(rating)].map((_, i) => (
+                                      <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                    ))}
+                                  </div>
+                                  <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative overflow-hidden">
+                                    <div 
+                                      className="bg-yellow-400 h-full rounded-full transition-all duration-500"
+                                      style={{ width: `${percentage}%` }}
                                     />
-                                  ))}
+                                  </div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400 w-8">
+                                    {count}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Right: Review Action */}
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <div className="mb-4">
+                            <Star className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                              Review {tool.name}?
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                              Share your experience to help others
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={() => {
+                              if (!user) {
+                                setShowAuthDialog(true);
+                              } else {
+                                setShowReviewDialog(true);
+                              }
+                            }}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            Leave a review
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Reviews List */}
+                      <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
+                            <select className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800">
+                              <option>Helpful</option>
+                              <option>Newest</option>
+                              <option>Oldest</option>
+                              <option>Highest rating</option>
+                              <option>Lowest rating</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6">
+                          {reviews.map((review) => (
+                            <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0">
+                              <div className="flex items-start gap-4">
+                                <img 
+                                  src={review.user?.profileImageUrl || "/api/placeholder/48/48"} 
+                                  alt={review.user?.firstName || 'User'}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className="font-semibold text-gray-900 dark:text-white">
+                                      {review.user?.firstName || 'Anonymous User'}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className={`w-4 h-4 ${
+                                            i < review.rating
+                                              ? "fill-yellow-400 text-yellow-400"
+                                              : "text-gray-300 dark:text-gray-600"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                      {new Date(review.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{review.title}</h4>
+                                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3">{review.content}</p>
+                                  <div className="flex items-center gap-4 text-sm">
+                                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                      <ThumbsUp className="w-4 h-4 mr-1" />
+                                      Helpful (12)
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                      Reply
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
-                              <h4 className="font-medium text-gray-900 dark:text-white mb-2">{review.title}</h4>
-                              <p className="text-gray-600 dark:text-gray-400">{review.content}</p>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          ))}
+
+                          {reviews.length === 0 && (
+                            <div className="text-center py-8">
+                              <div className="text-gray-400 dark:text-gray-600 mb-2">
+                                <MessageSquare className="w-12 h-12 mx-auto mb-3" />
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No reviews yet</h3>
+                              <p className="text-gray-600 dark:text-gray-400 mb-4">Be the first to share your experience</p>
+                              <Button 
+                                onClick={() => {
+                                  if (!user) {
+                                    setShowAuthDialog(true);
+                                  } else {
+                                    setShowReviewDialog(true);
+                                  }
+                                }}
+                                variant="outline"
+                              >
+                                Write a review
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </section>
 
                 {/* Alternatives Section */}
@@ -861,9 +1010,34 @@ export default function ToolDetailsPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
+                <Label>Rating</Label>
+                <div className="flex items-center gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setNewReview({ ...newReview, rating })}
+                      className="transition-colors"
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          rating <= newReview.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                    {newReview.rating} star{newReview.rating !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+              <div>
                 <Label htmlFor="review-title">Title</Label>
                 <Input
                   id="review-title"
+                  placeholder="Summarize your experience"
                   value={newReview.title}
                   onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
                 />
@@ -872,6 +1046,7 @@ export default function ToolDetailsPage() {
                 <Label htmlFor="review-content">Review</Label>
                 <Textarea
                   id="review-content"
+                  placeholder="Share details about your experience with this tool"
                   value={newReview.content}
                   onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
                   rows={4}
@@ -881,8 +1056,11 @@ export default function ToolDetailsPage() {
                 <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={submitReview} disabled={reviewMutation.isPending}>
-                  Submit Review
+                <Button 
+                  onClick={submitReview} 
+                  disabled={reviewMutation.isPending || !newReview.title.trim() || !newReview.content.trim()}
+                >
+                  {reviewMutation.isPending ? 'Submitting...' : 'Submit Review'}
                 </Button>
               </div>
             </div>
