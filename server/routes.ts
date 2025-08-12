@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit review endpoint
-  app.post('/api/reviews', isAuthenticated, async (req, res) => {
+  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const reviewData = insertReviewSchema.parse({
@@ -722,8 +722,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/reviews/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
-      const review = await storage.updateReview(id, { status });
+      const { status, reported, reportReason } = req.body;
+      
+      // Prepare updates object
+      const updates: any = { status };
+      
+      // Clear report flags if provided
+      if (reported !== undefined) {
+        updates.reported = reported;
+      }
+      if (reportReason !== undefined) {
+        updates.reportReason = reportReason;
+      }
+      
+      const review = await storage.updateReview(id, updates);
       res.json(review);
     } catch (error) {
       console.error("Error updating review:", error);

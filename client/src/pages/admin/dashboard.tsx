@@ -851,7 +851,24 @@ export default function AdminDashboard() {
                       <h3 className="text-lg font-semibold mb-2">Loading Reported Content...</h3>
                       <p className="text-muted-foreground">Please wait while we fetch reported content.</p>
                     </div>
-                  ) : reportedReviews.length === 0 ? (
+                  ) : reportedReviews
+                      .filter(review => {
+                        // Filter by content type
+                        if (reportedContentType === 'all') return true;
+                        if (reportedContentType === 'reviews') return true;
+                        return false;
+                      })
+                      .filter(review => {
+                        // Filter by search query
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        return review.title.toLowerCase().includes(query) ||
+                               review.content.toLowerCase().includes(query) ||
+                               (review.author?.firstName || '').toLowerCase().includes(query) ||
+                               (review.author?.lastName || '').toLowerCase().includes(query) ||
+                               (review.reportReason || '').toLowerCase().includes(query) ||
+                               (review.tool?.name || '').toLowerCase().includes(query);
+                      }).length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Shield className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <h3 className="text-lg font-semibold mb-2">No Reported Content</h3>
@@ -859,7 +876,25 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {reportedReviews.map((review) => (
+                      {reportedReviews
+                        .filter(review => {
+                          // Filter by content type
+                          if (reportedContentType === 'all') return true;
+                          if (reportedContentType === 'reviews') return true;
+                          return false;
+                        })
+                        .filter(review => {
+                          // Filter by search query
+                          if (!searchQuery) return true;
+                          const query = searchQuery.toLowerCase();
+                          return review.title.toLowerCase().includes(query) ||
+                                 review.content.toLowerCase().includes(query) ||
+                                 (review.author?.firstName || '').toLowerCase().includes(query) ||
+                                 (review.author?.lastName || '').toLowerCase().includes(query) ||
+                                 (review.reportReason || '').toLowerCase().includes(query) ||
+                                 (review.tool?.name || '').toLowerCase().includes(query);
+                        })
+                        .map((review) => (
                         <div 
                           key={review.id} 
                           className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg"
