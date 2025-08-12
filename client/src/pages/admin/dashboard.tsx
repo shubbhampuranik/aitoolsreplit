@@ -131,8 +131,7 @@ export default function AdminDashboard() {
   });
 
   const { data: reviewsData, isLoading: reviewsLoading, error: reviewsError } = useQuery<Review[]>({
-    queryKey: ["/api/admin/reviews", statusFilter === 'all' ? undefined : statusFilter],
-    queryFn: () => apiRequest("GET", `/api/admin/reviews${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
+    queryKey: ["/api/admin/reviews", statusFilter !== 'all' ? `?status=${statusFilter}` : ''],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         return false;
