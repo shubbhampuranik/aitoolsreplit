@@ -97,6 +97,7 @@ export default function ToolDetailsPage() {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [selectedReviewId, setSelectedReviewId] = useState<string>("");
   const [reportReason, setReportReason] = useState("");
+  const [reviewSortBy, setReviewSortBy] = useState("helpful");
 
   // Fetch tool data
   const { data: tool, isLoading: toolLoading } = useQuery<Tool>({
@@ -138,6 +139,24 @@ export default function ToolDetailsPage() {
   const { data: userInteractions = {} } = useQuery({
     queryKey: [`/api/user/interactions/${toolId}`],
     enabled: !!toolId && !!isAuthenticated
+  });
+
+  // Sort reviews based on selected criteria
+  const sortedReviews = reviews.sort((a, b) => {
+    switch (reviewSortBy) {
+      case 'helpful':
+        return (b.helpful || 0) - (a.helpful || 0);
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case 'highest':
+        return b.rating - a.rating;
+      case 'lowest':
+        return a.rating - b.rating;
+      default:
+        return (b.helpful || 0) - (a.helpful || 0);
+    }
   });
 
   // Fetch usage stats
@@ -864,18 +883,22 @@ export default function ToolDetailsPage() {
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
-                            <select className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800">
-                              <option>Helpful</option>
-                              <option>Newest</option>
-                              <option>Oldest</option>
-                              <option>Highest rating</option>
-                              <option>Lowest rating</option>
+                            <select 
+                              className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800"
+                              value={reviewSortBy}
+                              onChange={(e) => setReviewSortBy(e.target.value)}
+                            >
+                              <option value="helpful">Most Helpful</option>
+                              <option value="newest">Newest</option>
+                              <option value="oldest">Oldest</option>
+                              <option value="highest">Highest Rating</option>
+                              <option value="lowest">Lowest Rating</option>
                             </select>
                           </div>
                         </div>
 
                         <div className="space-y-6">
-                          {reviews.slice(0, 5).map((review) => (
+                          {sortedReviews.slice(0, 5).map((review) => (
                             <Card key={review.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                               <CardContent className="p-6">
                                 <div className="flex items-start gap-4">
