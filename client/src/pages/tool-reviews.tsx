@@ -110,8 +110,8 @@ export default function ToolReviews() {
         return (
           review.title.toLowerCase().includes(query) ||
           review.content.toLowerCase().includes(query) ||
-          review.user.firstName?.toLowerCase().includes(query) ||
-          review.user.lastName?.toLowerCase().includes(query)
+          review.user?.firstName?.toLowerCase().includes(query) ||
+          review.user?.lastName?.toLowerCase().includes(query)
         );
       }
       return true;
@@ -440,10 +440,10 @@ export default function ToolReviews() {
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                              {review.user.profileImageUrl ? (
+                              {review.user?.profileImageUrl ? (
                                 <img 
-                                  src={review.user.profileImageUrl} 
-                                  alt={`${review.user.firstName || 'User'} ${review.user.lastName || ''}`}
+                                  src={review.user?.profileImageUrl} 
+                                  alt={`${review.user?.firstName || 'User'} ${review.user?.lastName || ''}`}
                                   className="w-10 h-10 rounded-full object-cover"
                                 />
                               ) : (
@@ -452,7 +452,7 @@ export default function ToolReviews() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {review.user.firstName} {review.user.lastName}
+                                {review.user?.firstName || 'Anonymous'} {review.user?.lastName || ''}
                               </p>
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1">
