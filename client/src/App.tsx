@@ -1,9 +1,11 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
+import NProgress from "nprogress";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -21,6 +23,30 @@ import PromptMarketplace from "@/pages/admin/prompt-marketplace";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  // Configure NProgress
+  useEffect(() => {
+    NProgress.configure({ 
+      showSpinner: false,
+      minimum: 0.1,
+      trickleRate: 0.02,
+      trickleSpeed: 800
+    });
+  }, []);
+
+  // Show loading progress on route changes
+  useEffect(() => {
+    NProgress.start();
+    const timer = setTimeout(() => {
+      NProgress.done();
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      NProgress.done();
+    };
+  }, [location]);
 
   return (
     <Switch>

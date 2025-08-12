@@ -619,7 +619,7 @@ export default function ToolDetailsPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                          Learn from top reviewers
+                          User Reviews
                         </h2>
                         {reviews.length > 3 && (
                           <Button 

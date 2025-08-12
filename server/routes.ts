@@ -732,6 +732,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Review voting endpoint
+  // Admin reported reviews endpoint  
+  app.get('/api/admin/reported-reviews', isAuthenticated, async (req, res) => {
+    try {
+      const reportedReviews = await storage.getReportedReviews();
+      res.json(reportedReviews);
+    } catch (error) {
+      console.error("Error fetching reported reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reported reviews" });
+    }
+  });
+
   app.post("/api/reviews/:id/vote", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;

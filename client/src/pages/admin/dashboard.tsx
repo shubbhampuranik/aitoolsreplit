@@ -452,7 +452,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">
               <BarChart3 className="w-4 h-4 mr-2" />
               Overview
@@ -464,6 +464,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="reviews">
               <Star className="w-4 h-4 mr-2" />
               Reviews
+            </TabsTrigger>
+            <TabsTrigger value="reported">
+              <Shield className="w-4 h-4 mr-2" />
+              Reported
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <Activity className="w-4 h-4 mr-2" />
@@ -777,6 +781,82 @@ export default function AdminDashboard() {
                   </Card>
                 ))
               )}
+            </div>
+          </TabsContent>
+
+          {/* Reported Reviews Tab */}
+          <TabsContent value="reported" className="mt-6">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-red-500" />
+                    Reported Reviews
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium">Review by Alex Johnson</span>
+                            <Badge variant="destructive" className="text-xs">Spam</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            "This is fake spam content with inappropriate links..."
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Tool: ChatGPT</span>
+                            <span>Reported by: 3 users</span>
+                            <span>2 hours ago</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                            Remove
+                          </Button>
+                          <Button size="sm" variant="ghost">
+                            Keep
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium">Review by Sarah Wilson</span>
+                            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">Inappropriate</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            "Contains offensive language and personal attacks..."
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Tool: Claude AI</span>
+                            <span>Reported by: 1 user</span>
+                            <span>5 hours ago</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                            Remove
+                          </Button>
+                          <Button size="sm" variant="ghost">
+                            Keep
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Shield className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No more reported reviews at the moment.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
