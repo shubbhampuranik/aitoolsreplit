@@ -147,7 +147,7 @@ export default function ToolDetailsPage() {
   const sortedReviews = reviews.sort((a, b) => {
     switch (reviewSortBy) {
       case 'helpful':
-        return (b.helpful || 0) - (a.helpful || 0);
+        return ((b as any).helpful || 0) - ((a as any).helpful || 0);
       case 'newest':
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'oldest':
@@ -157,7 +157,7 @@ export default function ToolDetailsPage() {
       case 'lowest':
         return a.rating - b.rating;
       default:
-        return (b.helpful || 0) - (a.helpful || 0);
+        return ((b as any).helpful || 0) - ((a as any).helpful || 0);
     }
   });
 
@@ -167,9 +167,9 @@ export default function ToolDetailsPage() {
     enabled: !!toolId
   });
 
-  const userVote = userInteractions?.vote;
-  const isBookmarked = userInteractions?.bookmarked;
-  const isFollowing = userInteractions?.following;
+  const userVote = (userInteractions as any)?.vote;
+  const isBookmarked = (userInteractions as any)?.bookmarked;
+  const isFollowing = (userInteractions as any)?.following;
 
   // Mutations
   const voteMutation = useMutation({
@@ -179,7 +179,18 @@ export default function ToolDetailsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/tools/${toolId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/user/interactions/${toolId}`] });
-    }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        setShowAuthDialog(true);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to vote. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const bookmarkMutation = useMutation({
@@ -188,7 +199,18 @@ export default function ToolDetailsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/user/interactions/${toolId}`] });
-    }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        setShowAuthDialog(true);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to bookmark. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const followMutation = useMutation({
@@ -906,15 +928,15 @@ export default function ToolDetailsPage() {
                                 <div className="flex items-start gap-4">
                                   {/* User Avatar */}
                                   <div className="flex-shrink-0">
-                                    {review.author?.profileImageUrl ? (
+                                    {(review as any).author?.profileImageUrl ? (
                                       <img 
-                                        src={review.author.profileImageUrl} 
+                                        src={(review as any).author.profileImageUrl} 
                                         alt="Profile"
                                         className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                                       />
                                     ) : (
                                       <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold border border-gray-200 dark:border-gray-700">
-                                        {getInitials(review.author?.firstName, review.author?.lastName)}
+                                        {getInitials((review as any).author?.firstName, (review as any).author?.lastName)}
                                       </div>
                                     )}
                                   </div>
@@ -923,7 +945,7 @@ export default function ToolDetailsPage() {
                                     <div className="flex items-center justify-between mb-2">
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                          {review.author?.firstName || 'Anonymous'} {review.author?.lastName || ''}
+                                          {(review as any).author?.firstName || 'Anonymous'} {(review as any).author?.lastName || ''}
                                         </span>
                                         <div className="flex items-center gap-1">
                                           <div className="flex">
@@ -953,7 +975,7 @@ export default function ToolDetailsPage() {
                                           className="text-gray-600 hover:text-blue-600"
                                         >
                                           <ThumbsUp className="w-4 h-4 mr-1" />
-                                          Helpful ({review.helpful})
+                                          Helpful ({(review as any).helpful})
                                         </Button>
                                         <Button
                                           variant="ghost"

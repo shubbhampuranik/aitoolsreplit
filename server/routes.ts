@@ -598,6 +598,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tool-specific voting endpoint
+  app.post('/api/tools/:id/vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const toolId = req.params.id;
+      const { type } = req.body; // 'up' or 'down'
+      const userId = req.user.claims.sub;
+      
+      const voteType = type === 'up' ? 'up' : 'down';
+      const result = await storage.voteOnItem(userId, 'tool', toolId, voteType);
+      res.json({
+        userVote: result.userVote,
+        upvotes: result.upvotes,
+        downvotes: result.downvotes || 0
+      });
+    } catch (error) {
+      console.error("Error voting on tool:", error);
+      res.status(500).json({ message: "Failed to vote on tool" });
+    }
+  });
+
+  // Tool-specific bookmarking endpoint
+  app.post('/api/tools/:id/bookmark', isAuthenticated, async (req: any, res) => {
+    try {
+      const toolId = req.params.id;
+      const userId = req.user.claims.sub;
+      
+      const isBookmarked = await storage.toggleBookmark(userId, 'tool', toolId);
+      res.json({ bookmarked: isBookmarked });
+    } catch (error) {
+      console.error("Error bookmarking tool:", error);
+      res.status(500).json({ message: "Failed to bookmark tool" });
+    }
+  });
+
   // Tool reviews endpoint
   app.get('/api/tools/:id/reviews', async (req, res) => {
     try {

@@ -450,14 +450,26 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   replies: many(comments),
 }));
 
-export const reviewsRelations = relations(reviews, ({ one }) => ({
-  user: one(users, {
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
+  author: one(users, {
     fields: [reviews.userId],
     references: [users.id],
   }),
   tool: one(tools, {
     fields: [reviews.toolId],
     references: [tools.id],
+  }),
+  votes: many(reviewVotes),
+}));
+
+export const reviewVotesRelations = relations(reviewVotes, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewVotes.reviewId],
+    references: [reviews.id],
+  }),
+  user: one(users, {
+    fields: [reviewVotes.userId],
+    references: [users.id],
   }),
 }));
 
