@@ -130,7 +130,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: reviews = [] } = useQuery<Review[]>({
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery<Review[]>({
     queryKey: ["/api/admin/reviews", statusFilter === 'all' ? undefined : statusFilter],
     queryFn: () => apiRequest("GET", `/api/admin/reviews${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
     retry: (failureCount, error) => {
@@ -140,6 +140,9 @@ export default function AdminDashboard() {
       return failureCount < 3;
     },
   });
+
+  // Ensure reviews is always an array
+  const reviews = Array.isArray(reviewsData) ? reviewsData : [];
 
   // Mock data for pending items - in real app this would come from API
   const pendingItems: PendingItem[] = [
@@ -670,7 +673,15 @@ export default function AdminDashboard() {
 
             {/* Reviews List */}
             <div className="space-y-4">
-              {reviews.length === 0 ? (
+              {reviewsLoading ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Loading Reviews...</h3>
+                    <p className="text-muted-foreground">Please wait while we fetch the reviews.</p>
+                  </CardContent>
+                </Card>
+              ) : reviews.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center">
                     <Star className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
