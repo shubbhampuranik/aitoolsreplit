@@ -144,7 +144,7 @@ export default function AdminDashboard() {
 
   // Query for reported reviews specifically  
   const { data: reportedReviewsData, isLoading: reportedReviewsLoading, error: reportedReviewsError } = useQuery<Review[]>({
-    queryKey: ["/api/admin/reviews/"],
+    queryKey: ["/api/admin/reported-reviews"],
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         return false;
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
   const reviews = Array.isArray(reviewsData) ? reviewsData : [];
   // Filter for reported reviews that are still pending moderation
   const reportedReviews = Array.isArray(reportedReviewsData) ? reportedReviewsData.filter(review => 
-    review.reportReason && review.status !== 'approved' && review.status !== 'rejected'
+    review.reportReason
   ) : [];
 
   // Mock data for pending items - in real app this would come from API
@@ -260,7 +260,9 @@ export default function AdminDashboard() {
   const approveReviewMutation = useMutation({
     mutationFn: async (reviewId: string) => {
       return await apiRequest("PATCH", `/api/admin/reviews/${reviewId}`, {
-        status: "approved"
+        status: "approved",
+        reported: false,
+        reportReason: null
       });
     },
     onSuccess: () => {
@@ -269,7 +271,7 @@ export default function AdminDashboard() {
         description: "Review has been approved and is now visible.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reported-reviews"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -294,7 +296,9 @@ export default function AdminDashboard() {
   const rejectReviewMutation = useMutation({
     mutationFn: async (reviewId: string) => {
       return await apiRequest("PATCH", `/api/admin/reviews/${reviewId}`, {
-        status: "rejected"
+        status: "rejected",
+        reported: false,
+        reportReason: null
       });
     },
     onSuccess: () => {
@@ -303,7 +307,7 @@ export default function AdminDashboard() {
         description: "Review has been rejected.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reported-reviews"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error as Error)) {
