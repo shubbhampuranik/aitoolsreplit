@@ -861,16 +861,7 @@ export default function ToolDetailsPage() {
                       {/* Reviews List */}
                       <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
                         <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
-                            {reviews.length > 0 && (
-                              <Link to={`/tools/${tool.id}/reviews`}>
-                                <Button variant="outline" size="sm">
-                                  All Reviews ({reviews.length})
-                                </Button>
-                              </Link>
-                            )}
-                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
                             <select className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800">
@@ -884,7 +875,7 @@ export default function ToolDetailsPage() {
                         </div>
 
                         <div className="space-y-6">
-                          {reviews.map((review) => (
+                          {reviews.slice(0, 5).map((review) => (
                             <Card key={review.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                               <CardContent className="p-6">
                                 <div className="flex items-start gap-4">
@@ -961,6 +952,17 @@ export default function ToolDetailsPage() {
                               </CardContent>
                             </Card>
                           ))}
+
+                          {/* Show All Reviews button if there are more than 5 reviews */}
+                          {reviews.length > 5 && (
+                            <div className="text-center py-6 border-t border-gray-200 dark:border-gray-700">
+                              <Link to={`/tools/${tool.id}/reviews`}>
+                                <Button variant="outline" size="lg">
+                                  View All {reviews.length} Reviews
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
 
                           {reviews.length === 0 && (
                             <div className="text-center py-8">
