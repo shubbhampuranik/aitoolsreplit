@@ -731,6 +731,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Review voting endpoint
+  app.post("/api/reviews/:id/vote", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const result = await storage.toggleReviewHelpful(id, userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error voting on review:", error);
+      res.status(500).json({ message: "Failed to vote on review" });
+    }
+  });
+
+  // Check if user voted on review
+  app.get("/api/reviews/:id/vote-status", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const userVoted = await storage.checkUserVotedReview(id, userId);
+      res.json({ userVoted });
+    } catch (error) {
+      console.error("Error checking vote status:", error);
+      res.status(500).json({ message: "Failed to check vote status" });
+    }
+  });
+
+  // Report review endpoint
+  app.post("/api/reviews/:id/report", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      if (!reason) {
+        return res.status(400).json({ message: "Report reason is required" });
+      }
+      
+      const review = await storage.reportReview(id, reason);
+      res.json({ message: "Review reported successfully", review });
+    } catch (error) {
+      console.error("Error reporting review:", error);
+      res.status(500).json({ message: "Failed to report review" });
+    }
+  });
+
   // Admin Prompt Marketplace Routes
   app.get("/api/admin/prompts", isAuthenticated, async (req, res) => {
     try {

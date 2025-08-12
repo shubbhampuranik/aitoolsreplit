@@ -140,9 +140,8 @@ export default function AdminDashboard() {
     },
   });
 
-  // Ensure reviews is always an array and log for debugging
+  // Ensure reviews is always an array
   const reviews = Array.isArray(reviewsData) ? reviewsData : [];
-  console.log("Reviews data:", { reviewsData, reviews, statusFilter, reviewsLoading, reviewsError });
 
   // Mock data for pending items - in real app this would come from API
   const pendingItems: PendingItem[] = [

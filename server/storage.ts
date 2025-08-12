@@ -10,6 +10,7 @@ import {
   comments,
   collections,
   reviews,
+  reviewVotes,
   tags,
   bookmarks,
   votes,
@@ -745,6 +746,8 @@ export class DatabaseStorage implements IStorage {
         userId: reviews.userId,
         status: reviews.status,
         helpful: reviews.helpful,
+        reported: reviews.reported,
+        reportReason: reviews.reportReason,
         createdAt: reviews.createdAt,
         updatedAt: reviews.updatedAt,
         tool: {
@@ -770,6 +773,63 @@ export class DatabaseStorage implements IStorage {
       tool: row.tool.id ? row.tool : undefined,
       author: row.author.id ? row.author : undefined
     })) as Review[];
+  }
+
+  async toggleReviewHelpful(reviewId: string, userId: string): Promise<{ helpful: number; userVoted: boolean }> {
+    // Check if user already voted
+    const existingVote = await db
+      .select()
+      .from(reviewVotes)
+      .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)));
+
+    if (existingVote.length > 0) {
+      // Remove vote
+      await db.delete(reviewVotes).where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)));
+      
+      // Decrease helpful count
+      const [updatedReview] = await db
+        .update(reviews)
+        .set({ helpful: sql`${reviews.helpful} - 1` })
+        .where(eq(reviews.id, reviewId))
+        .returning({ helpful: reviews.helpful });
+
+      return { helpful: updatedReview.helpful, userVoted: false };
+    } else {
+      // Add vote
+      await db.insert(reviewVotes).values({ reviewId, userId });
+      
+      // Increase helpful count
+      const [updatedReview] = await db
+        .update(reviews)
+        .set({ helpful: sql`${reviews.helpful} + 1` })
+        .where(eq(reviews.id, reviewId))
+        .returning({ helpful: reviews.helpful });
+
+      return { helpful: updatedReview.helpful, userVoted: true };
+    }
+  }
+
+  async checkUserVotedReview(reviewId: string, userId: string): Promise<boolean> {
+    const vote = await db
+      .select()
+      .from(reviewVotes)
+      .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)));
+    
+    return vote.length > 0;
+  }
+
+  async reportReview(reviewId: string, reason: string): Promise<Review> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({ 
+        reported: true, 
+        reportReason: reason,
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+    
+    return updatedReview;
   }
 
   // Collections

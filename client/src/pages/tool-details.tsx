@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +33,9 @@ import {
   Plus,
   Search,
   Camera,
-  MessageSquare
+  MessageSquare,
+  Flag,
+  User
 } from "lucide-react";
 
 type Tool = {
@@ -91,6 +94,9 @@ export default function ToolDetailsPage() {
   const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [newReview, setNewReview] = useState({ title: '', content: '', rating: 5 });
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState<string>("");
+  const [reportReason, setReportReason] = useState("");
 
   // Fetch tool data
   const { data: tool, isLoading: toolLoading } = useQuery<Tool>({
@@ -188,6 +194,55 @@ export default function ToolDetailsPage() {
     }
   });
 
+  // Review voting mutation
+  const voteOnReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const response = await apiRequest("POST", `/api/reviews/${reviewId}/vote`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/tools/${toolId}/reviews`] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        setShowAuthDialog(true);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to vote on review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Report review mutation
+  const reportReviewMutation = useMutation({
+    mutationFn: async ({ reviewId, reason }: { reviewId: string; reason: string }) => {
+      const response = await apiRequest("POST", `/api/reviews/${reviewId}/report`, { reason });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Review Reported",
+        description: "Thank you for reporting this review. We'll review it shortly.",
+      });
+      setShowReportDialog(false);
+      setReportReason("");
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        setShowAuthDialog(true);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to report review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (toolLoading || !tool) {
     return (
       <Layout>
@@ -236,6 +291,54 @@ export default function ToolDetailsPage() {
       return;
     }
     followMutation.mutate({ entityId: tool.id, entityType: 'tool' });
+  };
+
+  const handleVoteOnReview = (reviewId: string) => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    voteOnReviewMutation.mutate(reviewId);
+  };
+
+  const handleReportReview = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    if (!reportReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a reason for reporting this review.",
+        variant: "destructive",
+      });
+      return;
+    }
+    reportReviewMutation.mutate({ reviewId: selectedReviewId, reason: reportReason });
+  };
+
+  const openReportDialog = (reviewId: string) => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    setSelectedReviewId(reviewId);
+    setShowReportDialog(true);
+  };
+
+  // Helper function to get user initials for avatars
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return "U";
+    return `${(firstName || "").charAt(0)}${(lastName || "").charAt(0)}`.toUpperCase();
+  };
+
+  // Helper function to format dates
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const submitReview = () => {
@@ -514,59 +617,122 @@ export default function ToolDetailsPage() {
 
                     {/* Reviews Section */}
                     <div className="space-y-4">
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Learn from top reviewers
-                      </h2>
-                      <div className="text-sm text-blue-600 dark:text-blue-400 mb-4">
-                        Login with LinkedIn to see your network →
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                          Learn from top reviewers
+                        </h2>
+                        {reviews.length > 3 && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            asChild
+                          >
+                            <Link href={`/tools/${toolId}/reviews`}>
+                              View All Reviews ({reviews.length})
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                       
                       {reviews.slice(0, 3).map((review) => (
-                        <Card key={review.id} className="border border-gray-200 dark:border-gray-700">
+                        <Card key={review.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
-                              <img 
-                                src={review.user?.profileImageUrl || "/api/placeholder/48/48"} 
-                                alt={review.user?.firstName || 'User'}
-                                className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="font-medium text-gray-900 dark:text-white">
-                                    {review.user?.firstName || 'Anonymous User'}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <div className="flex">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star
-                                          key={i}
-                                          className={`w-3 h-3 ${
-                                            i < review.rating
-                                              ? "fill-green-500 text-green-500"
-                                              : "text-gray-300 dark:text-gray-600"
-                                          }`}
-                                        />
-                                      ))}
-                                    </div>
+                              {/* User Avatar */}
+                              <div className="flex-shrink-0">
+                                {review.author?.profileImageUrl ? (
+                                  <img 
+                                    src={review.author.profileImageUrl} 
+                                    alt="Profile"
+                                    className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold border border-gray-200 dark:border-gray-700">
+                                    {getInitials(review.author?.firstName, review.author?.lastName)}
                                   </div>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(review.createdAt).toLocaleDateString()}
-                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {review.author?.firstName || 'Anonymous'} {review.author?.lastName || ''}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <div className="flex">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star
+                                            key={i}
+                                            className={`w-3 h-3 ${
+                                              i < review.rating
+                                                ? "fill-yellow-400 text-yellow-400"
+                                                : "text-gray-300 dark:text-gray-600"
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                      {formatDate(review.createdAt)}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Action buttons */}
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleVoteOnReview(review.id)}
+                                      className="text-gray-600 hover:text-blue-600"
+                                    >
+                                      <ThumbsUp className="w-4 h-4 mr-1" />
+                                      Helpful ({review.helpful})
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => openReportDialog(review.id)}
+                                      className="text-gray-600 hover:text-red-600"
+                                    >
+                                      <Flag className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 </div>
+                                
                                 <h3 className="font-medium text-gray-900 dark:text-white mb-2">
                                   {review.title}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                  {review.content.substring(0, 200)}...
+                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                                  {review.content.length > 200 ? `${review.content.substring(0, 200)}...` : review.content}
                                 </p>
-                                <Button variant="link" className="p-0 mt-2 text-blue-600 dark:text-blue-400 text-sm">
-                                  Continue reading →
-                                </Button>
+                                {review.content.length > 200 && (
+                                  <Button 
+                                    variant="link" 
+                                    className="p-0 mt-2 text-blue-600 dark:text-blue-400 text-sm"
+                                    asChild
+                                  >
+                                    <Link href={`/tools/${toolId}/reviews`}>
+                                      Continue reading →
+                                    </Link>
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </CardContent>
                         </Card>
                       ))}
+                      
+                      {reviews.length === 0 && (
+                        <Card className="border border-gray-200 dark:border-gray-700">
+                          <CardContent className="p-8 text-center">
+                            <p className="text-gray-500 dark:text-gray-400 mb-4">No reviews yet for this tool.</p>
+                            <Button onClick={() => setShowReviewDialog(true)}>
+                              Be the first to review
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )}
                     </div>
                   </div>
                 </section>
@@ -1135,6 +1301,56 @@ export default function ToolDetailsPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Report Review Dialog */}
+        <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Report Review</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="reason">Reason for reporting</Label>
+                <Select onValueChange={setReportReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="spam">Spam</SelectItem>
+                    <SelectItem value="inappropriate">Inappropriate content</SelectItem>
+                    <SelectItem value="fake">Fake review</SelectItem>
+                    <SelectItem value="harassment">Harassment</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleReportReview}
+                  disabled={reportReviewMutation.isPending}
+                  className="flex-1"
+                >
+                  {reportReviewMutation.isPending ? "Reporting..." : "Report"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowReportDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Auth Dialog */}
+        <AuthDialog 
+          open={showAuthDialog} 
+          onOpenChange={setShowAuthDialog}
+          mode="general"
+          toolName={tool.name}
+        />
       </div>
     </Layout>
   );

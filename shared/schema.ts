@@ -225,8 +225,18 @@ export const reviews = pgTable("reviews", {
   userId: varchar("user_id").references(() => users.id),
   status: statusEnum("status").default("pending"),
   helpful: integer("helpful").default(0),
+  reported: boolean("reported").default(false),
+  reportReason: varchar("report_reason", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Table to track who voted reviews as helpful
+export const reviewVotes = pgTable("review_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reviewId: varchar("review_id").references(() => reviews.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Collections
