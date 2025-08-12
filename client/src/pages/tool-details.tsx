@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import AuthDialog from "@/components/AuthDialog";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import {
   Star,
   Eye,
@@ -35,7 +36,8 @@ import {
   Camera,
   MessageSquare,
   Flag,
-  User
+  User,
+  Bookmark
 } from "lucide-react";
 
 type Tool = {
@@ -1088,8 +1090,8 @@ export default function ToolDetailsPage() {
                       className="w-full mb-3"
                       onClick={handleBookmark}
                     >
-                      <Heart className={`w-4 h-4 mr-2 ${isBookmarked ? 'fill-current' : ''}`} />
-                      Save
+                      <Bookmark className={`w-4 h-4 mr-2 ${isBookmarked ? 'fill-current text-blue-600' : ''}`} />
+                      {isBookmarked ? 'Bookmarked' : 'Bookmark'}
                     </Button>
                     
                     <div className="grid grid-cols-2 gap-2">
@@ -1097,8 +1099,9 @@ export default function ToolDetailsPage() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => handleVote('up')}
+                        className={userVote === 'up' ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}
                       >
-                        <ThumbsUp className="w-4 h-4 mr-1" />
+                        <ThumbsUp className={`w-4 h-4 mr-1 ${userVote === 'up' ? 'fill-current' : ''}`} />
                         {tool.upvotes}
                       </Button>
                       <Button variant="outline" size="sm">
