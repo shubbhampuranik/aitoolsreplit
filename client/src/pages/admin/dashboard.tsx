@@ -130,7 +130,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: reviewsData, isLoading: reviewsLoading } = useQuery<Review[]>({
+  const { data: reviewsData, isLoading: reviewsLoading, error: reviewsError } = useQuery<Review[]>({
     queryKey: ["/api/admin/reviews", statusFilter === 'all' ? undefined : statusFilter],
     queryFn: () => apiRequest("GET", `/api/admin/reviews${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
     retry: (failureCount, error) => {
@@ -141,8 +141,9 @@ export default function AdminDashboard() {
     },
   });
 
-  // Ensure reviews is always an array
+  // Ensure reviews is always an array and log for debugging
   const reviews = Array.isArray(reviewsData) ? reviewsData : [];
+  console.log("Reviews data:", { reviewsData, reviews, statusFilter, reviewsLoading, reviewsError });
 
   // Mock data for pending items - in real app this would come from API
   const pendingItems: PendingItem[] = [
