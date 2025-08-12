@@ -15,8 +15,10 @@ import {
   User,
   Settings,
   Bookmark,
+  BookmarkX,
   TrendingUp,
   Star,
+  ArrowUp,
   MessageSquare,
   Calendar,
   MapPin,
@@ -33,7 +35,7 @@ import {
   BookOpen,
   Briefcase
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 interface UserProfile {
@@ -63,6 +65,10 @@ export default function Profile() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Get tab from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get('tab') || 'overview';
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -91,10 +97,10 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       setEditForm({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        bio: user.bio || '',
-        skills: user.skills || [],
+        firstName: (user as any)?.firstName || '',
+        lastName: (user as any)?.lastName || '',
+        bio: (user as any)?.bio || '',
+        skills: (user as any)?.skills || [],
       });
     }
   }, [user]);
@@ -161,10 +167,10 @@ export default function Profile() {
     setIsEditing(false);
     if (user) {
       setEditForm({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        bio: user.bio || '',
-        skills: user.skills || [],
+        firstName: (user as any)?.firstName || '',
+        lastName: (user as any)?.lastName || '',
+        bio: (user as any)?.bio || '',
+        skills: (user as any)?.skills || [],
       });
     }
   };
@@ -187,30 +193,30 @@ export default function Profile() {
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`;
+      return `${(user as any)?.firstName[0]}${(user as any)?.lastName[0]}`;
     }
     if (user?.firstName) {
-      return user.firstName[0];
+      return (user as any)?.firstName[0];
     }
     if (user?.email) {
-      return user.email[0].toUpperCase();
+      return (user as any)?.email[0].toUpperCase();
     }
     return 'U';
   };
 
   const getDisplayName = () => {
     if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+      return `${(user as any)?.firstName} ${(user as any)?.lastName}`;
     }
     if (user?.firstName) {
-      return user.firstName;
+      return (user as any)?.firstName;
     }
     return user?.email || 'User';
   };
 
   const getMemberSince = () => {
     if (user?.createdAt) {
-      return new Date(user.createdAt).toLocaleDateString('en-US', {
+      return new Date((user as any)?.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long'
       });
@@ -423,8 +429,8 @@ export default function Profile() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {user?.skills && user.skills.length > 0 ? (
-                  user.skills.map((skill) => (
+                {user?.skills && (user as any)?.skills.length > 0 ? (
+                  (user as any)?.skills.map((skill) => (
                     <Badge key={skill} variant="secondary">
                       {skill}
                     </Badge>
@@ -440,7 +446,7 @@ export default function Profile() {
 
       {/* Profile Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={initialTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">
               <User className="w-4 h-4 mr-2" />
@@ -551,13 +557,95 @@ export default function Profile() {
 
           {/* Bookmarks Tab */}
           <TabsContent value="bookmarks">
-            <div className="text-center py-12">
-              <Bookmark className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Your Bookmarks</h3>
-              <p className="text-muted-foreground">
-                Items you've bookmarked will appear here.
-              </p>
-            </div>
+            {(bookmarks as any) && (bookmarks as any).length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid gap-4 md:gap-6">
+                  {(bookmarks as any).map((bookmark: any) => (
+                    <div
+                      key={bookmark.id}
+                      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                              {bookmark.itemType}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              Bookmarked {new Date(bookmark.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          
+                          {bookmark.item && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-2">
+                                {bookmark.item.title || bookmark.item.name}
+                              </h3>
+                              <p className="text-muted-foreground mb-3 line-clamp-2">
+                                {bookmark.item.description}
+                              </p>
+                              
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                {bookmark.item.upvotes !== undefined && (
+                                  <span className="flex items-center gap-1">
+                                    <ArrowUp className="w-4 h-4" />
+                                    {bookmark.item.upvotes}
+                                  </span>
+                                )}
+                                {bookmark.item.rating && (
+                                  <span className="flex items-center gap-1">
+                                    <Star className="w-4 h-4" />
+                                    {bookmark.item.rating}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (bookmark.itemType === 'tool') {
+                                window.location.href = `/tools/${bookmark.itemId}`;
+                              } else if (bookmark.itemType === 'prompt') {
+                                window.location.href = `/prompts/${bookmark.itemId}`;
+                              }
+                            }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await apiRequest("POST", `/api/${bookmark.itemType}s/${bookmark.itemId}/bookmark`);
+                                queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+                              } catch (error) {
+                                console.error("Failed to remove bookmark:", error);
+                              }
+                            }}
+                          >
+                            <BookmarkX className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Bookmark className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Your Bookmarks</h3>
+                <p className="text-muted-foreground">
+                  Items you've bookmarked will appear here.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Activity Tab */}

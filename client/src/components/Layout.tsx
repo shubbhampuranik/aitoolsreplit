@@ -152,10 +152,12 @@ export default function Layout({ children }: LayoutProps) {
                           Profile
                         </DropdownMenuItem>
                       </Link>
-                      <DropdownMenuItem>
-                        <Bookmark className="mr-2 h-4 w-4" />
-                        Bookmarks
-                      </DropdownMenuItem>
+                      <Link href="/profile?tab=bookmarks">
+                        <DropdownMenuItem>
+                          <Bookmark className="mr-2 h-4 w-4" />
+                          Bookmarks
+                        </DropdownMenuItem>
+                      </Link>
                       <Link href="/admin">
                         <DropdownMenuItem>
                           <Settings className="mr-2 h-4 w-4" />
