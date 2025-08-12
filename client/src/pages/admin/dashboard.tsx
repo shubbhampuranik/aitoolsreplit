@@ -88,6 +88,7 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [reportedContentType, setReportedContentType] = useState('all');
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function AdminDashboard() {
     },
   });
 
-  // Query for reported reviews specifically
+  // Query for reported reviews specifically  
   const { data: reportedReviewsData, isLoading: reportedReviewsLoading, error: reportedReviewsError } = useQuery<Review[]>({
     queryKey: ["/api/admin/reviews/"],
     retry: (failureCount, error) => {
@@ -154,7 +155,10 @@ export default function AdminDashboard() {
 
   // Ensure reviews is always an array
   const reviews = Array.isArray(reviewsData) ? reviewsData : [];
-  const reportedReviews = Array.isArray(reportedReviewsData) ? reportedReviewsData.filter(review => review.reportReason) : [];
+  // Filter for reported reviews that are still pending moderation
+  const reportedReviews = Array.isArray(reportedReviewsData) ? reportedReviewsData.filter(review => 
+    review.reportReason && review.status !== 'approved' && review.status !== 'rejected'
+  ) : [];
 
   // Mock data for pending items - in real app this would come from API
   const pendingItems: PendingItem[] = [
@@ -265,6 +269,7 @@ export default function AdminDashboard() {
         description: "Review has been approved and is now visible.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -298,6 +303,7 @@ export default function AdminDashboard() {
         description: "Review has been rejected.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews/"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error as Error)) {
@@ -480,7 +486,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="reported">
               <Shield className="w-4 h-4 mr-2" />
-              Reported
+              Reported Content
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <Activity className="w-4 h-4 mr-2" />
@@ -797,28 +803,55 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          {/* Reported Reviews Tab */}
+          {/* Reported Content Tab */}
           <TabsContent value="reported" className="mt-6">
             <div className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-red-500" />
-                    Reported Reviews
+                    Reported Content
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* Filter Controls */}
+                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search reported content..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select value={reportedContentType} onValueChange={setReportedContentType}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Content Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Content</SelectItem>
+                        <SelectItem value="reviews">Reviews</SelectItem>
+                        <SelectItem value="tools">Tools</SelectItem>
+                        <SelectItem value="prompts">Prompts</SelectItem>
+                        <SelectItem value="jobs">Jobs</SelectItem>
+                        <SelectItem value="courses">Courses</SelectItem>
+                        <SelectItem value="posts">Posts</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {reportedReviewsLoading ? (
                     <div className="text-center py-12">
                       <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Loading Reported Reviews...</h3>
-                      <p className="text-muted-foreground">Please wait while we fetch reported reviews.</p>
+                      <h3 className="text-lg font-semibold mb-2">Loading Reported Content...</h3>
+                      <p className="text-muted-foreground">Please wait while we fetch reported content.</p>
                     </div>
                   ) : reportedReviews.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Shield className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-semibold mb-2">No Reported Reviews</h3>
-                      <p>All reviews are clean - no reports to moderate.</p>
+                      <h3 className="text-lg font-semibold mb-2">No Reported Content</h3>
+                      <p>All content is clean - no reports to moderate.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
