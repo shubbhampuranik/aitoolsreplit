@@ -614,126 +614,6 @@ export default function ToolDetailsPage() {
                         </Button>
                       </CardContent>
                     </Card>
-
-                    {/* Reviews Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                          User Reviews
-                        </h2>
-                        {reviews.length > 3 && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            asChild
-                          >
-                            <Link href={`/tools/${toolId}/reviews`}>
-                              View All Reviews ({reviews.length})
-                            </Link>
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {reviews.slice(0, 3).map((review) => (
-                        <Card key={review.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              {/* User Avatar */}
-                              <div className="flex-shrink-0">
-                                {review.author?.profileImageUrl ? (
-                                  <img 
-                                    src={review.author.profileImageUrl} 
-                                    alt="Profile"
-                                    className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold border border-gray-200 dark:border-gray-700">
-                                    {getInitials(review.author?.firstName, review.author?.lastName)}
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                      {review.author?.firstName || 'Anonymous'} {review.author?.lastName || ''}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <div className="flex">
-                                        {[...Array(5)].map((_, i) => (
-                                          <Star
-                                            key={i}
-                                            className={`w-3 h-3 ${
-                                              i < review.rating
-                                                ? "fill-yellow-400 text-yellow-400"
-                                                : "text-gray-300 dark:text-gray-600"
-                                            }`}
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                      {formatDate(review.createdAt)}
-                                    </span>
-                                  </div>
-                                  
-                                  {/* Action buttons */}
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleVoteOnReview(review.id)}
-                                      className="text-gray-600 hover:text-blue-600"
-                                    >
-                                      <ThumbsUp className="w-4 h-4 mr-1" />
-                                      Helpful ({review.helpful})
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => openReportDialog(review.id)}
-                                      className="text-gray-600 hover:text-red-600"
-                                    >
-                                      <Flag className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                
-                                <h3 className="font-medium text-gray-900 dark:text-white mb-2">
-                                  {review.title}
-                                </h3>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                  {review.content.length > 200 ? `${review.content.substring(0, 200)}...` : review.content}
-                                </p>
-                                {review.content.length > 200 && (
-                                  <Button 
-                                    variant="link" 
-                                    className="p-0 mt-2 text-blue-600 dark:text-blue-400 text-sm"
-                                    asChild
-                                  >
-                                    <Link href={`/tools/${toolId}/reviews`}>
-                                      Continue reading →
-                                    </Link>
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                      
-                      {reviews.length === 0 && (
-                        <Card className="border border-gray-200 dark:border-gray-700">
-                          <CardContent className="p-8 text-center">
-                            <p className="text-gray-500 dark:text-gray-400 mb-4">No reviews yet for this tool.</p>
-                            <Button onClick={() => setShowReviewDialog(true)}>
-                              Be the first to review
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
                   </div>
                 </section>
 
@@ -996,48 +876,81 @@ export default function ToolDetailsPage() {
 
                         <div className="space-y-6">
                           {reviews.map((review) => (
-                            <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0">
-                              <div className="flex items-start gap-4">
-                                <img 
-                                  src={review.user?.profileImageUrl || "/api/placeholder/48/48"} 
-                                  alt={review.user?.firstName || 'User'}
-                                  className="w-12 h-12 rounded-full object-cover"
-                                />
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <span className="font-semibold text-gray-900 dark:text-white">
-                                      {review.user?.firstName || 'Anonymous User'}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star
-                                          key={i}
-                                          className={`w-4 h-4 ${
-                                            i < review.rating
-                                              ? "fill-yellow-400 text-yellow-400"
-                                              : "text-gray-300 dark:text-gray-600"
-                                          }`}
-                                        />
-                                      ))}
-                                    </div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                      {new Date(review.createdAt).toLocaleDateString()}
-                                    </span>
+                            <Card key={review.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                              <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                  {/* User Avatar */}
+                                  <div className="flex-shrink-0">
+                                    {review.author?.profileImageUrl ? (
+                                      <img 
+                                        src={review.author.profileImageUrl} 
+                                        alt="Profile"
+                                        className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold border border-gray-200 dark:border-gray-700">
+                                        {getInitials(review.author?.firstName, review.author?.lastName)}
+                                      </div>
+                                    )}
                                   </div>
-                                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{review.title}</h4>
-                                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3">{review.content}</p>
-                                  <div className="flex items-center gap-4 text-sm">
-                                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                                      <ThumbsUp className="w-4 h-4 mr-1" />
-                                      Helpful (12)
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                                      Reply
-                                    </Button>
+                                  
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                          {review.author?.firstName || 'Anonymous'} {review.author?.lastName || ''}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <div className="flex">
+                                            {[...Array(5)].map((_, i) => (
+                                              <Star
+                                                key={i}
+                                                className={`w-3 h-3 ${
+                                                  i < review.rating
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-gray-300 dark:text-gray-600"
+                                                }`}
+                                              />
+                                            ))}
+                                          </div>
+                                        </div>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                          {formatDate(review.createdAt)}
+                                        </span>
+                                      </div>
+                                      
+                                      {/* Action buttons */}
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleVoteOnReview(review.id)}
+                                          className="text-gray-600 hover:text-blue-600"
+                                        >
+                                          <ThumbsUp className="w-4 h-4 mr-1" />
+                                          Helpful ({review.helpful})
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => openReportDialog(review.id)}
+                                          className="text-gray-600 hover:text-red-600"
+                                        >
+                                          <Flag className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    
+                                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">
+                                      {review.title}
+                                    </h3>
+                                    <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                                      {review.content}
+                                    </p>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
+                              </CardContent>
+                            </Card>
                           ))}
 
                           {reviews.length === 0 && (
