@@ -861,7 +861,16 @@ export default function ToolDetailsPage() {
                       {/* Reviews List */}
                       <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
                         <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reviews</h3>
+                            {reviews.length > 0 && (
+                              <Link to={`/tools/${tool.id}/reviews`}>
+                                <Button variant="outline" size="sm">
+                                  All Reviews ({reviews.length})
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
                             <select className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800">
