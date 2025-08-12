@@ -632,6 +632,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User interactions endpoint
+  app.get('/api/user/interactions/:itemId', isAuthenticated, async (req: any, res) => {
+    try {
+      const itemId = req.params.itemId;
+      const userId = req.user.claims.sub;
+      const { itemType = 'tool' } = req.query;
+      
+      const interactions = await storage.getUserInteractions(userId, itemType as string, itemId);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching user interactions:", error);
+      res.status(500).json({ message: "Failed to fetch user interactions" });
+    }
+  });
+
   // Tool reviews endpoint
   app.get('/api/tools/:id/reviews', async (req, res) => {
     try {

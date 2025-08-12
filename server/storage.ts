@@ -993,6 +993,47 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  // Get user interactions for a specific item
+  async getUserInteractions(userId: string, itemType: string, itemId: string): Promise<{
+    bookmarked: boolean;
+    vote: 'up' | 'down' | null;
+    following?: boolean;
+  }> {
+    // Check bookmark status
+    const bookmarkResult = await db
+      .select()
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.itemType, itemType as any),
+          eq(bookmarks.itemId, itemId)
+        )
+      );
+
+    // Check vote status
+    const voteResult = await db
+      .select()
+      .from(votes)
+      .where(
+        and(
+          eq(votes.userId, userId),
+          eq(votes.itemType, itemType as any),
+          eq(votes.itemId, itemId)
+        )
+      );
+
+    const userVote = voteResult.length > 0 
+      ? (voteResult[0].voteType === 1 ? 'up' : 'down')
+      : null;
+
+    return {
+      bookmarked: bookmarkResult.length > 0,
+      vote: userVote,
+      following: false // Add following logic if needed
+    };
+  }
+
   async voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
     userVote: 'up' | 'down' | null;
     upvotes: number;
@@ -1335,56 +1376,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(prompts).orderBy(desc(prompts.createdAt));
   }
 
-  async createPrompt(promptData: InsertPrompt): Promise<Prompt> {
-    const [prompt] = await db.insert(prompts).values(promptData).returning();
-    return prompt;
-  }
 
-  async updatePrompt(id: string, promptData: Partial<InsertPrompt>): Promise<Prompt> {
-    const [prompt] = await db
-      .update(prompts)
-      .set({ ...promptData, updatedAt: new Date() })
-      .where(eq(prompts.id, id))
-      .returning();
-    return prompt;
-  }
 
   async deletePrompt(id: string): Promise<void> {
     await db.delete(prompts).where(eq(prompts.id, id));
   }
 
-  async createPromptPurchase(purchaseData: InsertPromptPurchase): Promise<PromptPurchase> {
-    const [purchase] = await db.insert(promptPurchases).values(purchaseData).returning();
-    return purchase;
-  }
 
-  async updatePromptPurchaseStatus(paymentIntentId: string, status: string): Promise<void> {
-    await db
-      .update(promptPurchases)
-      .set({ status })
-      .where(eq(promptPurchases.stripePaymentIntentId, paymentIntentId));
-  }
-
-  async getUserPromptPurchases(userId: string): Promise<PromptPurchase[]> {
-    return await db
-      .select()
-      .from(promptPurchases)
-      .where(eq(promptPurchases.userId, userId));
-  }
-
-  async hasUserPurchasedPrompt(userId: string, promptId: string): Promise<boolean> {
-    const [purchase] = await db
-      .select()
-      .from(promptPurchases)
-      .where(
-        and(
-          eq(promptPurchases.userId, userId),
-          eq(promptPurchases.promptId, promptId),
-          eq(promptPurchases.status, "completed")
-        )
-      );
-    return !!purchase;
-  }
 }
 
 export const storage = new DatabaseStorage();
