@@ -215,6 +215,20 @@ export const posts = pgTable("posts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Reviews
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  rating: integer("rating").notNull(), // 1-5 star rating
+  toolId: varchar("tool_id").references(() => tools.id),
+  userId: varchar("user_id").references(() => users.id),
+  status: statusEnum("status").default("pending"),
+  helpful: integer("helpful").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Collections
 export const collections = pgTable("collections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -307,6 +321,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   bookmarks: many(bookmarks),
   votes: many(votes),
+  reviews: many(reviews),
   promptPurchases: many(promptPurchases),
 }));
 
@@ -331,6 +346,7 @@ export const toolsRelations = relations(tools, ({ one, many }) => ({
   comments: many(comments),
   bookmarks: many(bookmarks),
   votes: many(votes),
+  reviews: many(reviews),
 }));
 
 export const promptsRelations = relations(prompts, ({ one, many }) => ({
@@ -424,6 +440,17 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   replies: many(comments),
 }));
 
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  user: one(users, {
+    fields: [reviews.userId],
+    references: [users.id],
+  }),
+  tool: one(tools, {
+    fields: [reviews.toolId],
+    references: [tools.id],
+  }),
+}));
+
 export const promptPurchasesRelations = relations(promptPurchases, ({ one }) => ({
   user: one(users, {
     fields: [promptPurchases.userId],
@@ -447,6 +474,7 @@ export type Model = typeof models.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Collection = typeof collections.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+export type Review = typeof reviews.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
 export type PromptPurchase = typeof promptPurchases.$inferSelect;
 export type InsertPromptPurchase = typeof promptPurchases.$inferInsert;
@@ -524,6 +552,13 @@ export const insertCommentSchema = createInsertSchema(comments).omit({
   upvotes: true,
 });
 
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  helpful: true,
+});
+
 export const insertCollectionSchema = createInsertSchema(collections).omit({
   id: true,
   createdAt: true,
@@ -542,4 +577,5 @@ export type InsertJob = z.infer<typeof insertJobSchema>;
 export type InsertModel = z.infer<typeof insertModelSchema>;
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;

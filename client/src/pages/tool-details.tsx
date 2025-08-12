@@ -181,7 +181,10 @@ export default function ToolDetailsPage() {
       queryClient.invalidateQueries({ queryKey: [`/api/tools/${toolId}/reviews`] });
       setShowReviewDialog(false);
       setNewReview({ title: '', content: '', rating: 5 });
-      toast({ title: "Review submitted successfully!" });
+      toast({ 
+        title: "Review submitted successfully!", 
+        description: "Your review is pending approval and will be visible once approved by our team." 
+      });
     }
   });
 

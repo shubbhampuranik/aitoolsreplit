@@ -55,6 +55,30 @@ interface PendingItem {
   type: 'tool' | 'prompt' | 'course' | 'job' | 'post';
 }
 
+interface Review {
+  id: string;
+  title: string;
+  content: string;
+  rating: number;
+  toolId: string;
+  userId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  helpful: number;
+  createdAt: string;
+  updatedAt: string;
+  tool?: {
+    id: string;
+    name: string;
+  };
+  author?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    profileImageUrl?: string;
+  };
+}
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -98,6 +122,17 @@ export default function AdminDashboard() {
 
   const { data: stats } = useQuery<Stats>({
     queryKey: ["/api/stats"],
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error as Error)) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+
+  const { data: reviews = [] } = useQuery<Review[]>({
+    queryKey: ["/api/admin/reviews", statusFilter === 'all' ? undefined : statusFilter],
+    queryFn: () => apiRequest("GET", `/api/admin/reviews${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error as Error)) {
         return false;
@@ -203,12 +238,86 @@ export default function AdminDashboard() {
     },
   });
 
+  const approveReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      return await apiRequest("PATCH", `/api/admin/reviews/${reviewId}`, {
+        status: "approved"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Review Approved",
+        description: "Review has been approved and is now visible.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to approve review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      return await apiRequest("PATCH", `/api/admin/reviews/${reviewId}`, {
+        status: "rejected"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Review Rejected",
+        description: "Review has been rejected.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reject review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleApprove = (itemId: string, itemType: string) => {
     approveMutation.mutate({ itemId, itemType });
   };
 
   const handleReject = (itemId: string, itemType: string) => {
     rejectMutation.mutate({ itemId, itemType });
+  };
+
+  const handleApproveReview = (reviewId: string) => {
+    approveReviewMutation.mutate(reviewId);
+  };
+
+  const handleRejectReview = (reviewId: string) => {
+    rejectReviewMutation.mutate(reviewId);
   };
 
   const getItemIcon = (type: string) => {
@@ -341,7 +450,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">
               <BarChart3 className="w-4 h-4 mr-2" />
               Overview
@@ -349,6 +458,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="moderation">
               <Flag className="w-4 h-4 mr-2" />
               Moderation
+            </TabsTrigger>
+            <TabsTrigger value="reviews">
+              <Star className="w-4 h-4 mr-2" />
+              Reviews
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <Activity className="w-4 h-4 mr-2" />
@@ -526,6 +639,134 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews" className="mt-6">
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search reviews..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reviews List */}
+            <div className="space-y-4">
+              {reviews.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Star className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Reviews Found</h3>
+                    <p className="text-muted-foreground">
+                      {statusFilter === 'pending' 
+                        ? 'No pending reviews to moderate.'
+                        : `No ${statusFilter} reviews found.`}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                reviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? "text-yellow-500 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <Badge variant="secondary" className={`tag ${getStatusColor(review.status)}`}>
+                              {review.status}
+                            </Badge>
+                            {review.tool && (
+                              <Badge variant="outline" className="text-xs">
+                                {review.tool.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="font-semibold text-foreground mb-2">
+                            {review.title}
+                          </h3>
+                          <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                            {review.content}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            {review.author && (
+                              <>
+                                <span>
+                                  By: {review.author.firstName} {review.author.lastName}
+                                  {review.author.email && ` (${review.author.email})`}
+                                </span>
+                                <span>•</span>
+                              </>
+                            )}
+                            <span>
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                            <span>•</span>
+                            <span>{review.helpful} helpful votes</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          {review.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 border-green-200 hover:bg-green-50"
+                                onClick={() => handleApproveReview(review.id)}
+                                disabled={approveReviewMutation.isPending}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => handleRejectReview(review.id)}
+                                disabled={rejectReviewMutation.isPending}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 

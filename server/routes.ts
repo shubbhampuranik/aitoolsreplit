@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertToolSchema, insertPromptSchema, insertCourseSchema, insertJobSchema, insertPostSchema, insertCommentSchema } from "@shared/schema";
+import { insertToolSchema, insertPromptSchema, insertCourseSchema, insertJobSchema, insertPostSchema, insertCommentSchema, insertReviewSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -603,90 +603,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const toolId = req.params.id;
       
-      // Check if this is ChatGPT tool and return comprehensive reviews
-      const tool = await storage.getTool(toolId);
-      if (!tool) {
-        return res.status(404).json({ message: "Tool not found" });
+      // Get approved reviews from database
+      const reviews = await storage.getReviews(toolId, 'approved');
+
+      // If no reviews exist and this is ChatGPT, return mock reviews for demo
+      if (reviews.length === 0) {
+        const tool = await storage.getTool(toolId);
+        if (tool && tool.name === "ChatGPT") {
+          const mockReviews = [
+            {
+              id: "review-1",
+              rating: 5,
+              title: "Game-changer for productivity",
+              content: "ChatGPT has completely transformed how I approach writing and research. The quality of responses is incredible, and it maintains context beautifully across long conversations. As a content creator, it's become an indispensable tool for brainstorming, drafting, and editing. The GPT-4 model in particular shows remarkable reasoning capabilities.",
+              author: {
+                firstName: "Sarah",
+                lastName: "Johnson",
+                profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b772b553?w=50&h=50&fit=crop&crop=face"
+              },
+              createdAt: "2024-01-15T10:30:00Z",
+              helpful: 24
+            },
+            {
+              id: "review-2", 
+              rating: 4,
+              title: "Excellent for coding assistance",
+              content: "As a software developer, I use ChatGPT daily for code review, debugging, and learning new technologies. It explains complex concepts clearly and provides practical examples. The code it generates is usually high-quality and well-commented. Only downside is the knowledge cutoff for very recent frameworks.",
+              author: {
+                firstName: "Michael",
+                lastName: "Chen",
+                profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face"
+              },
+              createdAt: "2024-01-12T14:22:00Z",
+              helpful: 18
+            },
+            {
+              id: "review-3",
+              rating: 5,
+              title: "Perfect for creative writing",
+              content: "I'm a novelist and ChatGPT has become my writing companion. It helps with character development, plot brainstorming, and even editing. The creative outputs are surprisingly sophisticated and it understands nuanced literary concepts. The conversational interface makes it feel like collaborating with a knowledgeable writing partner.",
+              author: {
+                firstName: "Emma",
+                lastName: "Rodriguez",
+                profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face"
+              },
+              createdAt: "2024-01-10T09:15:00Z",
+              helpful: 15
+            },
+            {
+              id: "review-4",
+              rating: 4,
+              title: "Great for research and analysis",
+              content: "ChatGPT excels at breaking down complex topics and providing structured analysis. I use it for market research, competitor analysis, and synthesizing information from multiple sources. The ability to ask follow-up questions and dive deeper into topics is invaluable. Would love to see real-time web browsing in the free tier.",
+              author: {
+                firstName: "David",
+                lastName: "Thompson",
+                profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"
+              },
+              createdAt: "2024-01-08T16:45:00Z",
+              helpful: 12
+            },
+            {
+              id: "review-5",
+              rating: 4,
+              title: "Helpful but has limitations",
+              content: "ChatGPT is undeniably powerful and has helped me with everything from writing emails to solving math problems. The interface is clean and the responses are generally accurate. However, the usage limits on the free tier can be frustrating, and it sometimes generates confident-sounding but incorrect information. Overall still very valuable.",
+              author: {
+                firstName: "Lisa",
+                lastName: "Park",
+                profileImageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=50&h=50&fit=crop&crop=face"
+              },
+              createdAt: "2024-01-06T11:30:00Z",
+              helpful: 9
+            }
+          ];
+          
+          return res.json(mockReviews);
+        }
       }
 
-      // For ChatGPT, return comprehensive reviews data
-      if (tool.name === "ChatGPT") {
-        const reviews = [
-          {
-            id: "review-1",
-            rating: 5,
-            title: "Game-changer for productivity",
-            content: "ChatGPT has completely transformed how I approach writing and research. The quality of responses is incredible, and it maintains context beautifully across long conversations. As a content creator, it's become an indispensable tool for brainstorming, drafting, and editing. The GPT-4 model in particular shows remarkable reasoning capabilities.",
-            author: {
-              firstName: "Sarah",
-              lastName: "Johnson",
-              profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b772b553?w=50&h=50&fit=crop&crop=face"
-            },
-            createdAt: "2024-01-15T10:30:00Z",
-            helpful: 24
-          },
-          {
-            id: "review-2", 
-            rating: 4,
-            title: "Excellent for coding assistance",
-            content: "As a software developer, I use ChatGPT daily for code review, debugging, and learning new technologies. It explains complex concepts clearly and provides practical examples. The code it generates is usually high-quality and well-commented. Only downside is the knowledge cutoff for very recent frameworks.",
-            author: {
-              firstName: "Michael",
-              lastName: "Chen",
-              profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face"
-            },
-            createdAt: "2024-01-12T14:22:00Z",
-            helpful: 18
-          },
-          {
-            id: "review-3",
-            rating: 5,
-            title: "Perfect for creative writing",
-            content: "I'm a novelist and ChatGPT has become my writing companion. It helps with character development, plot brainstorming, and even editing. The creative outputs are surprisingly sophisticated and it understands nuanced literary concepts. The conversational interface makes it feel like collaborating with a knowledgeable writing partner.",
-            author: {
-              firstName: "Emma",
-              lastName: "Rodriguez",
-              profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face"
-            },
-            createdAt: "2024-01-10T09:15:00Z",
-            helpful: 15
-          },
-          {
-            id: "review-4",
-            rating: 4,
-            title: "Great for research and analysis",
-            content: "ChatGPT excels at breaking down complex topics and providing structured analysis. I use it for market research, competitor analysis, and synthesizing information from multiple sources. The ability to ask follow-up questions and dive deeper into topics is invaluable. Would love to see real-time web browsing in the free tier.",
-            author: {
-              firstName: "David",
-              lastName: "Thompson",
-              profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"
-            },
-            createdAt: "2024-01-08T16:45:00Z",
-            helpful: 12
-          },
-          {
-            id: "review-5",
-            rating: 4,
-            title: "Helpful but has limitations",
-            content: "ChatGPT is undeniably powerful and has helped me with everything from writing emails to solving math problems. The interface is clean and the responses are generally accurate. However, the usage limits on the free tier can be frustrating, and it sometimes generates confident-sounding but incorrect information. Overall still very valuable.",
-            author: {
-              firstName: "Lisa",
-              lastName: "Park",
-              profileImageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=50&h=50&fit=crop&crop=face"
-            },
-            createdAt: "2024-01-06T11:30:00Z",
-            helpful: 9
-          }
-        ];
-        
-        return res.json(reviews);
-      }
-
-      // For other tools, return empty array
-      res.json([]);
+      res.json(reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Submit review endpoint
+  app.post('/api/reviews', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reviewData = insertReviewSchema.parse({
+        ...req.body,
+        userId,
+        status: 'pending'
+      });
+
+      const review = await storage.createReview(reviewData);
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  // Admin Review Management Routes
+  app.get("/api/admin/reviews", isAuthenticated, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const reviews = await storage.getAllReviewsForAdmin(status as string);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching admin reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.patch("/api/admin/reviews/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const review = await storage.updateReview(id, { status });
+      res.json(review);
+    } catch (error) {
+      console.error("Error updating review:", error);
+      res.status(500).json({ message: "Failed to update review" });
     }
   });
 

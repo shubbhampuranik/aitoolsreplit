@@ -9,6 +9,7 @@ import {
   models,
   comments,
   collections,
+  reviews,
   tags,
   bookmarks,
   votes,
@@ -26,6 +27,7 @@ import {
   type Post,
   type Comment,
   type Collection,
+  type Review,
   type Tag,
   type InsertTool,
   type InsertPrompt,
@@ -34,6 +36,7 @@ import {
   type InsertModel,
   type InsertPost,
   type InsertComment,
+  type InsertReview,
   type InsertCollection,
 } from "@shared/schema";
 import { db } from "./db";
@@ -137,6 +140,12 @@ export interface IStorage {
   // Comments
   getComments(itemType: string, itemId: string): Promise<Comment[]>;
   createComment(comment: InsertComment): Promise<Comment>;
+  
+  // Reviews
+  getReviews(toolId: string, status?: string): Promise<Review[]>;
+  createReview(review: InsertReview): Promise<Review>;
+  updateReview(id: string, updates: Partial<Review>): Promise<Review>;
+  getAllReviewsForAdmin(status?: string): Promise<Review[]>;
   
   // Collections
   getCollections(userId?: string, isPublic?: boolean): Promise<Collection[]>;
@@ -665,6 +674,102 @@ export class DatabaseStorage implements IStorage {
   async createComment(comment: InsertComment): Promise<Comment> {
     const result = await db.insert(comments).values(comment).returning();
     return result[0] as Comment;
+  }
+
+  // Reviews
+  async getReviews(toolId: string, status?: string): Promise<Review[]> {
+    const conditions = [eq(reviews.toolId, toolId)];
+    
+    if (status) {
+      conditions.push(eq(reviews.status, status as any));
+    }
+
+    const result = await db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        toolId: reviews.toolId,
+        userId: reviews.userId,
+        status: reviews.status,
+        helpful: reviews.helpful,
+        createdAt: reviews.createdAt,
+        updatedAt: reviews.updatedAt,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(reviews.createdAt));
+
+    return result.map(row => ({
+      ...row,
+      author: row.author.id ? row.author : undefined
+    })) as Review[];
+  }
+
+  async createReview(review: InsertReview): Promise<Review> {
+    const [newReview] = await db.insert(reviews).values(review).returning();
+    return newReview;
+  }
+
+  async updateReview(id: string, updates: Partial<Review>): Promise<Review> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(reviews.id, id))
+      .returning();
+    return updatedReview;
+  }
+
+  async getAllReviewsForAdmin(status?: string): Promise<Review[]> {
+    const conditions = [];
+    
+    if (status) {
+      conditions.push(eq(reviews.status, status as any));
+    }
+
+    const result = await db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        toolId: reviews.toolId,
+        userId: reviews.userId,
+        status: reviews.status,
+        helpful: reviews.helpful,
+        createdAt: reviews.createdAt,
+        updatedAt: reviews.updatedAt,
+        tool: {
+          id: tools.id,
+          name: tools.name,
+        },
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(tools, eq(reviews.toolId, tools.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(reviews.createdAt));
+
+    return result.map(row => ({
+      ...row,
+      tool: row.tool.id ? row.tool : undefined,
+      author: row.author.id ? row.author : undefined
+    })) as Review[];
   }
 
   // Collections
