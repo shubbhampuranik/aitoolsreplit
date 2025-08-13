@@ -950,6 +950,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const updatedTool = await storage.updateTool(id, updates);
+      res.json(updatedTool);
+    } catch (error) {
+      console.error("Error updating tool:", error);
+      res.status(500).json({ message: "Failed to update tool" });
+    }
+  });
+
   app.patch("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
