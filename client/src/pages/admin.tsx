@@ -629,10 +629,11 @@ function ReviewsManagement() {
   const [activeReviewTab, setActiveReviewTab] = useState("pending");
   const { toast } = useToast();
 
-  const { data: reviews = [], isLoading } = useQuery({
+  const { data: reviews = [], isLoading, error } = useQuery({
     queryKey: ["/api/admin/reviews", activeReviewTab],
     queryFn: async () => {
       const response = await apiRequest("GET", `/api/admin/reviews?status=${activeReviewTab}`);
+      console.log(`Reviews data for ${activeReviewTab}:`, response);
       return Array.isArray(response) ? response : [];
     },
   });
@@ -641,6 +642,7 @@ function ReviewsManagement() {
     queryKey: ["/api/admin/reported-reviews"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/reported-reviews");
+      console.log("Reported reviews data:", response);
       return Array.isArray(response) ? response : [];
     },
   });
@@ -831,6 +833,8 @@ interface ReviewsTableProps {
 }
 
 function ReviewsTable({ reviews, isLoading, updateMutation, getStatusBadge, title, showApprovalActions }: ReviewsTableProps) {
+  console.log(`ReviewsTable for ${title}:`, { reviews, isLoading, reviewsLength: reviews?.length });
+  
   if (isLoading) {
     return (
       <Card>
@@ -842,12 +846,13 @@ function ReviewsTable({ reviews, isLoading, updateMutation, getStatusBadge, titl
     );
   }
 
-  if (reviews.length === 0) {
+  if (!reviews || reviews.length === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">No {title.toLowerCase()} found</p>
+          <p className="text-xs text-gray-400 mt-2">Debug: reviews = {JSON.stringify(reviews)}</p>
         </CardContent>
       </Card>
     );
