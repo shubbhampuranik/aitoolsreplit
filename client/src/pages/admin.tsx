@@ -628,23 +628,61 @@ function UsersManagement() {
 function ReviewsManagement() {
   const [activeReviewTab, setActiveReviewTab] = useState("pending");
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+  
+  console.log("ReviewsManagement - Auth status:", { user, isAuthenticated });
+
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Reviews Management</h2>
+          <p className="text-gray-600">Moderate user reviews, handle reports, and manage approval workflow</p>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
+            <p className="text-gray-600 mb-4">You need to be logged in to access the admin panel.</p>
+            <Button onClick={() => window.location.href = '/api/login'}>
+              Log In to Continue
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const { data: reviews = [], isLoading, error } = useQuery({
     queryKey: ["/api/admin/reviews", activeReviewTab],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/admin/reviews?status=${activeReviewTab}`);
-      console.log(`Reviews data for ${activeReviewTab}:`, response);
-      return Array.isArray(response) ? response : [];
+      try {
+        const response = await apiRequest("GET", `/api/admin/reviews?status=${activeReviewTab}`);
+        const data = await response.json();
+        console.log(`Reviews data for ${activeReviewTab}:`, data);
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+        throw err;
+      }
     },
+    enabled: isAuthenticated, // Only run query if authenticated
   });
 
   const { data: reportedReviews = [] } = useQuery({
     queryKey: ["/api/admin/reported-reviews"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/admin/reported-reviews");
-      console.log("Reported reviews data:", response);
-      return Array.isArray(response) ? response : [];
+      try {
+        const response = await apiRequest("GET", "/api/admin/reported-reviews");
+        const data = await response.json();
+        console.log("Reported reviews data:", data);
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error("Error fetching reported reviews:", err);
+        throw err;
+      }
     },
+    enabled: isAuthenticated, // Only run query if authenticated
   });
 
   const updateReviewMutation = useMutation({
@@ -852,7 +890,6 @@ function ReviewsTable({ reviews, isLoading, updateMutation, getStatusBadge, titl
         <CardContent className="p-8 text-center">
           <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">No {title.toLowerCase()} found</p>
-          <p className="text-xs text-gray-400 mt-2">Debug: reviews = {JSON.stringify(reviews)}</p>
         </CardContent>
       </Card>
     );
