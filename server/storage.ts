@@ -851,8 +851,16 @@ export class DatabaseStorage implements IStorage {
   async getAllReviewsForAdmin(status?: string): Promise<Review[]> {
     const conditions = [];
     
-    if (status) {
-      conditions.push(eq(reviews.status, status as any));
+    if (status && status !== 'all') {
+      // Handle the "reported" status differently since it's not in the enum
+      if (status === 'reported') {
+        conditions.push(eq(reviews.reported, true));
+      } else {
+        // Only use valid enum values: pending, approved, rejected
+        if (['pending', 'approved', 'rejected'].includes(status)) {
+          conditions.push(eq(reviews.status, status as any));
+        }
+      }
     }
 
     const result = await db
@@ -885,6 +893,46 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(reviews.userId, users.id))
       .leftJoin(tools, eq(reviews.toolId, tools.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(reviews.createdAt));
+
+    return result.map(row => ({
+      ...row,
+      tool: row.tool.id ? row.tool : undefined,
+      author: row.author.id ? row.author : undefined
+    })) as Review[];
+  }
+
+  async getReportedReviews(): Promise<Review[]> {
+    const result = await db
+      .select({
+        id: reviews.id,
+        title: reviews.title,
+        content: reviews.content,
+        rating: reviews.rating,
+        toolId: reviews.toolId,
+        userId: reviews.userId,
+        status: reviews.status,
+        helpful: reviews.helpful,
+        reported: reviews.reported,
+        reportReason: reviews.reportReason,
+        createdAt: reviews.createdAt,
+        updatedAt: reviews.updatedAt,
+        tool: {
+          id: tools.id,
+          name: tools.name,
+        },
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(reviews)
+      .leftJoin(users, eq(reviews.userId, users.id))
+      .leftJoin(tools, eq(reviews.toolId, tools.id))
+      .where(eq(reviews.reported, true))
       .orderBy(desc(reviews.createdAt));
 
     return result.map(row => ({
