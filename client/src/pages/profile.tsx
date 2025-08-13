@@ -66,9 +66,11 @@ export default function Profile() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Get tab from URL params
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialTab = urlParams.get('tab') || 'overview';
+  // Get tab from URL params and manage state
+  const [activeTab, setActiveTab] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('tab') || 'overview';
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -77,6 +79,17 @@ export default function Profile() {
     bio: '',
     skills: [] as string[],
   });
+
+  // Update URL when tab changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (activeTab === 'overview') {
+      url.searchParams.delete('tab');
+    } else {
+      url.searchParams.set('tab', activeTab);
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, [activeTab]);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -446,7 +459,7 @@ export default function Profile() {
 
       {/* Profile Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue={initialTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">
               <User className="w-4 h-4 mr-2" />
@@ -521,8 +534,7 @@ export default function Profile() {
                       variant="outline"
                       className="w-full justify-start"
                       onClick={() => {
-                        // Switch to bookmarks tab
-                        window.location.href = '/profile?tab=bookmarks';
+                        setActiveTab('bookmarks');
                       }}
                     >
                       <Bookmark className="w-4 h-4 mr-2" />
@@ -531,11 +543,19 @@ export default function Profile() {
                         {userStats.bookmarksCount}
                       </Badge>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('submissions')}
+                    >
                       <Brain className="w-4 h-4 mr-2" />
                       Submit Tool
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('settings')}
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Account Settings
                     </Button>
