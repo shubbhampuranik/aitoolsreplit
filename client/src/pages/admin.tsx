@@ -384,7 +384,7 @@ function ContentManager({ title, description, endpoint, type }: ContentManagerPr
   const [statusFilter, setStatusFilter] = useState("all");
   
   // Query with better error handling
-  const { data: items = [], isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: [endpoint, searchTerm, statusFilter],
     queryFn: async () => {
       try {
@@ -394,13 +394,17 @@ function ContentManager({ title, description, endpoint, type }: ContentManagerPr
         
         const url = `${endpoint}${params.toString() ? `?${params.toString()}` : ''}`;
         const response = await apiRequest("GET", url);
-        return response;
+        // Ensure we always return an array
+        return Array.isArray(response) ? response : [];
       } catch (error) {
         console.error(`Error fetching ${type}:`, error);
-        return [];
+        throw error; // Let error boundary handle it
       }
     },
   });
+
+  // Ensure items is always an array
+  const items = Array.isArray(data) ? data : [];
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
