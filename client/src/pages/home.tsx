@@ -194,19 +194,35 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => window.location.href = '/tools/submit'}
+                  >
                     <TrendingUp className="w-6 h-6" />
                     <span className="text-sm">Submit Tool</span>
                   </Button>
-                  <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => window.location.href = '/prompts/submit'}
+                  >
                     <Star className="w-6 h-6" />
                     <span className="text-sm">Add Prompt</span>
                   </Button>
-                  <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => window.location.href = '/posts'}
+                  >
                     <Users className="w-6 h-6" />
                     <span className="text-sm">Join Discussion</span>
                   </Button>
-                  <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => window.location.href = '/profile?tab=bookmarks'}
+                  >
                     <Bookmark className="w-6 h-6" />
                     <span className="text-sm">My Bookmarks</span>
                   </Button>
@@ -221,7 +237,13 @@ export default function Home() {
                   <Star className="w-5 h-5 text-primary" />
                   Featured Tools
                 </CardTitle>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => window.location.href = '/tools?featured=true'}
+                >
+                  View All
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,7 +261,13 @@ export default function Home() {
                   <Clock className="w-5 h-5 text-primary" />
                   Recently Added
                 </CardTitle>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => window.location.href = '/tools?recent=true'}
+                >
+                  View All
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
