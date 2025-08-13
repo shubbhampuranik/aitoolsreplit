@@ -14,11 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart3, Users, Wrench, MessageSquare, Settings, Plus, Search, Eye, 
   ThumbsUp, Star, Edit, Trash2, BookOpen, Briefcase, Newspaper,
-  Filter, CheckCircle, XCircle, Clock, AlertTriangle
+  Filter, CheckCircle, XCircle, Clock, AlertTriangle, MoreHorizontal,
+  FileText, List, Image, Scale, ArrowRight, HelpCircle
 } from "lucide-react";
 
 interface Tool {
@@ -1020,19 +1022,24 @@ function AIToolsManagement() {
 
   if (showEditor && selectedTool) {
     return (
-      <ToolEditor
-        tool={selectedTool}
-        section={editingSection}
-        categories={categories}
-        onClose={() => {
-          setShowEditor(false);
-          setSelectedTool(null);
-        }}
-        onSave={(updates) => {
-          updateToolMutation.mutate({ id: selectedTool.id, updates });
-        }}
-        onSectionChange={setEditingSection}
-      />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Edit Tool: {selectedTool.name}</h2>
+          <Button variant="outline" onClick={() => {
+            setShowEditor(false);
+            setSelectedTool(null);
+          }}>
+            Back to Tools
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Edit className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">Tool editor interface coming soon</p>
+            <p className="text-sm text-gray-500 mt-2">Editing: {editingSection}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
