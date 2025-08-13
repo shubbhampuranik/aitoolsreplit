@@ -916,14 +916,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/tools", isAuthenticated, async (req, res) => {
     try {
       const { search, status } = req.query;
-      console.log("Admin tools request:", { search, status, user: (req as any).user?.claims?.sub });
-      
       const tools = await storage.getToolsForAdmin({
         search: search as string,
         status: status as string,
       });
-      
-      console.log(`Found ${tools.length} admin tools`);
       res.json(tools);
     } catch (error) {
       console.error("Error fetching admin tools:", error);
