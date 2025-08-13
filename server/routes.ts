@@ -647,6 +647,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk user interactions endpoint
+  app.post('/api/user/interactions/bulk', isAuthenticated, async (req: any, res) => {
+    try {
+      const { toolIds } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!toolIds || !Array.isArray(toolIds)) {
+        return res.status(400).json({ message: "toolIds array is required" });
+      }
+      
+      const interactions = await storage.getUserInteractionsBulk(userId, 'tool', toolIds);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching bulk user interactions:", error);
+      res.status(500).json({ message: "Failed to fetch bulk user interactions" });
+    }
+  });
+
   // Tool reviews endpoint
   app.get('/api/tools/:id/reviews', async (req, res) => {
     try {

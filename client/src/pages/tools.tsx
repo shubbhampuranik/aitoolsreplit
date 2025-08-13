@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Grid3X3, List, Filter, Plus, TrendingUp, Star, Clock, Eye } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Tool {
   id: string;
@@ -34,6 +36,7 @@ interface Category {
 }
 
 export default function Tools() {
+  const { isAuthenticated } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('popular');
@@ -85,6 +88,18 @@ export default function Tools() {
       if (!response.ok) throw new Error('Failed to fetch featured tools');
       return response.json();
     },
+  });
+
+  // Fetch user interactions for bookmark/vote states
+  const { data: userInteractions = {} } = useQuery({
+    queryKey: ["/api/user/interactions/bulk"],
+    queryFn: async () => {
+      if (!isAuthenticated || !allTools.length) return {};
+      const toolIds = allTools.map(tool => tool.id);
+      const response = await apiRequest("POST", "/api/user/interactions/bulk", { toolIds });
+      return response.json();
+    },
+    enabled: isAuthenticated && allTools.length > 0
   });
 
   const displayTools = currentPage === 1 ? tools : allTools;
@@ -327,6 +342,7 @@ export default function Tools() {
                 key={tool.id} 
                 tool={tool} 
                 viewMode={viewMode}
+                userInteractions={userInteractions[tool.id] || {}}
               />
             ))}
           </div>

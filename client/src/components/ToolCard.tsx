@@ -27,14 +27,18 @@ interface Tool {
 interface ToolCardProps {
   tool: Tool;
   viewMode?: 'grid' | 'list';
+  userInteractions?: {
+    bookmarked?: boolean;
+    vote?: 'up' | 'down' | null;
+  };
 }
 
-export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
+export default function ToolCard({ tool, viewMode = 'grid', userInteractions }: ToolCardProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(userInteractions?.bookmarked || false);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(userInteractions?.vote || null);
   const [currentUpvotes, setCurrentUpvotes] = useState(tool.upvotes);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   
@@ -65,19 +69,16 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
 
   const bookmarkMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/bookmarks", {
-        itemType: "tool",
-        itemId: tool.id,
-      });
+      const response = await apiRequest("POST", `/api/tools/${tool.id}/bookmark`, {});
       return response.json();
     },
     onSuccess: (data) => {
-      setIsBookmarked(data.bookmarked);
+      setIsBookmarked(!isBookmarked);
       toast({
-        title: data.bookmarked ? "Bookmarked" : "Removed from bookmarks",
-        description: data.bookmarked 
-          ? `${tool.name} has been added to your bookmarks`
-          : `${tool.name} has been removed from your bookmarks`,
+        title: isBookmarked ? "Bookmark removed" : "Bookmark added",
+        description: isBookmarked 
+          ? `Removed ${tool.name} from your bookmarks`
+          : `Added ${tool.name} to your bookmarks`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
     },
@@ -309,7 +310,7 @@ export default function ToolCard({ tool, viewMode = 'grid' }: ToolCardProps) {
             <Button 
               variant="ghost" 
               size="sm"
-              className="bookmark-btn opacity-0 group-hover:opacity-100 p-2"
+              className={`bookmark-btn p-2 ${isBookmarked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               onClick={handleBookmark}
               disabled={bookmarkMutation.isPending}
             >

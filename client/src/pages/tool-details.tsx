@@ -199,6 +199,16 @@ export default function ToolDetailsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/user/interactions/${toolId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/bookmarks`] });
+      
+      // Show toast notification based on bookmark state
+      const wasBookmarked = isBookmarked;
+      toast({
+        title: wasBookmarked ? "Bookmark removed" : "Bookmark added",
+        description: wasBookmarked 
+          ? `Removed ${tool?.name || 'tool'} from your bookmarks`
+          : `Added ${tool?.name || 'tool'} to your bookmarks`,
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error as Error)) {

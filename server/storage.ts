@@ -1034,6 +1034,59 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getUserInteractionsBulk(userId: string, itemType: string, itemIds: string[]): Promise<Record<string, {
+    bookmarked: boolean;
+    vote: 'up' | 'down' | null;
+    following?: boolean;
+  }>> {
+    if (itemIds.length === 0) return {};
+
+    // Check bookmark status for all items
+    const bookmarkResults = await db
+      .select()
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.itemType, itemType as any),
+          inArray(bookmarks.itemId, itemIds)
+        )
+      );
+
+    // Check vote status for all items
+    const voteResults = await db
+      .select()
+      .from(votes)
+      .where(
+        and(
+          eq(votes.userId, userId),
+          eq(votes.itemType, itemType as any),
+          inArray(votes.itemId, itemIds)
+        )
+      );
+
+    // Create lookup maps
+    const bookmarkedItems = new Set(bookmarkResults.map(b => b.itemId));
+    const voteMap = new Map<string, 'up' | 'down'>();
+    
+    voteResults.forEach(vote => {
+      voteMap.set(vote.itemId, vote.voteType === 1 ? 'up' : 'down');
+    });
+
+    // Build result object
+    const result: Record<string, { bookmarked: boolean; vote: 'up' | 'down' | null; following?: boolean }> = {};
+    
+    itemIds.forEach(itemId => {
+      result[itemId] = {
+        bookmarked: bookmarkedItems.has(itemId),
+        vote: voteMap.get(itemId) || null,
+        following: false
+      };
+    });
+
+    return result;
+  }
+
   async voteOnItem(userId: string, itemType: string, itemId: string, voteType: string): Promise<{
     userVote: 'up' | 'down' | null;
     upvotes: number;

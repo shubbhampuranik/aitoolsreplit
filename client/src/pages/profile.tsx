@@ -472,7 +472,7 @@ export default function Profile() {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Contribution Summary</CardTitle>
@@ -511,6 +511,38 @@ export default function Profile() {
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        // Switch to bookmarks tab
+                        window.location.href = '/profile?tab=bookmarks';
+                      }}
+                    >
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      My Bookmarks
+                      <Badge variant="secondary" className="ml-auto">
+                        {userStats.bookmarksCount}
+                      </Badge>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Brain className="w-4 h-4 mr-2" />
+                      Submit Tool
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Account Settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
@@ -624,8 +656,17 @@ export default function Profile() {
                               try {
                                 await apiRequest("POST", `/api/${bookmark.itemType}s/${bookmark.itemId}/bookmark`);
                                 queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+                                toast({
+                                  title: "Bookmark removed",
+                                  description: `Removed ${bookmark.item?.title || bookmark.item?.name || 'item'} from your bookmarks`,
+                                });
                               } catch (error) {
                                 console.error("Failed to remove bookmark:", error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to remove bookmark. Please try again.",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                           >
