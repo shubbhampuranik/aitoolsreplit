@@ -987,7 +987,8 @@ function AIToolsManagement() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
-      if (statusFilter !== "all") params.append("status", statusFilter);
+      // Only add status filter if it's not "all" and not empty
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
       
       const response = await apiRequest("GET", `/api/admin/tools?${params}`);
       return Array.isArray(response) ? response : [];
