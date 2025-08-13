@@ -993,9 +993,12 @@ function AIToolsManagement() {
       if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
       
       const response = await apiRequest("GET", `/api/admin/tools?${params}`);
+      console.log("Frontend received tools:", response, "Length:", Array.isArray(response) ? response.length : "not array");
       return Array.isArray(response) ? response : [];
     },
   });
+
+  console.log("AIToolsManagement render:", { tools, toolsLength: tools.length, isLoading, searchTerm, statusFilter });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
