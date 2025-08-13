@@ -929,7 +929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
     try {
-      const tool = await storage.getToolById(req.params.id);
+      const tool = await storage.getTool(req.params.id);
       if (!tool) {
         return res.status(404).json({ message: "Tool not found" });
       }

@@ -324,15 +324,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tools).where(eq(tools.id, id));
   }
 
-  async updateTool(id: string, updates: Partial<Tool>): Promise<Tool> {
-    const [updatedTool] = await db
-      .update(tools)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(tools.id, id))
-      .returning();
-    return updatedTool;
-  }
-
   // Admin specific methods
   async getToolsForAdmin(params: {
     search?: string;
@@ -907,8 +898,8 @@ export class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row,
-      tool: row.tool.id ? row.tool : undefined,
-      author: row.author.id ? row.author : undefined
+      tool: row.tool?.id ? row.tool : undefined,
+      author: row.author?.id ? row.author : undefined
     })) as Review[];
   }
 
@@ -947,8 +938,8 @@ export class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row,
-      tool: row.tool.id ? row.tool : undefined,
-      author: row.author.id ? row.author : undefined
+      tool: row.tool?.id ? row.tool : undefined,
+      author: row.author?.id ? row.author : undefined
     })) as Review[];
   }
 
@@ -970,7 +961,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(reviews.id, reviewId))
         .returning({ helpful: reviews.helpful });
 
-      return { helpful: updatedReview.helpful, userVoted: false };
+      return { helpful: updatedReview.helpful || 0, userVoted: false };
     } else {
       // Add vote
       await db.insert(reviewVotes).values({ reviewId, userId });
@@ -982,7 +973,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(reviews.id, reviewId))
         .returning({ helpful: reviews.helpful });
 
-      return { helpful: updatedReview.helpful, userVoted: true };
+      return { helpful: updatedReview.helpful || 0, userVoted: true };
     }
   }
 
@@ -993,46 +984,6 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)));
     
     return vote.length > 0;
-  }
-
-  async getReportedReviews(): Promise<Review[]> {
-    const result = await db
-      .select({
-        id: reviews.id,
-        title: reviews.title,
-        content: reviews.content,
-        rating: reviews.rating,
-        toolId: reviews.toolId,
-        userId: reviews.userId,
-        status: reviews.status,
-        helpful: reviews.helpful,
-        reported: reviews.reported,
-        reportReason: reviews.reportReason,
-        createdAt: reviews.createdAt,
-        updatedAt: reviews.updatedAt,
-        tool: {
-          id: tools.id,
-          name: tools.name,
-        },
-        author: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          email: users.email,
-          profileImageUrl: users.profileImageUrl,
-        }
-      })
-      .from(reviews)
-      .leftJoin(users, eq(reviews.userId, users.id))
-      .leftJoin(tools, eq(reviews.toolId, tools.id))
-      .where(eq(reviews.reported, true))
-      .orderBy(desc(reviews.updatedAt));
-
-    return result.map(row => ({
-      ...row,
-      tool: row.tool.id ? row.tool : undefined,
-      author: row.author.id ? row.author : undefined
-    })) as Review[];
   }
 
   async reportReview(reviewId: string, reason: string): Promise<Review> {

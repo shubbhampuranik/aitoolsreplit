@@ -264,7 +264,7 @@ export const comments = pgTable("comments", {
   itemType: commentTypeEnum("item_type").notNull(),
   itemId: varchar("item_id").notNull(),
   userId: varchar("user_id").references(() => users.id),
-  parentId: varchar("parent_id").references(() => comments.id),
+  parentId: varchar("parent_id"),
   upvotes: integer("upvotes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
