@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -554,7 +554,7 @@ function ToolEditDialog({ tool, categories, open, onOpenChange, onSave, isLoadin
   const [formData, setFormData] = useState<Partial<Tool>>({});
 
   // Initialize form data when tool changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (tool) {
       setFormData({
         name: tool.name,
