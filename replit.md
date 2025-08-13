@@ -40,6 +40,9 @@ The application provides both public browsing for non-authenticated users and fu
 - **Professional Sidebar Layout**: Sticky navigation with descriptions for each module, allowing efficient management of diverse content
 - **Real-time Dashboard**: Statistics overview with total tools, users, pending reviews, and platform activity metrics
 - **Advanced Search & Filtering**: Unified search and status filtering system across all content types with instant updates
+- **Reviews Management System**: Comprehensive review moderation with approval workflow, reported reviews handling, and status management
+- **Review Approval Workflow**: Pending, approved, and rejected review tabs with inline approval/rejection actions
+- **Review Report Moderation**: Dedicated reported reviews section with Keep/Remove moderation actions and reason tracking
 - **Scalable Architecture**: Modular design that can easily accommodate new content types as the platform grows
 - **Error Handling**: Comprehensive error states with retry functionality and informative messages for non-implemented endpoints
 - **Responsive Design**: Professional admin interface that works seamlessly on desktop and mobile devices

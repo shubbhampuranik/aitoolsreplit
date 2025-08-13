@@ -606,7 +606,7 @@ function ContentManager({ title, description, endpoint, type }: ContentManagerPr
   );
 }
 
-// Placeholder components for other tabs
+// Users Management Component
 function UsersManagement() {
   return (
     <div className="space-y-6">
@@ -624,20 +624,315 @@ function UsersManagement() {
   );
 }
 
+// Reviews Management Component with approval and moderation
 function ReviewsManagement() {
+  const [activeReviewTab, setActiveReviewTab] = useState("pending");
+  const { toast } = useToast();
+
+  const { data: reviews = [], isLoading } = useQuery({
+    queryKey: ["/api/admin/reviews", activeReviewTab],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/admin/reviews?status=${activeReviewTab}`);
+      return Array.isArray(response) ? response : [];
+    },
+  });
+
+  const { data: reportedReviews = [] } = useQuery({
+    queryKey: ["/api/admin/reported-reviews"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/reported-reviews");
+      return Array.isArray(response) ? response : [];
+    },
+  });
+
+  const updateReviewMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      return apiRequest("PATCH", `/api/admin/reviews/${id}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reported-reviews"] });
+      toast({ title: "Review updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update review", variant: "destructive" });
+    },
+  });
+
+  const getStatusBadge = (status: string) => {
+    const config = {
+      pending: { variant: "secondary" as const, label: "Pending", icon: Clock },
+      approved: { variant: "default" as const, label: "Approved", icon: CheckCircle },
+      rejected: { variant: "destructive" as const, label: "Rejected", icon: XCircle },
+    };
+    
+    const statusConfig = config[status as keyof typeof config] || config.pending;
+    const Icon = statusConfig.icon;
+    
+    return (
+      <Badge variant={statusConfig.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {statusConfig.label}
+      </Badge>
+    );
+  };
+
+  const getReportBadge = (reportReason: string) => {
+    const colors = {
+      'spam': 'bg-red-100 text-red-800',
+      'inappropriate': 'bg-orange-100 text-orange-800',
+      'fake': 'bg-yellow-100 text-yellow-800',
+      'other': 'bg-gray-100 text-gray-800'
+    };
+    
+    const colorClass = colors[reportReason as keyof typeof colors] || colors.other;
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+        {reportReason}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Reviews Management</h2>
-        <p className="text-gray-600">Moderate user reviews and ratings</p>
+        <p className="text-gray-600">Moderate user reviews, handle reports, and manage approval workflow</p>
       </div>
+
+      <Tabs value={activeReviewTab} onValueChange={setActiveReviewTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pending">Pending Reviews</TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="reported">Reported Reviews</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="mt-6">
+          <ReviewsTable 
+            reviews={reviews} 
+            isLoading={isLoading}
+            updateMutation={updateReviewMutation}
+            getStatusBadge={getStatusBadge}
+            title="Pending Reviews"
+            showApprovalActions={true}
+          />
+        </TabsContent>
+
+        <TabsContent value="approved" className="mt-6">
+          <ReviewsTable 
+            reviews={reviews} 
+            isLoading={isLoading}
+            updateMutation={updateReviewMutation}
+            getStatusBadge={getStatusBadge}
+            title="Approved Reviews"
+            showApprovalActions={false}
+          />
+        </TabsContent>
+
+        <TabsContent value="rejected" className="mt-6">
+          <ReviewsTable 
+            reviews={reviews} 
+            isLoading={isLoading}
+            updateMutation={updateReviewMutation}
+            getStatusBadge={getStatusBadge}
+            title="Rejected Reviews"
+            showApprovalActions={false}
+          />
+        </TabsContent>
+
+        <TabsContent value="reported" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Reported Reviews ({reportedReviews.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {reportedReviews.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                  <p className="text-gray-600">No reported reviews at this time</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reportedReviews.map((review: any) => (
+                    <div key={review.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{review.title}</h4>
+                            {getStatusBadge(review.status)}
+                            {getReportBadge(review.reportReason)}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{review.content}</p>
+                          <p className="text-xs text-gray-500">
+                            By {review.author?.firstName} {review.author?.lastName} • {new Date(review.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-600 hover:bg-green-50"
+                            onClick={() => updateReviewMutation.mutate({
+                              id: review.id,
+                              updates: { reported: false, reportReason: null, status: 'approved' }
+                            })}
+                          >
+                            Keep Review
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updateReviewMutation.mutate({
+                              id: review.id,
+                              updates: { status: 'rejected' }
+                            })}
+                          >
+                            Remove Review
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Star className="w-4 h-4" />
+                            {review.rating}/5
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="w-4 h-4" />
+                            {review.helpful || 0} helpful
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Reusable Reviews Table Component
+interface ReviewsTableProps {
+  reviews: any[];
+  isLoading: boolean;
+  updateMutation: any;
+  getStatusBadge: (status: string) => JSX.Element;
+  title: string;
+  showApprovalActions: boolean;
+}
+
+function ReviewsTable({ reviews, isLoading, updateMutation, getStatusBadge, title, showApprovalActions }: ReviewsTableProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading reviews...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return (
       <Card>
         <CardContent className="p-8 text-center">
           <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Reviews management interface coming soon</p>
+          <p className="text-gray-600">No {title.toLowerCase()} found</p>
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title} ({reviews.length})</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Review</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reviews.map((review: any) => (
+              <TableRow key={review.id}>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{review.title}</div>
+                    <div className="text-sm text-gray-500 line-clamp-2">{review.content}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      By {review.author?.firstName} {review.author?.lastName}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    {review.rating}/5
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {getStatusBadge(review.status)}
+                </TableCell>
+                <TableCell>
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {showApprovalActions ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 hover:bg-green-50"
+                          onClick={() => updateMutation.mutate({
+                            id: review.id,
+                            updates: { status: 'approved' }
+                          })}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => updateMutation.mutate({
+                            id: review.id,
+                            updates: { status: 'rejected' }
+                          })}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }
 
