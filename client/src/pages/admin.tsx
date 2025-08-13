@@ -199,12 +199,7 @@ export default function AdminPanel() {
 
                 {/* Tools Tab */}
                 <TabsContent value="tools" className="mt-0">
-                  <ContentManager
-                    title="AI Tools Management"
-                    description="Manage AI tools, approve submissions, and edit tool details"
-                    endpoint="/api/admin/tools"
-                    type="tools"
-                  />
+                  <AIToolsManagement />
                 </TabsContent>
 
                 {/* Prompts Tab */}
@@ -978,6 +973,211 @@ function ReviewsTable({ reviews, isLoading, updateMutation, getStatusBadge, titl
   );
 }
 
+// AI Tools Management Component with comprehensive CRUD
+function AIToolsManagement() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedTool, setSelectedTool] = useState<any>(null);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editingSection, setEditingSection] = useState<string>("overview");
+  const { toast } = useToast();
+  
+  const { data: tools = [], isLoading } = useQuery({
+    queryKey: ["/api/admin/tools", searchTerm, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("search", searchTerm);
+      if (statusFilter !== "all") params.append("status", statusFilter);
+      
+      const response = await apiRequest("GET", `/api/admin/tools?${params}`);
+      return Array.isArray(response) ? response : [];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
+  const updateToolMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      return apiRequest("PATCH", `/api/admin/tools/${id}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
+      toast({ title: "Tool updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update tool", variant: "destructive" });
+    },
+  });
+
+  const openEditor = (tool: any, section: string = "overview") => {
+    setSelectedTool(tool);
+    setEditingSection(section);
+    setShowEditor(true);
+  };
+
+  if (showEditor && selectedTool) {
+    return (
+      <ToolEditor
+        tool={selectedTool}
+        section={editingSection}
+        categories={categories}
+        onClose={() => {
+          setShowEditor(false);
+          setSelectedTool(null);
+        }}
+        onSave={(updates) => {
+          updateToolMutation.mutate({ id: selectedTool.id, updates });
+        }}
+        onSectionChange={setEditingSection}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">AI Tools Management</h2>
+          <p className="text-gray-600">Manage tools, edit content sections, and approve submissions</p>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search tools..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tools Table */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading tools...</p>
+          </CardContent>
+        </Card>
+      ) : tools.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Wrench className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No tools found</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b">
+                  <tr className="text-left">
+                    <th className="p-4 font-medium">Tool</th>
+                    <th className="p-4 font-medium">Category</th>
+                    <th className="p-4 font-medium">Status</th>
+                    <th className="p-4 font-medium">Rating</th>
+                    <th className="p-4 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tools.map((tool: any) => (
+                    <tr key={tool.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={tool.logoUrl || "/api/placeholder/40/40"}
+                            alt={tool.name}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                          <div>
+                            <div className="font-medium">{tool.name}</div>
+                            <div className="text-sm text-gray-500 line-clamp-1">
+                              {tool.shortDescription}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant="outline">{tool.category?.name || "Uncategorized"}</Badge>
+                      </td>
+                      <td className="p-4">
+                        <Badge 
+                          variant={tool.status === "approved" ? "default" : 
+                                  tool.status === "pending" ? "secondary" : "destructive"}
+                        >
+                          {tool.status}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span>{parseFloat(tool.rating || "0").toFixed(1)}</span>
+                          <span className="text-gray-400">({tool.ratingCount || 0})</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditor(tool, "overview")}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              Edit Overview
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditor(tool, "features")}>
+                              <List className="w-4 h-4 mr-2" />
+                              Edit Features
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditor(tool, "gallery")}>
+                              <Image className="w-4 h-4 mr-2" />
+                              Edit Gallery
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditor(tool, "pros-cons")}>
+                              <Scale className="w-4 h-4 mr-2" />
+                              Edit Pros & Cons
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditor(tool, "alternatives")}>
+                              <ArrowRight className="w-4 h-4 mr-2" />
+                              Edit Alternatives
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditor(tool, "qa")}>
+                              <HelpCircle className="w-4 h-4 mr-2" />
+                              Edit Q&A
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function SettingsManagement() {
   return (
     <div className="space-y-6">
@@ -994,3 +1194,5 @@ function SettingsManagement() {
     </div>
   );
 }
+
+

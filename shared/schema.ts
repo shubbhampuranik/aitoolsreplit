@@ -86,8 +86,10 @@ export const tools = pgTable("tools", {
   ratingCount: integer("rating_count").default(0),
   featured: boolean("featured").default(false),
   socialLinks: jsonb("social_links"),
+  features: jsonb("features"),
   faqs: jsonb("faqs"),
   prosAndCons: jsonb("pros_and_cons"),
+  alternatives: jsonb("alternatives"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

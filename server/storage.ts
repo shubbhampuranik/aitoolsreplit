@@ -201,6 +201,7 @@ export interface IStorage {
   }>;
   
   deleteTool(id: string): Promise<void>;
+  updateTool(id: string, updates: Partial<Tool>): Promise<Tool>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -321,6 +322,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTool(id: string): Promise<void> {
     await db.delete(tools).where(eq(tools.id, id));
+  }
+
+  async updateTool(id: string, updates: Partial<Tool>): Promise<Tool> {
+    const [updatedTool] = await db
+      .update(tools)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tools.id, id))
+      .returning();
+    return updatedTool;
   }
 
   // Admin specific methods

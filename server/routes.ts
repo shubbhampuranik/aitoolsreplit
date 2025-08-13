@@ -927,6 +927,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
+    try {
+      const tool = await storage.getToolById(req.params.id);
+      if (!tool) {
+        return res.status(404).json({ message: "Tool not found" });
+      }
+      res.json(tool);
+    } catch (error) {
+      console.error("Error fetching tool:", error);
+      res.status(500).json({ message: "Failed to fetch tool" });
+    }
+  });
+
   app.get("/api/admin/stats", isAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getAdminStats();
@@ -941,7 +954,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const tool = await storage.updateTool(id, updates);
+      
+      // Log the update operation for debugging
+      console.log(`Admin updating tool ${id} with:`, updates);
+      
+      // Handle complex data transformations
+      const processedUpdates = { ...updates };
+      
+      // Ensure arrays are properly handled
+      if (updates.features && typeof updates.features === 'string') {
+        try {
+          processedUpdates.features = JSON.parse(updates.features);
+        } catch (e) {
+          processedUpdates.features = [];
+        }
+      }
+      
+      if (updates.gallery && typeof updates.gallery === 'string') {
+        try {
+          processedUpdates.gallery = JSON.parse(updates.gallery);
+        } catch (e) {
+          processedUpdates.gallery = [];
+        }
+      }
+      
+      if (updates.prosAndCons && typeof updates.prosAndCons === 'string') {
+        try {
+          processedUpdates.prosAndCons = JSON.parse(updates.prosAndCons);
+        } catch (e) {
+          processedUpdates.prosAndCons = { pros: [], cons: [] };
+        }
+      }
+      
+      if (updates.alternatives && typeof updates.alternatives === 'string') {
+        try {
+          processedUpdates.alternatives = JSON.parse(updates.alternatives);
+        } catch (e) {
+          processedUpdates.alternatives = [];
+        }
+      }
+      
+      if (updates.faqs && typeof updates.faqs === 'string') {
+        try {
+          processedUpdates.faqs = JSON.parse(updates.faqs);
+        } catch (e) {
+          processedUpdates.faqs = [];
+        }
+      }
+      
+      const tool = await storage.updateTool(id, processedUpdates);
       res.json(tool);
     } catch (error) {
       console.error("Error updating tool:", error);
