@@ -259,7 +259,7 @@ export default function AdminPage() {
                 {currentView === 'settings' && 'Settings'}
               </h1>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500">Welcome back, {user.email}</span>
+                <span className="text-sm text-gray-500">Welcome back, {user?.email || 'Admin'}</span>
               </div>
             </div>
           </div>
