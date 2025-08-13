@@ -45,6 +45,7 @@
     "@stripe/react-stripe-js": "^3.9.0",
     "@stripe/stripe-js": "^7.8.0",
     "@tanstack/react-query": "^5.60.5",
+    "@tanstack/react-table": "^8.21.3",
     "@types/memoizee": "^0.4.12",
     "@types/nprogress": "^0.2.3",
     "@uppy/aws-s3": "^4.3.2",

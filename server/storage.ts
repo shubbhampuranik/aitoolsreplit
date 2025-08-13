@@ -181,6 +181,26 @@ export interface IStorage {
     modelsCount: number;
     usersCount: number;
   }>;
+
+  // Admin specific operations
+  getToolsForAdmin(params?: {
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Tool[]>;
+  
+  getAdminStats(): Promise<{
+    totalTools: number;
+    pendingTools: number;
+    approvedTools: number;
+    rejectedTools: number;
+    totalUsers: number;
+    totalViews: number;
+    totalUpvotes: number;
+  }>;
+  
+  deleteTool(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -297,6 +317,105 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tools.id, id))
       .returning();
     return updatedTool;
+  }
+
+  async deleteTool(id: string): Promise<void> {
+    await db.delete(tools).where(eq(tools.id, id));
+  }
+
+  // Admin specific methods
+  async getToolsForAdmin(params: {
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<Tool[]> {
+    const { search, status, limit = 100, offset = 0 } = params;
+
+    let query = db
+      .select({
+        tool: tools,
+        category: categories,
+      })
+      .from(tools)
+      .leftJoin(categories, eq(tools.categoryId, categories.id));
+
+    const conditions = [];
+
+    if (status && status !== "all") {
+      conditions.push(eq(tools.status, status as any));
+    }
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      conditions.push(
+        or(
+          ilike(tools.name, `%${searchTerm}%`),
+          ilike(tools.description, `%${searchTerm}%`)
+        )!
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const results = await query
+      .orderBy(desc(tools.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return results.map(result => ({
+      ...result.tool,
+      category: result.category || undefined,
+    })) as Tool[];
+  }
+
+  async getAdminStats(): Promise<{
+    totalTools: number;
+    pendingTools: number;
+    approvedTools: number;
+    rejectedTools: number;
+    totalUsers: number;
+    totalViews: number;
+    totalUpvotes: number;
+  }> {
+    const [toolStats] = await db
+      .select({
+        totalTools: count(),
+        totalViews: sql<number>`sum(${tools.views})`,
+        totalUpvotes: sql<number>`sum(${tools.upvotes})`,
+      })
+      .from(tools);
+
+    const [pendingCount] = await db
+      .select({ count: count() })
+      .from(tools)
+      .where(eq(tools.status, "pending"));
+
+    const [approvedCount] = await db
+      .select({ count: count() })
+      .from(tools)
+      .where(eq(tools.status, "approved"));
+
+    const [rejectedCount] = await db
+      .select({ count: count() })
+      .from(tools)
+      .where(eq(tools.status, "rejected"));
+
+    const [userCount] = await db
+      .select({ count: count() })
+      .from(users);
+
+    return {
+      totalTools: toolStats.totalTools || 0,
+      pendingTools: pendingCount.count || 0,
+      approvedTools: approvedCount.count || 0,
+      rejectedTools: rejectedCount.count || 0,
+      totalUsers: userCount.count || 0,
+      totalViews: toolStats.totalViews || 0,
+      totalUpvotes: toolStats.totalUpvotes || 0,
+    };
   }
 
   // Prompts

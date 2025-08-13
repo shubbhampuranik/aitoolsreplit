@@ -18,6 +18,7 @@ import Courses from "@/pages/courses";
 import Jobs from "@/pages/jobs";
 import News from "@/pages/news";
 import Profile from "@/pages/profile";
+import AdminPanel from "@/pages/admin";
 import AdminDashboard from "@/pages/admin/dashboard";
 import PromptMarketplace from "@/pages/admin/prompt-marketplace";
 
@@ -64,7 +65,7 @@ function Router() {
       {isAuthenticated && (
         <>
           <Route path="/profile" component={Profile} />
-          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin" component={AdminPanel} />
           <Route path="/admin/prompt-marketplace" component={PromptMarketplace} />
         </>
       )}

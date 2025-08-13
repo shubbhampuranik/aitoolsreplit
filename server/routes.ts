@@ -912,6 +912,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Tools Management Routes
+  app.get("/api/admin/tools", isAuthenticated, async (req, res) => {
+    try {
+      const { search, status } = req.query;
+      const tools = await storage.getToolsForAdmin({
+        search: search as string,
+        status: status as string,
+      });
+      res.json(tools);
+    } catch (error) {
+      console.error("Error fetching admin tools:", error);
+      res.status(500).json({ message: "Failed to fetch tools" });
+    }
+  });
+
+  app.get("/api/admin/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.patch("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const tool = await storage.updateTool(id, updates);
+      res.json(tool);
+    } catch (error) {
+      console.error("Error updating tool:", error);
+      res.status(500).json({ message: "Failed to update tool" });
+    }
+  });
+
+  app.delete("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTool(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting tool:", error);
+      res.status(500).json({ message: "Failed to delete tool" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
