@@ -16,24 +16,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Settings,
-  Users,
-  BarChart3,
-  Shield,
-  Star,
-  Eye,
-  ThumbsUp,
-  Edit,
-  Trash2,
-  Plus,
-  Search,
-  Filter,
-  Download,
-  Upload,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle
+  BarChart3, Users, Wrench, MessageSquare, Settings, Plus, Search, Eye, 
+  ThumbsUp, Star, Edit, Trash2, BookOpen, Briefcase, Newspaper,
+  Filter, CheckCircle, XCircle, Clock, AlertTriangle
 } from "lucide-react";
 
 interface Tool {
@@ -74,146 +59,16 @@ interface Category {
   slug: string;
 }
 
-interface AdminStats {
-  totalTools: number;
-  pendingTools: number;
-  approvedTools: number;
-  rejectedTools: number;
-  totalUsers: number;
-  totalViews: number;
-  totalUpvotes: number;
-}
-
 export default function AdminPanel() {
-  const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  // Admin stats query
-  const { data: adminStats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated,
-  });
-
-  // Tools query with filters
-  const { data: tools, isLoading: toolsLoading } = useQuery({
-    queryKey: ["/api/admin/tools", searchTerm, statusFilter],
-    enabled: isAuthenticated,
-  });
-
-  // Categories query
-  const { data: categories } = useQuery({
-    queryKey: ["/api/categories"],
-    enabled: isAuthenticated,
-  });
-
-  // Tool update mutation
-  const updateToolMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Tool> }) => {
-      return apiRequest("PATCH", `/api/admin/tools/${id}`, updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({
-        title: "Success",
-        description: "Tool updated successfully",
-      });
-      setIsEditDialogOpen(false);
-      setSelectedTool(null);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Tool deletion mutation
-  const deleteToolMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/admin/tools/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({
-        title: "Success",
-        description: "Tool deleted successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleToolEdit = (tool: Tool) => {
-    setSelectedTool(tool);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleToolUpdate = (updates: Partial<Tool>) => {
-    if (selectedTool) {
-      updateToolMutation.mutate({ id: selectedTool.id, updates });
-    }
-  };
-
-  const handleStatusChange = (toolId: string, newStatus: string) => {
-    updateToolMutation.mutate({ 
-      id: toolId, 
-      updates: { status: newStatus }
-    });
-  };
-
-  const handleDeleteTool = (toolId: string) => {
-    if (confirm("Are you sure you want to delete this tool?")) {
-      deleteToolMutation.mutate(toolId);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { variant: "secondary" as const, icon: Clock, label: "Pending" },
-      approved: { variant: "default" as const, icon: CheckCircle, label: "Approved" },
-      rejected: { variant: "destructive" as const, icon: XCircle, label: "Rejected" },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    const Icon = config.icon;
-
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="loading-shimmer w-32 h-8 rounded"></div>
-        </div>
-      </Layout>
-    );
-  }
+  const { toast } = useToast();
 
   if (!isAuthenticated) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Card className="p-6">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>Access Denied</CardTitle>
             </CardHeader>
@@ -226,576 +81,575 @@ export default function AdminPanel() {
     );
   }
 
+  // Admin tabs configuration
+  const adminTabs = [
+    { 
+      id: "dashboard", 
+      label: "Dashboard", 
+      icon: BarChart3,
+      description: "Overview and analytics"
+    },
+    { 
+      id: "tools", 
+      label: "AI Tools", 
+      icon: Wrench,
+      description: "Manage AI tools and applications"
+    },
+    { 
+      id: "prompts", 
+      label: "Prompts", 
+      icon: MessageSquare,
+      description: "AI prompts marketplace"
+    },
+    { 
+      id: "courses", 
+      label: "Courses", 
+      icon: BookOpen,
+      description: "Educational content and tutorials"
+    },
+    { 
+      id: "jobs", 
+      label: "Jobs", 
+      icon: Briefcase,
+      description: "AI job listings and opportunities"
+    },
+    { 
+      id: "news", 
+      label: "News", 
+      icon: Newspaper,
+      description: "Community news and updates"
+    },
+    { 
+      id: "users", 
+      label: "Users", 
+      icon: Users,
+      description: "User management and profiles"
+    },
+    { 
+      id: "reviews", 
+      label: "Reviews", 
+      icon: Star,
+      description: "User reviews and ratings"
+    },
+    { 
+      id: "settings", 
+      label: "Settings", 
+      icon: Settings,
+      description: "Platform configuration"
+    },
+  ];
+
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage tools, users, and platform content</p>
-          </div>
-          <Badge variant="outline" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Administrator
-          </Badge>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="dashboard">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="tools">
-              <Settings className="w-4 h-4 mr-2" />
-              Tools
-            </TabsTrigger>
-            <TabsTrigger value="reviews">
-              <Star className="w-4 h-4 mr-2" />
-              Reviews
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="w-4 h-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Tools</p>
-                      <p className="text-2xl font-bold">{adminStats?.totalTools || 0}</p>
-                    </div>
-                    <Settings className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
-                      <p className="text-2xl font-bold text-orange-600">{adminStats?.pendingTools || 0}</p>
-                    </div>
-                    <Clock className="w-8 h-8 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Views</p>
-                      <p className="text-2xl font-bold">{adminStats?.totalViews?.toLocaleString() || 0}</p>
-                    </div>
-                    <Eye className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Upvotes</p>
-                      <p className="text-2xl font-bold">{adminStats?.totalUpvotes?.toLocaleString() || 0}</p>
-                    </div>
-                    <ThumbsUp className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-6 py-8">
+          {/* Admin Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+                <p className="text-gray-600 mt-1">Manage your AI community platform</p>
+              </div>
+              <Badge variant="outline" className="px-3 py-1">
+                Welcome, {user?.firstName || user?.email}
+              </Badge>
             </div>
+          </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">New tool submitted</p>
-                      <p className="text-sm text-muted-foreground">ChatGPT submitted by user@example.com</p>
-                    </div>
-                    <Badge variant="secondary">2 mins ago</Badge>
-                  </div>
-                  <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">Tool approved</p>
-                      <p className="text-sm text-muted-foreground">DALL-E 3 has been approved and published</p>
-                    </div>
-                    <Badge variant="secondary">1 hour ago</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tools Management Tab */}
-          <TabsContent value="tools">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Tools Management</CardTitle>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Tool
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Filters */}
-                <div className="flex gap-4 mb-6">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-                        placeholder="Search tools..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Tools Table */}
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tool</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Stats</TableHead>
-                        <TableHead>Featured</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tools?.map((tool: Tool) => (
-                        <TableRow key={tool.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <span className="text-white font-semibold text-sm">
-                                  {tool.name.charAt(0)}
-                                </span>
-                              </div>
-                              <div>
-                                <div className="font-medium">{tool.name}</div>
-                                <div className="text-sm text-muted-foreground line-clamp-1">
-                                  {tool.shortDescription}
-                                </div>
+          {/* Admin Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Sidebar Navigation */}
+            <div className="flex gap-8">
+              <div className="w-64 flex-shrink-0">
+                <Card className="sticky top-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Navigation</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <TabsList className="grid w-full grid-cols-1 h-auto bg-transparent p-2">
+                      {adminTabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <TabsTrigger
+                            key={tab.id}
+                            value={tab.id}
+                            className="flex items-start gap-3 p-3 h-auto text-left justify-start hover:bg-gray-100 data-[state=active]:bg-primary data-[state=active]:text-white"
+                          >
+                            <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium">{tab.label}</div>
+                              <div className="text-xs opacity-70 mt-1 line-clamp-2">
+                                {tab.description}
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {tool.category?.name || "Uncategorized"}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(tool.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="flex items-center gap-1">
-                                <Eye className="w-3 h-3" />
-                                {tool.views}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <ThumbsUp className="w-3 h-3" />
-                                {tool.upvotes}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Star className="w-3 h-3" />
-                                {tool.rating}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Switch
-                              checked={tool.featured}
-                              onCheckedChange={(checked) => 
-                                updateToolMutation.mutate({ 
-                                  id: tool.id, 
-                                  updates: { featured: checked }
-                                })
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {new Date(tool.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToolEdit(tool)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Select
-                                value={tool.status}
-                                onValueChange={(status) => handleStatusChange(tool.id, status)}
-                              >
-                                <SelectTrigger className="w-24 h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="approved">Approve</SelectItem>
-                                  <SelectItem value="rejected">Reject</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteTool(tool.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </CardContent>
+                </Card>
+              </div>
 
-          {/* Other tabs placeholders */}
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reviews Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Review management interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              {/* Main Content Area */}
+              <div className="flex-1">
+                {/* Dashboard Tab */}
+                <TabsContent value="dashboard" className="mt-0">
+                  <DashboardContent />
+                </TabsContent>
 
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>User management interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                {/* Tools Tab */}
+                <TabsContent value="tools" className="mt-0">
+                  <ContentManager
+                    title="AI Tools Management"
+                    description="Manage AI tools, approve submissions, and edit tool details"
+                    endpoint="/api/admin/tools"
+                    type="tools"
+                  />
+                </TabsContent>
 
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Settings interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                {/* Prompts Tab */}
+                <TabsContent value="prompts" className="mt-0">
+                  <ContentManager
+                    title="Prompts Management"
+                    description="Manage AI prompts, marketplace items, and pricing"
+                    endpoint="/api/admin/prompts"
+                    type="prompts"
+                  />
+                </TabsContent>
 
-        {/* Edit Tool Dialog */}
-        <ToolEditDialog
-          tool={selectedTool}
-          categories={categories}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onSave={handleToolUpdate}
-          isLoading={updateToolMutation.isPending}
-        />
+                {/* Courses Tab */}
+                <TabsContent value="courses" className="mt-0">
+                  <ContentManager
+                    title="Courses Management"
+                    description="Manage educational content, tutorials, and learning paths"
+                    endpoint="/api/admin/courses"
+                    type="courses"
+                  />
+                </TabsContent>
+
+                {/* Jobs Tab */}
+                <TabsContent value="jobs" className="mt-0">
+                  <ContentManager
+                    title="Jobs Management"
+                    description="Manage job listings, applications, and employer profiles"
+                    endpoint="/api/admin/jobs"
+                    type="jobs"
+                  />
+                </TabsContent>
+
+                {/* News Tab */}
+                <TabsContent value="news" className="mt-0">
+                  <ContentManager
+                    title="News Management"
+                    description="Manage community news, announcements, and blog posts"
+                    endpoint="/api/admin/news"
+                    type="news"
+                  />
+                </TabsContent>
+
+                {/* Users Tab */}
+                <TabsContent value="users" className="mt-0">
+                  <UsersManagement />
+                </TabsContent>
+
+                {/* Reviews Tab */}
+                <TabsContent value="reviews" className="mt-0">
+                  <ReviewsManagement />
+                </TabsContent>
+
+                {/* Settings Tab */}
+                <TabsContent value="settings" className="mt-0">
+                  <SettingsManagement />
+                </TabsContent>
+              </div>
+            </div>
+          </Tabs>
+        </div>
       </div>
     </Layout>
   );
 }
 
-// Tool Edit Dialog Component
-interface ToolEditDialogProps {
-  tool: Tool | null;
-  categories: Category[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (updates: Partial<Tool>) => void;
-  isLoading: boolean;
-}
+// Dashboard Component
+function DashboardContent() {
+  const { data: stats } = useQuery({
+    queryKey: ["/api/admin/stats"],
+  });
 
-function ToolEditDialog({ tool, categories, open, onOpenChange, onSave, isLoading }: ToolEditDialogProps) {
-  const [formData, setFormData] = useState<Partial<Tool>>({});
-
-  // Initialize form data when tool changes
-  useEffect(() => {
-    if (tool) {
-      setFormData({
-        name: tool.name,
-        shortDescription: tool.shortDescription,
-        description: tool.description,
-        url: tool.url,
-        logoUrl: tool.logoUrl,
-        pricingType: tool.pricingType,
-        pricingDetails: tool.pricingDetails,
-        categoryId: tool.categoryId,
-        featured: tool.featured,
-        gallery: tool.gallery,
-        socialLinks: tool.socialLinks,
-        faqs: tool.faqs,
-        prosAndCons: tool.prosAndCons,
-      });
+  const statCards = [
+    {
+      title: "Total Tools",
+      value: stats?.totalTools || 0,
+      icon: Wrench,
+      color: "text-blue-600",
+      bg: "bg-blue-50"
+    },
+    {
+      title: "Total Users",
+      value: stats?.totalUsers || 0,
+      icon: Users,
+      color: "text-green-600",
+      bg: "bg-green-50"
+    },
+    {
+      title: "Pending Reviews",
+      value: stats?.pendingReviews || 0,
+      icon: Clock,
+      color: "text-yellow-600",
+      bg: "bg-yellow-50"
+    },
+    {
+      title: "Total Views",
+      value: stats?.totalViews || 0,
+      icon: Eye,
+      color: "text-purple-600",
+      bg: "bg-purple-50"
     }
-  }, [tool]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  if (!tool) return null;
+  ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Tool: {tool.name}</DialogTitle>
-        </DialogHeader>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <p className="text-gray-600">Monitor your platform's performance and activity</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
-              <TabsTrigger value="media">Media</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="basic" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Tool Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
+                  </div>
+                  <div className={`${stat.bg} p-3 rounded-lg`}>
+                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select 
-                    value={formData.categoryId || ""} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-              <div>
-                <Label htmlFor="shortDescription">Short Description</Label>
-                <Textarea
-                  id="shortDescription"
-                  value={formData.shortDescription || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                  rows={2}
-                />
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 p-3 border rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="flex-1">
+                <p className="font-medium">New tool submitted: "AI Writing Assistant"</p>
+                <p className="text-sm text-gray-600">2 hours ago</p>
               </div>
-
-              <div>
-                <Label htmlFor="url">Website URL</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  value={formData.url || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                />
+            </div>
+            <div className="flex items-center gap-4 p-3 border rounded-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className="flex-1">
+                <p className="font-medium">User review pending approval</p>
+                <p className="text-sm text-gray-600">4 hours ago</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="pricingType">Pricing Type</Label>
-                  <Select 
-                    value={formData.pricingType || ""} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, pricingType: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="freemium">Freemium</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="free_trial">Free Trial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Switch
-                    id="featured"
-                    checked={formData.featured || false}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
-                  />
-                  <Label htmlFor="featured">Featured Tool</Label>
-                </div>
+            </div>
+            <div className="flex items-center gap-4 p-3 border rounded-lg">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <div className="flex-1">
+                <p className="font-medium">New user registration: john@example.com</p>
+                <p className="text-sm text-gray-600">6 hours ago</p>
               </div>
-            </TabsContent>
-
-            <TabsContent value="content" className="space-y-4">
-              <div>
-                <Label htmlFor="description">Full Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={6}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="pricingDetails">Pricing Details</Label>
-                <Textarea
-                  id="pricingDetails"
-                  value={formData.pricingDetails || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, pricingDetails: e.target.value }))}
-                  rows={3}
-                  placeholder="Detailed pricing information..."
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="media" className="space-y-4">
-              <div>
-                <Label htmlFor="logoUrl">Logo URL</Label>
-                <Input
-                  id="logoUrl"
-                  type="url"
-                  value={formData.logoUrl || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, logoUrl: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="gallery">Gallery URLs (one per line)</Label>
-                <Textarea
-                  id="gallery"
-                  value={formData.gallery?.join('\n') || ""}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    gallery: e.target.value.split('\n').filter(url => url.trim()) 
-                  }))}
-                  rows={4}
-                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="advanced" className="space-y-4">
-              <div>
-                <Label htmlFor="socialLinks">Social Links (JSON)</Label>
-                <Textarea
-                  id="socialLinks"
-                  value={JSON.stringify(formData.socialLinks || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setFormData(prev => ({ ...prev, socialLinks: parsed }));
-                    } catch (error) {
-                      // Invalid JSON, don't update
-                    }
-                  }}
-                  rows={4}
-                  placeholder='{"twitter": "https://twitter.com/...", "github": "https://github.com/..."}'
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="faqs">FAQs (JSON)</Label>
-                <Textarea
-                  id="faqs"
-                  value={JSON.stringify(formData.faqs || [], null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setFormData(prev => ({ ...prev, faqs: parsed }));
-                    } catch (error) {
-                      // Invalid JSON, don't update
-                    }
-                  }}
-                  rows={6}
-                  placeholder='[{"question": "Question?", "answer": "Answer..."}]'
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="prosAndCons">Pros & Cons (JSON)</Label>
-                <Textarea
-                  id="prosAndCons"
-                  value={JSON.stringify(formData.prosAndCons || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setFormData(prev => ({ ...prev, prosAndCons: parsed }));
-                    } catch (error) {
-                      // Invalid JSON, don't update
-                    }
-                  }}
-                  rows={6}
-                  placeholder='{"pros": ["Pro 1", "Pro 2"], "cons": ["Con 1", "Con 2"]}'
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
+            </div>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Generic Content Manager Component
+interface ContentManagerProps {
+  title: string;
+  description: string;
+  endpoint: string;
+  type: string;
+}
+
+function ContentManager({ title, description, endpoint, type }: ContentManagerProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  
+  // Query with better error handling
+  const { data: items = [], isLoading, error } = useQuery({
+    queryKey: [endpoint, searchTerm, statusFilter],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (statusFilter !== 'all') params.append('status', statusFilter);
+        
+        const url = `${endpoint}${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await apiRequest("GET", url);
+        return response;
+      } catch (error) {
+        console.error(`Error fetching ${type}:`, error);
+        return [];
+      }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      return apiRequest("PUT", `${endpoint}/${id}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [endpoint] });
+      toast({ title: "Updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Update failed", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `${endpoint}/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [endpoint] });
+      toast({ title: "Deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Delete failed", variant: "destructive" });
+    },
+  });
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { variant: "secondary" as const, label: "Pending", icon: Clock },
+      approved: { variant: "default" as const, label: "Approved", icon: CheckCircle },
+      rejected: { variant: "destructive" as const, label: "Rejected", icon: XCircle },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const Icon = config.icon;
+    
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <AlertTriangle className="w-5 h-5" />
+            Error Loading {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">
+            Unable to load {type}. This might be because the backend endpoints are not yet implemented.
+          </p>
+          <Button 
+            className="mt-4" 
+            onClick={() => queryClient.invalidateQueries({ queryKey: [endpoint] })}
+          >
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        <p className="text-gray-600">{description}</p>
+      </div>
+
+      {/* Controls */}
+      <div className="flex gap-4 items-center">
+        <div className="flex-1 max-w-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder={`Search ${type}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Add New
+        </Button>
+      </div>
+
+      {/* Content Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading {type}...</p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Filter className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-600">No {type} found</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {searchTerm || statusFilter !== 'all' 
+                  ? 'Try adjusting your filters' 
+                  : `Start by adding your first ${type.slice(0, -1)}`
+                }
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">
+                            {(item.name || item.title || 'N/A').charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-medium">{item.name || item.title || 'Unnamed'}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">
+                            {item.shortDescription || item.description || 'No description'}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(item.status || 'pending')}
+                    </TableCell>
+                    <TableCell>
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Select
+                          value={item.status || 'pending'}
+                          onValueChange={(status) => 
+                            updateMutation.mutate({ id: item.id, updates: { status } })
+                          }
+                        >
+                          <SelectTrigger className="w-24 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approve</SelectItem>
+                            <SelectItem value="rejected">Reject</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(item.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Placeholder components for other tabs
+function UsersManagement() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Users Management</h2>
+        <p className="text-gray-600">Manage user accounts, permissions, and activity</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">User management interface coming soon</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ReviewsManagement() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Reviews Management</h2>
+        <p className="text-gray-600">Moderate user reviews and ratings</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">Reviews management interface coming soon</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function SettingsManagement() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+        <p className="text-gray-600">Configure platform settings and preferences</p>
+      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">Settings management interface coming soon</p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
