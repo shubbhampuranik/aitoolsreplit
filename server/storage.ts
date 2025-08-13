@@ -38,6 +38,7 @@ import {
   type InsertPost,
   type InsertComment,
   type InsertReview,
+  type InsertCategory,
   type InsertCollection,
 } from "@shared/schema";
 import { db } from "./db";
@@ -52,6 +53,9 @@ export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, updates: Partial<Category>): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
   
   // Tools
   getTools(params?: {
@@ -234,6 +238,24 @@ export class DatabaseStorage implements IStorage {
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
     return category;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set(updates)
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   // Tools

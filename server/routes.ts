@@ -45,6 +45,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin category management endpoints
+  app.post('/api/admin/categories', isAuthenticated, async (req, res) => {
+    try {
+      const categoryData = req.body;
+      
+      // Generate slug from name if not provided
+      if (!categoryData.slug && categoryData.name) {
+        categoryData.slug = categoryData.name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      
+      const category = await storage.createCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.put('/api/admin/categories/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Update slug if name changed
+      if (updates.name && !updates.slug) {
+        updates.slug = updates.name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      
+      const category = await storage.updateCategory(id, updates);
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete('/api/admin/categories/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCategory(id);
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
   // Tools
   app.get('/api/tools', async (req, res) => {
     try {
