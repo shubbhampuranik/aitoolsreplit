@@ -839,14 +839,255 @@ function UsersManagement() {
 }
 
 function ReviewsManagement() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+
+  const { data: reviews = [], isLoading, refetch } = useQuery({
+    queryKey: ["/api/admin/reviews", statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (statusFilter && statusFilter !== "all") {
+        params.append("status", statusFilter);
+      }
+      const response = await apiRequest("GET", `/api/admin/reviews?${params}`);
+      return await response.json();
+    },
+  });
+
+  const { data: reportedReviews = [] } = useQuery({
+    queryKey: ["/api/admin/reported-reviews"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/reported-reviews");
+      return await response.json();
+    },
+  });
+
+  const updateReviewMutation = useMutation({
+    mutationFn: async ({ id, status, reported, reportReason }: { id: string; status?: string; reported?: boolean; reportReason?: string }) => {
+      const response = await apiRequest("PATCH", `/api/admin/reviews/${id}`, { status, reported, reportReason });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Review updated successfully" });
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reported-reviews"] });
+    },
+    onError: () => {
+      toast({ title: "Error updating review", variant: "destructive" });
+    },
+  });
+
+  const handleApprove = (reviewId: string) => {
+    updateReviewMutation.mutate({ id: reviewId, status: "approved" });
+  };
+
+  const handleReject = (reviewId: string) => {
+    updateReviewMutation.mutate({ id: reviewId, status: "rejected" });
+  };
+
+  const handleKeepReported = (reviewId: string) => {
+    updateReviewMutation.mutate({ id: reviewId, reported: false, reportReason: "" });
+  };
+
+  const handleRemoveReported = (reviewId: string) => {
+    updateReviewMutation.mutate({ id: reviewId, status: "rejected", reported: false });
+  };
+
+  const filteredReviews = reviews.filter((review: any) =>
+    review.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    review.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    review.author?.firstName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-8 text-center">
-          <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Reviews management interface coming soon</p>
-        </CardContent>
-      </Card>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search reviews..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Reviews</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="reported">Reported</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Reported Reviews Section */}
+      {reportedReviews.length > 0 && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-800 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Reported Reviews ({reportedReviews.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {reportedReviews.map((review: any) => (
+                <div key={review.id} className="bg-white p-4 rounded-lg border border-red-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-medium">{review.title}</h4>
+                      <p className="text-sm text-gray-600">
+                        By {review.author?.firstName} {review.author?.lastName} • Tool: {review.tool?.name}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleKeepReported(review.id)}
+                        variant="outline"
+                        size="sm"
+                        className="text-green-600 border-green-600 hover:bg-green-50"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Keep
+                      </Button>
+                      <Button
+                        onClick={() => handleRemoveReported(review.id)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">{review.content}</p>
+                  {review.reportReason && (
+                    <div className="bg-red-100 p-2 rounded text-sm">
+                      <strong>Report Reason:</strong> {review.reportReason}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reviews Table */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-gray-600">Loading reviews...</p>
+          </CardContent>
+        </Card>
+      ) : filteredReviews.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No reviews found</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b">
+                  <tr className="text-left">
+                    <th className="p-4 font-medium">Review</th>
+                    <th className="p-4 font-medium">Tool</th>
+                    <th className="p-4 font-medium">Author</th>
+                    <th className="p-4 font-medium">Rating</th>
+                    <th className="p-4 font-medium">Status</th>
+                    <th className="p-4 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReviews.map((review: any) => (
+                    <tr key={review.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4">
+                        <div>
+                          <div className="font-medium line-clamp-1">{review.title}</div>
+                          <div className="text-sm text-gray-500 line-clamp-2 mt-1">
+                            {review.content}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm">{review.tool?.name || "Unknown"}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm">
+                          {review.author?.firstName} {review.author?.lastName}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span>{review.rating}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge 
+                          variant={
+                            review.status === "approved" ? "default" : 
+                            review.status === "pending" ? "secondary" : 
+                            review.reported ? "destructive" : "destructive"
+                          }
+                        >
+                          {review.reported ? "Reported" : review.status}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          {review.status === "pending" && (
+                            <>
+                              <Button
+                                onClick={() => handleApprove(review.id)}
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleReject(review.id)}
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {review.status !== "pending" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
