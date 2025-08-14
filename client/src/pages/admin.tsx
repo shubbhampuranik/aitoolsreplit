@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +23,8 @@ import {
   ThumbsUp, Star, Edit, Trash2, BookOpen, Briefcase, Newspaper,
   Filter, CheckCircle, XCircle, Clock, AlertTriangle, MoreHorizontal,
   FileText, List, Image, Scale, ArrowRight, HelpCircle, ChevronDown,
-  ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil
+  ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil,
+  Layers, ThumbsDown, Users2, MessageCircle, Minus, X
 } from "lucide-react";
 
 interface Tool {
@@ -504,248 +506,822 @@ function ToolsList({ onEditTool }: { onEditTool: (tool: Tool) => void }) {
   );
 }
 
-// WordPress-style Tool Editor
+// Comprehensive Tool Editor with Tabbed Interface
 function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
+  const [activeTab, setActiveTab] = useState("overview");
   const [formData, setFormData] = useState({
+    // Overview fields
     name: tool.name || "",
     shortDescription: tool.shortDescription || "",
     description: tool.description || "",
     url: tool.url || "",
     logoUrl: tool.logoUrl || "",
-    pricingType: tool.pricingType || "free",
+    pricingType: tool.pricingType || "freemium",
     pricingDetails: tool.pricingDetails || "",
     categoryId: tool.categoryId || "",
-    features: tool.features || [],
-    prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
-    faqs: tool.faqs || [],
-    alternatives: tool.alternatives || [],
     status: tool.status || "pending",
-    featured: tool.featured || false
+    featured: tool.featured || false,
+    
+    // Features
+    features: tool.features || [],
+    
+    // Gallery
+    gallery: tool.gallery || [],
+    
+    // Pros and Cons
+    prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
+    
+    // Alternatives
+    alternatives: tool.alternatives || [],
+    
+    // Q&A
+    faqs: tool.faqs || [],
   });
-
+  
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories");
-      return await response.json();
-    },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("PUT", `/api/admin/tools/${tool.id}`, data);
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Tool updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
-    },
-    onError: () => {
-      toast({ title: "Error updating tool", variant: "destructive" });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+    setIsLoading(true);
+    
+    try {
+      const response = await apiRequest("PUT", `/api/admin/tools/${tool.id}`, formData);
+      
+      if (response.ok) {
+        toast({ title: "Tool updated successfully" });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
+      } else {
+        throw new Error("Failed to update tool");
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error updating tool", 
+        description: "Please try again",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateFormData = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="max-w-4xl">
-      {/* Back Button */}
+    <div className="max-w-6xl">
+      {/* Header */}
       <div className="mb-6">
         <Button onClick={onBack} variant="outline" className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Tools
         </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Edit Tool: {tool.name}</h1>
+            <p className="text-gray-600">Manage all aspects of this tool</p>
+          </div>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Tool Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mt-1"
-                  />
+      {/* Tabbed Interface */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="features" className="flex items-center gap-2">
+            <Layers className="w-4 h-4" />
+            Features
+          </TabsTrigger>
+          <TabsTrigger value="gallery" className="flex items-center gap-2">
+            <Image className="w-4 h-4" />
+            Gallery
+          </TabsTrigger>
+          <TabsTrigger value="pros-cons" className="flex items-center gap-2">
+            <Scale className="w-4 h-4" />
+            Pros & Cons
+          </TabsTrigger>
+          <TabsTrigger value="alternatives" className="flex items-center gap-2">
+            <Users2 className="w-4 h-4" />
+            Alternatives
+          </TabsTrigger>
+          <TabsTrigger value="qa" className="flex items-center gap-2">
+            <MessageCircle className="w-4 h-4" />
+            Q&A
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <OverviewTab 
+            formData={formData} 
+            updateFormData={updateFormData} 
+            categories={categories} 
+          />
+        </TabsContent>
+
+        {/* Features Tab */}
+        <TabsContent value="features">
+          <FeaturesTab 
+            features={formData.features} 
+            updateFeatures={(features) => updateFormData('features', features)} 
+          />
+        </TabsContent>
+
+        {/* Gallery Tab */}
+        <TabsContent value="gallery">
+          <GalleryTab 
+            gallery={formData.gallery} 
+            updateGallery={(gallery) => updateFormData('gallery', gallery)} 
+          />
+        </TabsContent>
+
+        {/* Pros & Cons Tab */}
+        <TabsContent value="pros-cons">
+          <ProsConsTab 
+            prosAndCons={formData.prosAndCons} 
+            updateProsAndCons={(prosAndCons) => updateFormData('prosAndCons', prosAndCons)} 
+          />
+        </TabsContent>
+
+        {/* Alternatives Tab */}
+        <TabsContent value="alternatives">
+          <AlternativesTab 
+            alternatives={formData.alternatives} 
+            updateAlternatives={(alternatives) => updateFormData('alternatives', alternatives)} 
+          />
+        </TabsContent>
+
+        {/* Q&A Tab */}
+        <TabsContent value="qa">
+          <QATab 
+            faqs={formData.faqs} 
+            updateFaqs={(faqs) => updateFormData('faqs', faqs)} 
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Overview Tab Component
+function OverviewTab({ formData, updateFormData, categories }: any) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Main Content */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Basic Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="name">Tool Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => updateFormData('name', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="shortDescription">Short Description</Label>
+              <Input
+                id="shortDescription"
+                value={formData.shortDescription}
+                onChange={(e) => updateFormData('shortDescription', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Full Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => updateFormData('description', e.target.value)}
+                className="mt-1 min-h-32"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="url">Tool URL</Label>
+              <Input
+                id="url"
+                type="url"
+                value={formData.url}
+                onChange={(e) => updateFormData('url', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="logoUrl">Logo URL</Label>
+              <Input
+                id="logoUrl"
+                type="url"
+                value={formData.logoUrl}
+                onChange={(e) => updateFormData('logoUrl', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pricing */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="pricingType">Pricing Type</Label>
+              <Select value={formData.pricingType} onValueChange={(value) => updateFormData('pricingType', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="freemium">Freemium</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="free_trial">Free Trial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="pricingDetails">Pricing Details</Label>
+              <Textarea
+                id="pricingDetails"
+                value={formData.pricingDetails}
+                onChange={(e) => updateFormData('pricingDetails', e.target.value)}
+                className="mt-1"
+                placeholder="Detailed pricing information..."
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sidebar */}
+      <div className="space-y-6">
+        {/* Publish Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Publish Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => updateFormData('status', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={formData.categoryId} onValueChange={(value) => updateFormData('categoryId', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="featured"
+                checked={formData.featured}
+                onChange={(e) => updateFormData('featured', e.target.checked)}
+              />
+              <Label htmlFor="featured">Featured Tool</Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Logo Preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Logo Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {formData.logoUrl ? (
+              <img 
+                src={formData.logoUrl} 
+                alt="Tool logo" 
+                className="w-24 h-24 rounded-lg object-cover mb-4"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-gray-500 text-sm">No logo</span>
+              </div>
+            )}
+            <Button variant="outline" className="w-full">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Image
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Features Tab Component
+function FeaturesTab({ features, updateFeatures }: any) {
+  const addFeature = () => {
+    updateFeatures([...features, { title: "", description: "" }]);
+  };
+
+  const removeFeature = (index: number) => {
+    const newFeatures = features.filter((_: any, i: number) => i !== index);
+    updateFeatures(newFeatures);
+  };
+
+  const updateFeature = (index: number, field: string, value: string) => {
+    const newFeatures = [...features];
+    newFeatures[index] = { ...newFeatures[index], [field]: value };
+    updateFeatures(newFeatures);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Tool Features</h3>
+          <p className="text-sm text-gray-600">Add key features and capabilities of this tool</p>
+        </div>
+        <Button onClick={addFeature}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Feature
+        </Button>
+      </div>
+
+      {features.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Layers className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No features added yet</p>
+            <Button onClick={addFeature} variant="outline" className="mt-4">
+              Add First Feature
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {features.map((feature: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Feature {index + 1}</h4>
+                  <Button
+                    onClick={() => removeFeature(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
                 
-                <div>
-                  <Label htmlFor="shortDescription">Short Description</Label>
-                  <Input
-                    id="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Full Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="mt-1 min-h-32"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="url">Tool URL</Label>
-                  <Input
-                    id="url"
-                    type="url"
-                    value={formData.url}
-                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    type="url"
-                    value={formData.logoUrl}
-                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="pricingType">Pricing Type</Label>
-                  <Select value={formData.pricingType} onValueChange={(value) => setFormData({ ...formData, pricingType: value })}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="freemium">Freemium</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="subscription">Subscription</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="pricingDetails">Pricing Details</Label>
-                  <Textarea
-                    id="pricingDetails"
-                    value={formData.pricingDetails}
-                    onChange={(e) => setFormData({ ...formData, pricingDetails: e.target.value })}
-                    className="mt-1"
-                    placeholder="Detailed pricing information..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Publish Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Publish Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="rounded"
-                  />
-                  <Label htmlFor="featured">Featured Tool</Label>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={updateMutation.isPending}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {updateMutation.isPending ? "Updating..." : "Update Tool"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Category */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Category</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category: Category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-
-            {/* Tool Image */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tool Image</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {formData.logoUrl && (
-                  <div className="mb-4">
-                    <img
-                      src={formData.logoUrl}
-                      alt="Tool logo"
-                      className="w-full h-32 object-cover rounded-lg border"
+                <div className="space-y-3">
+                  <div>
+                    <Label>Feature Title</Label>
+                    <Input
+                      value={feature.title || ""}
+                      onChange={(e) => updateFeature(index, 'title', e.target.value)}
+                      placeholder="e.g. Advanced AI Model"
                     />
                   </div>
-                )}
-                <Button variant="outline" className="w-full">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Image
-                </Button>
+                  
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={feature.description || ""}
+                      onChange={(e) => updateFeature(index, 'description', e.target.value)}
+                      placeholder="Describe this feature..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Gallery Tab Component
+function GalleryTab({ gallery, updateGallery }: any) {
+  const addImage = () => {
+    const url = prompt("Enter image URL:");
+    if (url) {
+      updateGallery([...gallery, url]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newGallery = gallery.filter((_: any, i: number) => i !== index);
+    updateGallery(newGallery);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Image Gallery</h3>
+          <p className="text-sm text-gray-600">Add screenshots and images showcasing the tool</p>
+        </div>
+        <Button onClick={addImage}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Image
+        </Button>
+      </div>
+
+      {gallery.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No images added yet</p>
+            <Button onClick={addImage} variant="outline" className="mt-4">
+              Add First Image
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {gallery.map((imageUrl: string, index: number) => (
+            <Card key={index}>
+              <CardContent className="p-4">
+                <div className="relative group">
+                  <img
+                    src={imageUrl}
+                    alt={`Gallery image ${index + 1}`}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                    <Button
+                      onClick={() => removeImage(index)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 truncate">{imageUrl}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Pros & Cons Tab Component
+function ProsConsTab({ prosAndCons, updateProsAndCons }: any) {
+  const addPro = () => {
+    const newProsAndCons = {
+      ...prosAndCons,
+      pros: [...(prosAndCons.pros || []), ""]
+    };
+    updateProsAndCons(newProsAndCons);
+  };
+
+  const addCon = () => {
+    const newProsAndCons = {
+      ...prosAndCons,
+      cons: [...(prosAndCons.cons || []), ""]
+    };
+    updateProsAndCons(newProsAndCons);
+  };
+
+  const updatePro = (index: number, value: string) => {
+    const newPros = [...(prosAndCons.pros || [])];
+    newPros[index] = value;
+    updateProsAndCons({ ...prosAndCons, pros: newPros });
+  };
+
+  const updateCon = (index: number, value: string) => {
+    const newCons = [...(prosAndCons.cons || [])];
+    newCons[index] = value;
+    updateProsAndCons({ ...prosAndCons, cons: newCons });
+  };
+
+  const removePro = (index: number) => {
+    const newPros = (prosAndCons.pros || []).filter((_: any, i: number) => i !== index);
+    updateProsAndCons({ ...prosAndCons, pros: newPros });
+  };
+
+  const removeCon = (index: number) => {
+    const newCons = (prosAndCons.cons || []).filter((_: any, i: number) => i !== index);
+    updateProsAndCons({ ...prosAndCons, cons: newCons });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold">Pros & Cons</h3>
+        <p className="text-sm text-gray-600">List the advantages and disadvantages of this tool</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Pros Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-green-600">Pros</h4>
+            <Button onClick={addPro} size="sm" variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Pro
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {(prosAndCons.pros || []).map((pro: string, index: number) => (
+              <div key={index} className="flex items-center gap-2">
+                <ThumbsUp className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <Input
+                  value={pro}
+                  onChange={(e) => updatePro(index, e.target.value)}
+                  placeholder="Enter a pro..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => removePro(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            
+            {(!prosAndCons.pros || prosAndCons.pros.length === 0) && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <ThumbsUp className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 text-sm">No pros added yet</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-      </form>
+
+        {/* Cons Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-red-600">Cons</h4>
+            <Button onClick={addCon} size="sm" variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Con
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {(prosAndCons.cons || []).map((con: string, index: number) => (
+              <div key={index} className="flex items-center gap-2">
+                <ThumbsDown className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <Input
+                  value={con}
+                  onChange={(e) => updateCon(index, e.target.value)}
+                  placeholder="Enter a con..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => removeCon(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            
+            {(!prosAndCons.cons || prosAndCons.cons.length === 0) && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <ThumbsDown className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 text-sm">No cons added yet</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Alternatives Tab Component
+function AlternativesTab({ alternatives, updateAlternatives }: any) {
+  const addAlternative = () => {
+    updateAlternatives([...alternatives, { name: "", url: "", description: "" }]);
+  };
+
+  const removeAlternative = (index: number) => {
+    const newAlternatives = alternatives.filter((_: any, i: number) => i !== index);
+    updateAlternatives(newAlternatives);
+  };
+
+  const updateAlternative = (index: number, field: string, value: string) => {
+    const newAlternatives = [...alternatives];
+    newAlternatives[index] = { ...newAlternatives[index], [field]: value };
+    updateAlternatives(newAlternatives);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Alternative Tools</h3>
+          <p className="text-sm text-gray-600">List similar or competing tools</p>
+        </div>
+        <Button onClick={addAlternative}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Alternative
+        </Button>
+      </div>
+
+      {alternatives.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Users2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No alternatives added yet</p>
+            <Button onClick={addAlternative} variant="outline" className="mt-4">
+              Add First Alternative
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {alternatives.map((alternative: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Alternative {index + 1}</h4>
+                  <Button
+                    onClick={() => removeAlternative(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Tool Name</Label>
+                    <Input
+                      value={alternative.name || ""}
+                      onChange={(e) => updateAlternative(index, 'name', e.target.value)}
+                      placeholder="e.g. Competitor Tool"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>URL</Label>
+                    <Input
+                      value={alternative.url || ""}
+                      onChange={(e) => updateAlternative(index, 'url', e.target.value)}
+                      placeholder="https://..."
+                      type="url"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Description</Label>
+                    <Input
+                      value={alternative.description || ""}
+                      onChange={(e) => updateAlternative(index, 'description', e.target.value)}
+                      placeholder="Brief comparison..."
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Q&A Tab Component
+function QATab({ faqs, updateFaqs }: any) {
+  const addFaq = () => {
+    updateFaqs([...faqs, { question: "", answer: "" }]);
+  };
+
+  const removeFaq = (index: number) => {
+    const newFaqs = faqs.filter((_: any, i: number) => i !== index);
+    updateFaqs(newFaqs);
+  };
+
+  const updateFaq = (index: number, field: string, value: string) => {
+    const newFaqs = [...faqs];
+    newFaqs[index] = { ...newFaqs[index], [field]: value };
+    updateFaqs(newFaqs);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Frequently Asked Questions</h3>
+          <p className="text-sm text-gray-600">Add common questions and answers about this tool</p>
+        </div>
+        <Button onClick={addFaq}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Q&A
+        </Button>
+      </div>
+
+      {faqs.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No Q&A added yet</p>
+            <Button onClick={addFaq} variant="outline" className="mt-4">
+              Add First Q&A
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {faqs.map((faq: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Q&A {index + 1}</h4>
+                  <Button
+                    onClick={() => removeFaq(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label>Question</Label>
+                    <Input
+                      value={faq.question || ""}
+                      onChange={(e) => updateFaq(index, 'question', e.target.value)}
+                      placeholder="What is the question?"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Answer</Label>
+                    <Textarea
+                      value={faq.answer || ""}
+                      onChange={(e) => updateFaq(index, 'answer', e.target.value)}
+                      placeholder="Provide a detailed answer..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
