@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertToolSchema, insertPromptSchema, insertCourseSchema, insertJobSchema, insertPostSchema, insertCommentSchema, insertReviewSchema } from "@shared/schema";
 import { z } from "zod";
+import { aiToolAnalyzer } from "./aiToolAnalyzer";
+import { imageDownloader } from "./imageDownloader";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -565,6 +567,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // AI-Powered Tool Data Fetching
+  app.post('/api/tools/fetch-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ message: "Invalid URL format" });
+      }
+
+      console.log(`Starting AI analysis for URL: ${url}`);
+      
+      // Analyze tool with AI
+      const analysis = await aiToolAnalyzer.analyzeToolFromUrl(url);
+      
+      if (!analysis.success) {
+        return res.status(400).json({ 
+          message: "Failed to analyze tool", 
+          error: analysis.error 
+        });
+      }
+
+      let toolData = analysis.data!;
+
+      // Download and store images if found
+      if (toolData.logoUrl) {
+        console.log(`Downloading logo: ${toolData.logoUrl}`);
+        const logoResult = await imageDownloader.downloadAndStoreImage(toolData.logoUrl, 'logo');
+        if (logoResult.success && logoResult.objectPath) {
+          toolData.logoUrl = logoResult.objectPath;
+        } else {
+          console.warn(`Logo download failed: ${logoResult.error}`);
+          toolData.logoUrl = undefined; // Remove if download failed
+        }
+      }
+
+      // Download screenshots
+      if (toolData.screenshots && toolData.screenshots.length > 0) {
+        console.log(`Downloading ${toolData.screenshots.length} screenshots`);
+        const screenshotResults = await imageDownloader.downloadMultipleImages(toolData.screenshots, 'screenshot');
+        toolData.screenshots = screenshotResults
+          .filter(result => result.result.success && result.result.objectPath)
+          .map(result => result.result.objectPath!);
+      }
+
+      // Get existing tools for alternative suggestions
+      const existingTools = await storage.getTools();
+      const alternatives = await aiToolAnalyzer.suggestAlternatives(
+        toolData.features?.map(f => f.title) || [],
+        toolData.category,
+        existingTools.map(t => ({ 
+          id: t.id, 
+          name: t.name, 
+          category: t.categoryId || '',
+          features: (t.features as any)?.map((f: any) => f.title) || []
+        }))
+      );
+
+      res.json({
+        success: true,
+        data: toolData,
+        suggestedAlternatives: alternatives,
+        webContentPreview: analysis.webContent
+      });
+
+    } catch (error) {
+      console.error("Error in AI tool analysis:", error);
+      res.status(500).json({ 
+        message: "Failed to analyze tool", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

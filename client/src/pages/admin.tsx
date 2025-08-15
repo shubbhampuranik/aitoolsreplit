@@ -74,6 +74,11 @@ export default function AdminPage() {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['tools']));
+  const [fetchingData, setFetchingData] = useState(false);
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null);
+  const [showAiPreview, setShowAiPreview] = useState(false);
+  const [currentUpdateFormData, setCurrentUpdateFormData] = useState<any>(null);
+  const { toast } = useToast();
   
   if (!user) {
     return (
@@ -102,6 +107,89 @@ export default function AdminPage() {
   const handleToolEdit = (tool: Tool) => {
     setSelectedTool(tool);
     setCurrentView('tool-edit');
+  };
+
+  const handleFetchAIData = async (url: string) => {
+    if (!url) {
+      toast({ title: "Error", description: "Please enter a URL", variant: "destructive" });
+      return;
+    }
+
+    setFetchingData(true);
+    try {
+      const response = await apiRequest(`/api/tools/fetch-data`, 'POST', { url });
+      
+      if (response.success) {
+        setAiAnalysisResult(response);
+        setShowAiPreview(true);
+        toast({
+          title: "AI Analysis Complete",
+          description: `Successfully analyzed ${response.data.name}. Review the data before applying.`
+        });
+      } else {
+        throw new Error(response.error || 'Failed to fetch data');
+      }
+    } catch (error) {
+      console.error('AI fetch error:', error);
+      toast({
+        title: "AI Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze the website",
+        variant: "destructive"
+      });
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
+  const applyAIData = () => {
+    if (!aiAnalysisResult?.data || !currentUpdateFormData) return;
+
+    const data = aiAnalysisResult.data;
+    const updateFormData = currentUpdateFormData;
+    
+    // Apply the AI-generated data using updateFormData function
+    updateFormData('name', data.name);
+    updateFormData('description', data.description);
+    updateFormData('shortDescription', data.shortDescription);
+    updateFormData('pricingType', data.pricingType);
+    updateFormData('pricingDetails', data.pricingDetails || '');
+    
+    if (data.logoUrl) {
+      updateFormData('logoUrl', data.logoUrl);
+    }
+    
+    if (data.screenshots && data.screenshots.length > 0) {
+      updateFormData('gallery', data.screenshots);
+    }
+
+    // Handle features
+    if (data.features && data.features.length > 0) {
+      updateFormData('features', data.features);
+    }
+
+    // Handle pros and cons
+    if (data.pros && data.cons) {
+      updateFormData('prosAndCons', {
+        pros: data.pros,
+        cons: data.cons
+      });
+    }
+
+    // Set AI-generated flag (if these fields exist in the form)
+    try {
+      updateFormData('aiGenerated', true);
+      updateFormData('aiConfidenceScore', data.confidenceScore);
+    } catch (e) {
+      // These fields might not exist in the form schema
+    }
+
+    setShowAiPreview(false);
+    setAiAnalysisResult(null);
+    
+    toast({
+      title: "Data Applied",
+      description: "AI-generated data has been applied to the form. Review and edit as needed."
+    });
   };
 
   return (
@@ -277,7 +365,7 @@ export default function AdminPage() {
             {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} />}
             {currentView === 'tools-add' && <AddNewTool />}
             {currentView === 'tools-categories' && <ToolCategories />}
-            {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} />}
+            {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} />}
             {currentView === 'prompts-list' && <PromptsManagement />}
             {currentView === 'courses-list' && <CoursesManagement />}
             {currentView === 'jobs-list' && <JobsManagement />}
@@ -288,6 +376,175 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Analysis Preview Dialog */}
+      <Dialog open={showAiPreview} onOpenChange={setShowAiPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="w-5 h-5" />
+              AI Analysis Preview
+            </DialogTitle>
+          </DialogHeader>
+          
+          {aiAnalysisResult && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Confidence Score: <Badge variant="outline">{Math.round((aiAnalysisResult.data.confidenceScore || 0) * 100)}%</Badge>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Review the generated data before applying to your tool
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowAiPreview(false)}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => applyAIData()}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Apply Data
+                  </Button>
+                </div>
+              </div>
+
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Tool Name</Label>
+                    <p className="mt-1 p-2 bg-gray-50 rounded border">{aiAnalysisResult.data.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Short Description</Label>
+                    <p className="mt-1 p-2 bg-gray-50 rounded border">{aiAnalysisResult.data.shortDescription}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Full Description</Label>
+                    <p className="mt-1 p-2 bg-gray-50 rounded border whitespace-pre-wrap">{aiAnalysisResult.data.description}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Pricing Type</Label>
+                      <p className="mt-1 p-2 bg-gray-50 rounded border">{aiAnalysisResult.data.pricingType}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Pricing Details</Label>
+                      <p className="mt-1 p-2 bg-gray-50 rounded border">{aiAnalysisResult.data.pricingDetails || 'N/A'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Features */}
+              {aiAnalysisResult.data.features && aiAnalysisResult.data.features.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Features</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 gap-2">
+                      {aiAnalysisResult.data.features.map((feature: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Pros and Cons */}
+              {(aiAnalysisResult.data.pros || aiAnalysisResult.data.cons) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Pros & Cons</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {aiAnalysisResult.data.pros && (
+                        <div>
+                          <h4 className="font-medium text-green-600 mb-3">Pros</h4>
+                          <div className="space-y-2">
+                            {aiAnalysisResult.data.pros.map((pro: string, index: number) => (
+                              <div key={index} className="flex items-start gap-2 p-2 bg-green-50 rounded border">
+                                <ThumbsUp className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{pro}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {aiAnalysisResult.data.cons && (
+                        <div>
+                          <h4 className="font-medium text-red-600 mb-3">Cons</h4>
+                          <div className="space-y-2">
+                            {aiAnalysisResult.data.cons.map((con: string, index: number) => (
+                              <div key={index} className="flex items-start gap-2 p-2 bg-red-50 rounded border">
+                                <ThumbsDown className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{con}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Images */}
+              {(aiAnalysisResult.data.logoUrl || (aiAnalysisResult.data.screenshots && aiAnalysisResult.data.screenshots.length > 0)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Images</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {aiAnalysisResult.data.logoUrl && (
+                      <div>
+                        <Label className="text-sm font-medium">Logo</Label>
+                        <div className="mt-2 p-4 border rounded">
+                          <img 
+                            src={aiAnalysisResult.data.logoUrl} 
+                            alt="Logo"
+                            className="w-16 h-16 object-contain rounded"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {aiAnalysisResult.data.screenshots && aiAnalysisResult.data.screenshots.length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium">Screenshots ({aiAnalysisResult.data.screenshots.length})</Label>
+                        <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {aiAnalysisResult.data.screenshots.slice(0, 6).map((screenshot: string, index: number) => (
+                            <div key={index} className="border rounded p-2">
+                              <img 
+                                src={screenshot} 
+                                alt={`Screenshot ${index + 1}`}
+                                className="w-full h-24 object-cover rounded"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
@@ -507,7 +764,7 @@ function ToolsList({ onEditTool }: { onEditTool: (tool: Tool) => void }) {
 }
 
 // Comprehensive Tool Editor with Tabbed Interface
-function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
+function ToolEditor({ tool, onBack, onSetUpdateFormData }: { tool: Tool; onBack: () => void; onSetUpdateFormData: (fn: any) => void }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [formData, setFormData] = useState({
     // Overview fields
@@ -572,6 +829,12 @@ function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Set the updateFormData function reference for AI data application
+  useEffect(() => {
+    onSetUpdateFormData(updateFormData);
+    return () => onSetUpdateFormData(null);
+  }, [onSetUpdateFormData]);
 
   return (
     <div className="max-w-6xl">
@@ -716,13 +979,25 @@ function OverviewTab({ formData, updateFormData, categories }: any) {
             
             <div>
               <Label htmlFor="url">Tool URL</Label>
-              <Input
-                id="url"
-                type="url"
-                value={formData.url}
-                onChange={(e) => updateFormData('url', e.target.value)}
-                className="mt-1"
-              />
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="url"
+                  type="url"
+                  value={formData.url}
+                  onChange={(e) => updateFormData('url', e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={() => handleFetchAIData(formData.url)}
+                  disabled={fetchingData || !formData.url}
+                  variant="outline"
+                  className="flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Bot className="w-4 h-4" />
+                  {fetchingData ? 'Analyzing...' : 'Fetch Data'}
+                </Button>
+              </div>
             </div>
 
             <div>

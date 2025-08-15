@@ -90,6 +90,13 @@ export const tools = pgTable("tools", {
   faqs: jsonb("faqs"),
   prosAndCons: jsonb("pros_and_cons"),
   alternatives: jsonb("alternatives"),
+  // AI-powered features
+  aiGenerated: boolean("ai_generated").default(false),
+  aiConfidenceScore: decimal("ai_confidence_score", { precision: 3, scale: 2 }),
+  originalWebContent: text("original_web_content"), // Store for reference
+  useCases: text("use_cases").array(),
+  tags: text("tags").array(),
+  targetAudience: text("target_audience"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
