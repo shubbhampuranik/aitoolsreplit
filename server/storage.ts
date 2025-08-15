@@ -18,6 +18,7 @@ import {
   promptTags,
   collectionItems,
   toolAlternatives,
+  alternativeVotes,
   type User,
   type UpsertUser,
   type Category,
@@ -358,14 +359,6 @@ export class DatabaseStorage implements IStorage {
   } = {}): Promise<Tool[]> {
     const { search, status, limit = 100, offset = 0 } = params;
 
-    let query = db
-      .select({
-        tool: tools,
-        category: categories,
-      })
-      .from(tools)
-      .leftJoin(categories, eq(tools.categoryId, categories.id));
-
     const conditions = [];
 
     if (status && status !== "all") {
@@ -382,14 +375,24 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const baseQuery = db
+      .select({
+        tool: tools,
+        category: categories,
+      })
+      .from(tools)
+      .leftJoin(categories, eq(tools.categoryId, categories.id));
 
-    const results = await query
-      .orderBy(desc(tools.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const results = conditions.length > 0 
+      ? await baseQuery
+          .where(and(...conditions)!)
+          .orderBy(desc(tools.createdAt))
+          .limit(limit)
+          .offset(offset)
+      : await baseQuery
+          .orderBy(desc(tools.createdAt))
+          .limit(limit)
+          .offset(offset);
 
     return results.map(result => ({
       ...result.tool,
@@ -856,7 +859,9 @@ export class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row,
-      author: row.author.id ? row.author : undefined
+      author: row.author?.id ? row.author : undefined,
+      reported: null,
+      reportReason: null
     })) as Review[];
   }
 
@@ -1337,10 +1342,7 @@ export class DatabaseStorage implements IStorage {
           .set({ upvotes: upvoteCount })
           .where(eq(courses.id, itemId));
       } else if (itemType === 'job') {
-        await db
-          .update(jobs)
-          .set({ upvotes: upvoteCount })
-          .where(eq(jobs.id, itemId));
+        // Jobs don't have upvotes field in schema, skip update
       } else if (itemType === 'model') {
         await db
           .update(models)
@@ -1672,7 +1674,7 @@ export class DatabaseStorage implements IStorage {
     // Add vote counts and user vote status for each alternative
     const enhancedAlternatives = [];
     for (const alt of alternatives) {
-      const voteCount = await this.db
+      const voteCount = await db
         .select({ count: sql<number>`count(*)` })
         .from(alternativeVotes)
         .where(and(
@@ -1682,7 +1684,7 @@ export class DatabaseStorage implements IStorage {
 
       let userVoted = false;
       if (userId) {
-        const userVote = await this.db
+        const userVote = await db
           .select()
           .from(alternativeVotes)
           .where(and(
@@ -1706,7 +1708,7 @@ export class DatabaseStorage implements IStorage {
   // Vote on alternative
   async voteAlternative(toolId: string, alternativeId: string, userId: string): Promise<any> {
     // Check if user already voted
-    const existingVote = await this.db
+    const existingVote = await db
       .select()
       .from(alternativeVotes)
       .where(and(
@@ -1717,7 +1719,7 @@ export class DatabaseStorage implements IStorage {
 
     if (existingVote.length > 0) {
       // Remove vote (toggle)
-      await this.db
+      await db
         .delete(alternativeVotes)
         .where(and(
           eq(alternativeVotes.toolId, toolId),
@@ -1727,7 +1729,7 @@ export class DatabaseStorage implements IStorage {
       return { userVoted: false, message: "Vote removed" };
     } else {
       // Add vote
-      await this.db
+      await db
         .insert(alternativeVotes)
         .values({
           toolId,
