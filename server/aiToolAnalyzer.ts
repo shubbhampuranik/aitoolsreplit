@@ -10,9 +10,9 @@ const ToolDataSchema = z.object({
   description: z.string().min(100).max(1000),
   shortDescription: z.string().min(50).max(300),
   category: z.string(),
-  subcategory: z.string().optional(),
+  subcategory: z.string().optional().nullable(),
   pricingType: z.enum(['free', 'freemium', 'paid']),
-  pricingDetails: z.string().optional(),
+  pricingDetails: z.string().optional().nullable(),
   features: z.array(z.object({
     title: z.string(),
     description: z.string()
@@ -22,8 +22,8 @@ const ToolDataSchema = z.object({
   useCases: z.array(z.string()).min(2).max(6),
   tags: z.array(z.string()).min(3).max(15),
   targetAudience: z.string(),
-  logoUrl: z.string().url().optional(),
-  screenshots: z.array(z.string().url()).max(5).optional(),
+  logoUrl: z.string().url().optional().nullable(),
+  screenshots: z.array(z.string().url()).max(5).optional().nullable(),
   confidenceScore: z.number().min(0).max(1)
 });
 
@@ -203,9 +203,17 @@ export class AIToolAnalyzer {
 
     try {
       const parsed = JSON.parse(result);
-      return ToolDataSchema.parse(parsed);
+      console.log('Parsed AI response:', JSON.stringify(parsed, null, 2));
+      
+      const validatedData = ToolDataSchema.parse(parsed);
+      console.log('Schema validation successful');
+      return validatedData;
     } catch (error) {
       console.error('Failed to parse AI response:', error);
+      console.error('Raw AI response:', result);
+      if (error instanceof z.ZodError) {
+        console.error('Validation errors:', error.issues);
+      }
       throw new Error('Invalid AI response format');
     }
   }
@@ -280,7 +288,8 @@ IMPORTANT:
 - PricingType must be exactly "free", "freemium", or "paid"
 - ConfidenceScore must be a number between 0 and 1
 - Category must match one from the provided list
-- Only include logoUrl and screenshots if they exist in the found images
+- For optional fields (subcategory, pricingDetails, logoUrl, screenshots): use null if not available
+- Only include valid URLs in logoUrl and screenshots arrays
 
 Respond with valid JSON only, no markdown or explanations.`;
   }
