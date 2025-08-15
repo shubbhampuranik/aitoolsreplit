@@ -24,7 +24,7 @@ import {
   Filter, CheckCircle, XCircle, Clock, AlertTriangle, MoreHorizontal,
   FileText, List, Image, Scale, ArrowRight, HelpCircle, ChevronDown,
   ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil,
-  Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot
+  Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot, RotateCcw
 } from "lucide-react";
 
 interface Tool {
@@ -1755,12 +1755,78 @@ function QATab({ faqs, updateFaqs }: { faqs: any[], updateFaqs: (faqs: any[]) =>
 
 // Placeholder components for other views
 function AddNewTool() {
+  const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Check for pending AI data on component mount
+  useEffect(() => {
+    const pendingData = sessionStorage.getItem('pendingAIData');
+    if (pendingData && !isInitialized) {
+      try {
+        const aiData = JSON.parse(pendingData);
+        sessionStorage.removeItem('pendingAIData'); // Clean up
+        setIsInitialized(true);
+        
+        toast({
+          title: "AI Data Loaded",
+          description: `Loaded AI-generated data for ${aiData.name}. You can review and edit before creating the tool.`
+        });
+      } catch (error) {
+        console.error('Error loading AI data:', error);
+        sessionStorage.removeItem('pendingAIData');
+      }
+    }
+  }, [isInitialized, toast]);
+
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="p-8 text-center">
-          <Plus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Add New Tool form will be implemented here</p>
+        <CardContent className="p-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <Plus className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-semibold mb-2">Add New AI Tool</h3>
+              <p className="text-gray-600">Create a new tool entry for the community platform</p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Bot className="w-5 h-5 text-blue-600" />
+                <h4 className="text-lg font-medium text-blue-900">AI-Powered Tool Creation</h4>
+              </div>
+              <p className="text-blue-800 mb-4">
+                Use our AI analysis feature to automatically generate comprehensive tool data from any website URL.
+              </p>
+              <div className="space-y-3 text-sm text-blue-700">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>Enter any AI tool website URL</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>AI analyzes and generates descriptions, features, pros/cons</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>Review and edit the generated data before publishing</span>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-white rounded border">
+                <p className="text-sm text-gray-600 mb-3">
+                  <strong>How to use:</strong> Go to any existing tool and click "Fetch Data" to analyze a new tool, or edit an existing tool to generate improved content.
+                </p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  variant="outline"
+                  className="w-full"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Refresh to Check for AI Data
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
