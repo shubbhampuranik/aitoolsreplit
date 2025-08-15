@@ -177,8 +177,8 @@ export default function AdminPage() {
         setAiAnalysisResult(null);
         
         toast({
-          title: "Data Ready",
-          description: "AI data is ready. The form will update automatically."
+          title: "Data Ready", 
+          description: "AI data is ready. The form will update automatically. If fields don't update, refresh the page."
         });
         return;
       }
