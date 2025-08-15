@@ -225,10 +225,10 @@ export default function AdminPage() {
           description: data.description,
           shortDescription: data.shortDescription,
           url: toolUrl,
-          categoryId: category?.id || categories[0]?.id, // Use matching category or first available
+          categoryId: category?.id || categories[0]?.id,
           pricingType: data.pricingType,
-          pricingDetails: data.pricingDetails || '',
-          logoUrl: data.logoUrl || '',
+          pricingDetails: data.pricingDetails || null,
+          logoUrl: data.logoUrl || null,
           gallery: data.screenshots || [],
           features: data.features || [],
           prosAndCons: {
@@ -236,14 +236,15 @@ export default function AdminPage() {
             cons: data.cons || []
           },
           tags: data.tags || [],
-          targetAudience: data.targetAudience || '',
+          targetAudience: data.targetAudience || null,
           useCases: data.useCases || [],
-          status: 'approved', // Auto-approve AI-generated tools
+          status: 'approved',
           aiGenerated: true,
-          aiConfidenceScore: data.confidenceScore
+          aiConfidenceScore: data.confidenceScore?.toString() || '0.80'
         };
 
         // Create the tool
+        console.log('Sending tool data:', newToolData);
         const response = await apiRequest('POST', '/api/tools', newToolData);
         const result = await response.json();
         
