@@ -157,12 +157,17 @@ export default function AdminPage() {
     
     // If we're in the tool editor, apply data directly to form
     if (currentUpdateFormData) {
+      console.log('Applying AI data to existing tool form');
       const updateFormData = currentUpdateFormData;
       
       // Apply the AI-generated data using updateFormData function
+      console.log('Updating name:', data.name);
       updateFormData('name', data.name);
+      console.log('Updating description:', data.description);
       updateFormData('description', data.description);
+      console.log('Updating shortDescription:', data.shortDescription);
       updateFormData('shortDescription', data.shortDescription);
+      console.log('Updating pricingType:', data.pricingType);
       updateFormData('pricingType', data.pricingType);
       updateFormData('pricingDetails', data.pricingDetails || '');
       
@@ -171,16 +176,19 @@ export default function AdminPage() {
       }
       
       if (data.screenshots && data.screenshots.length > 0) {
+        console.log('Updating gallery:', data.screenshots);
         updateFormData('gallery', data.screenshots);
       }
 
       // Handle features
       if (data.features && data.features.length > 0) {
+        console.log('Updating features:', data.features);
         updateFormData('features', data.features);
       }
 
       // Handle pros and cons
       if (data.pros && data.cons) {
+        console.log('Updating prosAndCons:', { pros: data.pros, cons: data.cons });
         updateFormData('prosAndCons', {
           pros: data.pros,
           cons: data.cons
