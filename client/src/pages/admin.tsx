@@ -119,7 +119,7 @@ export default function AdminPage() {
     try {
       const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
       const data = await response.json();
-      console.log('Frontend received response:', data);
+      console.log('Frontend received parsed data:', data);
       
       // Check if response has success property and data
       if (data && data.success && data.data) {
