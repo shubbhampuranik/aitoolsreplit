@@ -101,7 +101,7 @@ export default function AlternativesPage() {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
+          return parseFloat(String(b.rating || "0")) - parseFloat(String(a.rating || "0"));
         case 'upvotes':
         default:
           return (b.upvotes || 0) - (a.upvotes || 0);
@@ -235,10 +235,10 @@ export default function AlternativesPage() {
                             <span>{alt.upvotes || 0} votes</span>
                           </div>
                           
-                          {alt.rating > 0 && (
+                          {parseFloat(String(alt.rating || "0")) > 0 && (
                             <div className="flex items-center gap-1">
                               <span>⭐</span>
-                              <span>{alt.rating.toFixed(1)}</span>
+                              <span>{parseFloat(String(alt.rating || "0")).toFixed(1)}</span>
                             </div>
                           )}
                         </div>
