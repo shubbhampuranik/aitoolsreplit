@@ -87,9 +87,33 @@ type Review = {
 
 // Alternatives Section Component
 function AlternativesSection({ toolId, toolName }: { toolId: string; toolName: string }) {
-  const { data: alternatives = [], isLoading } = useQuery<Array<Tool & { upvotes: number }>>({
+  const { isAuthenticated } = useAuth();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const { data: alternatives = [], isLoading } = useQuery<Array<Tool & { upvotes: number; userVoted: boolean }>>({
     queryKey: ['/api/tools', toolId, 'alternatives'],
   });
+
+  const voteAlternativeMutation = useMutation({
+    mutationFn: async (alternativeId: string) => {
+      const response = await fetch(`/api/tools/${toolId}/alternatives/${alternativeId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to vote');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+    },
+  });
+
+  const handleVote = (alternativeId: string) => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    voteAlternativeMutation.mutate(alternativeId);
+  };
 
   if (isLoading) {
     return (
@@ -114,70 +138,108 @@ function AlternativesSection({ toolId, toolName }: { toolId: string; toolName: s
     );
   }
 
+  const displayedAlternatives = alternatives.slice(0, 10);
+  const hasMoreAlternatives = alternatives.length > 10;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Compare {toolName} with Alternatives</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {alternatives.length > 0 ? (
-          <div className="grid gap-4">
-            {alternatives.map((alt) => (
-              <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  {alt.logoUrl ? (
-                    <img 
-                      src={alt.logoUrl} 
-                      alt={alt.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ExternalLink className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <ThumbsUp className="w-3 h-3" />
-                      <span>{alt.upvotes || 0}</span>
-                    </div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Compare {toolName} with Alternatives</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alternatives.length > 0 ? (
+            <div className="grid gap-4">
+              {displayedAlternatives.map((alt) => (
+                <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    {alt.logoUrl ? (
+                      <img 
+                        src={alt.logoUrl} 
+                        alt={alt.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ExternalLink className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {alt.shortDescription || alt.description || 'No description available'}
-                  </p>
-                  {alt.url && (
-                    <a 
-                      href={alt.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-block"
-                    >
-                      Visit website →
-                    </a>
-                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Link href={`/tools/${alt.id}`}>
+                        <h3 className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">{alt.name}</h3>
+                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleVote(alt.id)}
+                          className={`p-1 h-auto ${alt.userVoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}
+                          disabled={voteAlternativeMutation.isPending}
+                        >
+                          <ThumbsUp className={`w-3 h-3 ${alt.userVoted ? 'fill-current' : ''}`} />
+                        </Button>
+                        <span className="text-sm text-gray-500">{alt.upvotes || 0}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {alt.shortDescription || alt.description || 'No description available'}
+                    </p>
+                    {alt.url && (
+                      <a 
+                        href={alt.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-block"
+                      >
+                        Visit website →
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Link href={`/tools/${alt.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Details
+                      </Button>
+                    </Link>
+                    {alt.url && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(alt.url, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Visit
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                {alt.url && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open(alt.url, '_blank')}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Visit
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <ExternalLink className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No alternatives available yet</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+              
+              {hasMoreAlternatives && (
+                <div className="text-center pt-4">
+                  <Link href={`/tools/${toolId}/alternatives`}>
+                    <Button variant="outline" className="w-full">
+                      View all {alternatives.length} alternatives
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <ExternalLink className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">No alternatives available yet</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {showAuthDialog && (
+        <AuthDialog onClose={() => setShowAuthDialog(false)} />
+      )}
+    </>
   );
 }
 

@@ -802,7 +802,7 @@ function OverviewTab({ formData, updateFormData, categories }: any) {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {categories.map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -1239,7 +1239,8 @@ function AlternativesTab({ toolId }: { toolId: string }) {
                   />
                   <div>
                     <h4 className="font-medium">{tool.name}</h4>
-                    <p className="text-sm text-gray-600">{tool.pricingType} • ⭐ {tool.rating}/5</p>
+                    <p className="text-sm text-gray-600 mb-1">{tool.shortDescription || tool.description || 'No description available'}</p>
+                    <p className="text-xs text-gray-500">{tool.pricingType} • ⭐ {tool.rating}/5 • {tool.upvotes || 0} votes</p>
                   </div>
                 </div>
                 <Button
@@ -1283,8 +1284,9 @@ function AlternativesTab({ toolId }: { toolId: string }) {
                     />
                     <div>
                       <h4 className="font-medium">{alternative.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        {alternative.pricingType} • ⭐ {alternative.rating}/5 • {alternative.upvotes} upvotes
+                      <p className="text-sm text-gray-600 mb-1">{alternative.shortDescription || alternative.description || 'No description available'}</p>
+                      <p className="text-xs text-gray-500">
+                        {alternative.pricingType} • ⭐ {alternative.rating}/5 • {alternative.upvotes || 0} upvotes
                       </p>
                     </div>
                   </div>
@@ -1313,29 +1315,35 @@ function AlternativesTab({ toolId }: { toolId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Select onValueChange={handleAddAlternative}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a tool to add as alternative" />
-            </SelectTrigger>
-            <SelectContent>
-              {allTools.map((tool: any) => (
-                <SelectItem 
-                  key={tool.id} 
-                  value={tool.id}
-                  disabled={alternatives.some((alt: any) => alt.id === tool.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={tool.logoUrl || '/api/placeholder/20/20'} 
-                      alt={tool.name}
-                      className="w-4 h-4 rounded object-cover"
-                    />
-                    {tool.name} ({tool.category?.name})
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Select onValueChange={handleAddAlternative}>
+                <SelectTrigger className="pl-10">
+                  <SelectValue placeholder="Search and select a tool to add as alternative..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {allTools.map((tool: any) => (
+                    <SelectItem 
+                      key={tool.id} 
+                      value={tool.id}
+                      disabled={alternatives.some((alt: any) => alt.id === tool.id)}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{tool.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {(tool.shortDescription || tool.description || '').substring(0, 60)}... • {tool.pricingType}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-gray-500">
+              Search through {allTools.length} approved tools to add as alternatives
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -1517,7 +1525,7 @@ function ToolCategories() {
     },
   });
 
-  const filteredCategories = categories.filter((category: any) =>
+  const filteredCategories = (categories as any[]).filter((category: any) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     category.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );

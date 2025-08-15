@@ -572,6 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/tools/:id/alternatives', async (req, res) => {
     try {
       const toolId = req.params.id;
+      const userId = (req as any).user?.claims?.sub || null;
       
       const tool = await storage.getTool(toolId);
       if (!tool) {
@@ -579,7 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get stored alternatives first with enhanced data
-      const storedAlternatives = await storage.getToolAlternativesWithDetails(toolId);
+      const storedAlternatives = await storage.getToolAlternativesWithDetails(toolId, userId);
       
       // If no stored alternatives, get auto-suggested ones and save them
       if (storedAlternatives.length === 0) {
@@ -591,7 +592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Return auto-suggested with enhanced data
-        const enhancedAutoSuggested = await storage.getToolAlternativesWithDetails(toolId);
+        const enhancedAutoSuggested = await storage.getToolAlternativesWithDetails(toolId, userId);
         return res.json(enhancedAutoSuggested);
       }
 
@@ -638,6 +639,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing alternative:", error);
       res.status(500).json({ message: "Failed to remove alternative" });
+    }
+  });
+
+  // Vote on alternative
+  app.post('/api/tools/:toolId/alternatives/:alternativeId/vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const { toolId, alternativeId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const result = await storage.voteAlternative(toolId, alternativeId, userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error voting on alternative:", error);
+      res.status(500).json({ message: "Failed to vote on alternative" });
     }
   });
 

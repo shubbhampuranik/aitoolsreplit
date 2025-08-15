@@ -108,6 +108,19 @@ export const toolAlternatives = pgTable("tool_alternatives", {
   };
 });
 
+// Alternative votes table
+export const alternativeVotes = pgTable("alternative_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  toolId: varchar("tool_id").notNull().references(() => tools.id, { onDelete: 'cascade' }),
+  alternativeId: varchar("alternative_id").notNull().references(() => tools.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueVote: index("unique_alternative_vote").on(table.toolId, table.alternativeId, table.userId),
+  };
+});
+
 // Prompts
 export const promptTypeEnum = pgEnum("prompt_type", ["chatgpt", "midjourney", "claude", "gemini", "other"]);
 
@@ -349,6 +362,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   votes: many(votes),
   reviews: many(reviews),
   promptPurchases: many(promptPurchases),
+  alternativeVotes: many(alternativeVotes),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -383,6 +397,21 @@ export const toolAlternativesRelations = relations(toolAlternatives, ({ one }) =
   }),
   alternative: one(tools, {
     fields: [toolAlternatives.alternativeId],
+    references: [tools.id],
+  }),
+}));
+
+export const alternativeVotesRelations = relations(alternativeVotes, ({ one }) => ({
+  user: one(users, {
+    fields: [alternativeVotes.userId],
+    references: [users.id],
+  }),
+  tool: one(tools, {
+    fields: [alternativeVotes.toolId],
+    references: [tools.id],
+  }),
+  alternative: one(tools, {
+    fields: [alternativeVotes.alternativeId],
     references: [tools.id],
   }),
 }));

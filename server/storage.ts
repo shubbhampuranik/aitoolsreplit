@@ -1658,7 +1658,7 @@ export class DatabaseStorage implements IStorage {
     return alternatives.map(alt => alt.tool);
   }
 
-  async getToolAlternativesWithDetails(toolId: string): Promise<Array<Tool & { upvotes: number }>> {
+  async getToolAlternativesWithDetails(toolId: string, userId?: string): Promise<Array<Tool & { upvotes: number; userVoted: boolean }>> {
     const alternatives = await db
       .select({
         tool: tools,
@@ -1669,28 +1669,73 @@ export class DatabaseStorage implements IStorage {
       .where(eq(toolAlternatives.toolId, toolId))
       .orderBy(desc(toolAlternatives.similarityScore));
 
-    // Get vote counts for each alternative tool
-    const result = await Promise.all(
-      alternatives.map(async (alt) => {
-        const voteCount = await db
-          .select({ count: count() })
-          .from(votes)
-          .where(
-            and(
-              eq(votes.itemId, alt.tool.id),
-              eq(votes.itemType, 'tool'),
-              eq(votes.voteType, 1)
-            )
-          );
+    // Add vote counts and user vote status for each alternative
+    const enhancedAlternatives = [];
+    for (const alt of alternatives) {
+      const voteCount = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(alternativeVotes)
+        .where(and(
+          eq(alternativeVotes.toolId, toolId),
+          eq(alternativeVotes.alternativeId, alt.tool.id)
+        ));
 
-        return {
-          ...alt.tool,
-          upvotes: voteCount[0]?.count || 0,
-        };
-      })
-    );
+      let userVoted = false;
+      if (userId) {
+        const userVote = await this.db
+          .select()
+          .from(alternativeVotes)
+          .where(and(
+            eq(alternativeVotes.toolId, toolId),
+            eq(alternativeVotes.alternativeId, alt.tool.id),
+            eq(alternativeVotes.userId, userId)
+          ));
+        userVoted = userVote.length > 0;
+      }
 
-    return result;
+      enhancedAlternatives.push({
+        ...alt.tool,
+        upvotes: voteCount[0]?.count || 0,
+        userVoted
+      });
+    }
+
+    return enhancedAlternatives;
+  }
+
+  // Vote on alternative
+  async voteAlternative(toolId: string, alternativeId: string, userId: string): Promise<any> {
+    // Check if user already voted
+    const existingVote = await this.db
+      .select()
+      .from(alternativeVotes)
+      .where(and(
+        eq(alternativeVotes.toolId, toolId),
+        eq(alternativeVotes.alternativeId, alternativeId),
+        eq(alternativeVotes.userId, userId)
+      ));
+
+    if (existingVote.length > 0) {
+      // Remove vote (toggle)
+      await this.db
+        .delete(alternativeVotes)
+        .where(and(
+          eq(alternativeVotes.toolId, toolId),
+          eq(alternativeVotes.alternativeId, alternativeId),
+          eq(alternativeVotes.userId, userId)
+        ));
+      return { userVoted: false, message: "Vote removed" };
+    } else {
+      // Add vote
+      await this.db
+        .insert(alternativeVotes)
+        .values({
+          toolId,
+          alternativeId,
+          userId
+        });
+      return { userVoted: true, message: "Vote added" };
+    }
   }
 
   async addToolAlternative(toolId: string, alternativeId: string, isAutoSuggested: boolean = false): Promise<void> {
