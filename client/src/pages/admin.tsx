@@ -146,7 +146,19 @@ export default function AdminPage() {
   };
 
   const applyAIData = () => {
-    if (!aiAnalysisResult?.data || !currentUpdateFormData) return;
+    console.log('Apply AI Data called');
+    console.log('aiAnalysisResult:', aiAnalysisResult);
+    console.log('currentUpdateFormData:', currentUpdateFormData);
+    
+    if (!aiAnalysisResult?.data || !currentUpdateFormData) {
+      console.log('Missing required data - cannot apply');
+      toast({
+        title: "Cannot Apply Data",
+        description: "Please ensure you're in the tool editor before applying AI data.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const data = aiAnalysisResult.data;
     const updateFormData = currentUpdateFormData;
