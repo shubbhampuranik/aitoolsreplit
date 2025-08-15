@@ -150,21 +150,21 @@ export default function AdminPage() {
   };
 
   const applyAIData = async () => {
-    console.log('Apply and Save AI Data called');
+    console.log('🚀 Apply and Save AI Data called');
+    console.log('🔍 Current state check:', {
+      hasAIData: !!aiAnalysisResult?.data,
+      hasUpdateFormData: !!currentUpdateFormData,
+      currentView,
+      isEditMode: currentView === 'tool-edit',
+      selectedTool: selectedTool?.name
+    });
     
     if (!aiAnalysisResult?.data) {
-      console.log('No AI analysis data available');
+      console.log('❌ No AI analysis data available');
       return;
     }
 
     const data = aiAnalysisResult.data;
-    
-    // If we're in the tool editor, apply data directly to form
-    console.log('Check conditions:', { 
-      hasUpdateFormData: !!currentUpdateFormData, 
-      currentView, 
-      isEditMode: currentView === 'tool-edit' 
-    });
     
     if (currentUpdateFormData && currentView === 'tool-edit') {
       console.log('✅ Applying AI data to existing tool form');
