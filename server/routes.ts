@@ -145,6 +145,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const tool = await storage.createTool(validatedData);
+      
+      // Initialize auto-alternatives for new tools
+      if (tool.status === "approved") {
+        await storage.initializeAutoAlternatives(tool.id);
+      }
+      
       res.status(201).json(tool);
     } catch (error) {
       console.error("Error creating tool:", error);
@@ -562,90 +568,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tool alternatives endpoint
+  // Tool alternatives endpoint - Enhanced with auto-matching
   app.get('/api/tools/:id/alternatives', async (req, res) => {
     try {
       const toolId = req.params.id;
       
-      // Check if this is ChatGPT tool and return comprehensive alternatives
       const tool = await storage.getTool(toolId);
       if (!tool) {
         return res.status(404).json({ message: "Tool not found" });
       }
 
-      // For ChatGPT, return comprehensive alternatives data
-      if (tool.name === "ChatGPT") {
-        const alternatives = [
-          {
-            id: "claude-alt-1",
-            name: "Claude",
-            description: "Anthropic's AI assistant focused on helpful, harmless, and honest interactions. Excellent for analysis, writing, and complex reasoning tasks with strong safety measures.",
-            logoUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=100&h=100&fit=crop",
-            url: "https://claude.ai",
-            pricingType: "freemium",
-            rating: 4.7,
-            upvotes: 987,
-            featured: true,
-            categoryId: tool.categoryId
-          },
-          {
-            id: "gemini-alt-2", 
-            name: "Google Gemini",
-            description: "Google's advanced AI assistant with multimodal capabilities. Integrates seamlessly with Google services and offers powerful reasoning across text, images, and code.",
-            logoUrl: "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=100&h=100&fit=crop",
-            url: "https://gemini.google.com",
-            pricingType: "freemium",
-            rating: 4.5,
-            upvotes: 756,
-            featured: true,
-            categoryId: tool.categoryId
-          },
-          {
-            id: "perplexity-alt-3",
-            name: "Perplexity AI",
-            description: "AI-powered search engine that provides real-time answers with citations. Combines the power of large language models with up-to-date web information.",
-            logoUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=100&h=100&fit=crop",
-            url: "https://perplexity.ai",
-            pricingType: "freemium", 
-            rating: 4.4,
-            upvotes: 632,
-            featured: false,
-            categoryId: tool.categoryId
-          },
-          {
-            id: "copilot-alt-4",
-            name: "Microsoft Copilot",
-            description: "Microsoft's AI assistant integrated across Office 365 and Windows. Offers productivity-focused AI capabilities with enterprise-grade security.",
-            logoUrl: "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=100&h=100&fit=crop",
-            url: "https://copilot.microsoft.com",
-            pricingType: "freemium",
-            rating: 4.3,
-            upvotes: 543,
-            featured: false,
-            categoryId: tool.categoryId
-          },
-          {
-            id: "jasper-alt-5",
-            name: "Jasper AI",
-            description: "AI writing assistant designed for marketing teams and content creators. Specializes in creating marketing copy, blog posts, and business content with brand consistency.",
-            logoUrl: "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=100&h=100&fit=crop",
-            url: "https://jasper.ai",
-            pricingType: "paid",
-            rating: 4.2,
-            upvotes: 467,
-            featured: false,
-            categoryId: tool.categoryId
-          }
-        ];
+      // Get stored alternatives first
+      const storedAlternatives = await storage.getToolAlternatives(toolId);
+      
+      // If no stored alternatives, get auto-suggested ones and save them
+      if (storedAlternatives.length === 0) {
+        const autoSuggested = await storage.getAutoSuggestedAlternatives(toolId);
         
-        return res.json(alternatives);
+        // Save auto-suggested alternatives for future use
+        for (const alternative of autoSuggested) {
+          await storage.addToolAlternative(toolId, alternative.id, true);
+        }
+        
+        return res.json(autoSuggested);
       }
 
-      // For other tools, return empty array or basic alternatives
-      res.json([]);
+      res.json(storedAlternatives);
     } catch (error) {
       console.error("Error fetching alternatives:", error);
       res.status(500).json({ message: "Failed to fetch alternatives" });
+    }
+  });
+
+  // Add a tool alternative (manual)
+  app.post('/api/admin/tools/:id/alternatives', isAuthenticated, async (req, res) => {
+    try {
+      const { id: toolId } = req.params;
+      const { alternativeId } = req.body;
+      
+      await storage.addToolAlternative(toolId, alternativeId, false);
+      res.json({ message: "Alternative added successfully" });
+    } catch (error) {
+      console.error("Error adding alternative:", error);
+      res.status(500).json({ message: "Failed to add alternative" });
+    }
+  });
+
+  // Remove a tool alternative
+  app.delete('/api/admin/tools/:id/alternatives/:alternativeId', isAuthenticated, async (req, res) => {
+    try {
+      const { id: toolId, alternativeId } = req.params;
+      
+      await storage.removeToolAlternative(toolId, alternativeId);
+      res.json({ message: "Alternative removed successfully" });
+    } catch (error) {
+      console.error("Error removing alternative:", error);
+      res.status(500).json({ message: "Failed to remove alternative" });
+    }
+  });
+
+  // Get auto-suggested alternatives (for admin preview)
+  app.get('/api/admin/tools/:id/suggested-alternatives', isAuthenticated, async (req, res) => {
+    try {
+      const { id: toolId } = req.params;
+      
+      const suggestions = await storage.getAutoSuggestedAlternatives(toolId);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching suggested alternatives:", error);
+      res.status(500).json({ message: "Failed to fetch suggested alternatives" });
     }
   });
 

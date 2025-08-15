@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,7 @@ import {
   Filter, CheckCircle, XCircle, Clock, AlertTriangle, MoreHorizontal,
   FileText, List, Image, Scale, ArrowRight, HelpCircle, ChevronDown,
   ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil,
-  Layers, ThumbsDown, Users2, MessageCircle, Minus, X
+  Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot
 } from "lucide-react";
 
 interface Tool {
@@ -657,10 +657,7 @@ function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
 
         {/* Alternatives Tab */}
         <TabsContent value="alternatives">
-          <AlternativesTab 
-            alternatives={formData.alternatives} 
-            updateAlternatives={(alternatives) => updateFormData('alternatives', alternatives)} 
-          />
+          <AlternativesTab toolId={selectedTool?.id || ''} />
         </TabsContent>
 
         {/* Q&A Tab */}
@@ -855,7 +852,7 @@ function OverviewTab({ formData, updateFormData, categories }: any) {
 }
 
 // Features Tab Component
-function FeaturesTab({ features, updateFeatures }: any) {
+function FeaturesTab({ features, updateFeatures }: { features: any[], updateFeatures: (features: any[]) => void }) {
   const addFeature = () => {
     updateFeatures([...features, { title: "", description: "" }]);
   };
@@ -941,7 +938,7 @@ function FeaturesTab({ features, updateFeatures }: any) {
 }
 
 // Gallery Tab Component
-function GalleryTab({ gallery, updateGallery }: any) {
+function GalleryTab({ gallery, updateGallery }: { gallery: any[], updateGallery: (gallery: any[]) => void }) {
   const addImage = () => {
     const url = prompt("Enter image URL:");
     if (url) {
@@ -1010,7 +1007,7 @@ function GalleryTab({ gallery, updateGallery }: any) {
 }
 
 // Pros & Cons Tab Component
-function ProsConsTab({ prosAndCons, updateProsAndCons }: any) {
+function ProsConsTab({ prosAndCons, updateProsAndCons }: { prosAndCons: any, updateProsAndCons: (prosAndCons: any) => void }) {
   const addPro = () => {
     const newProsAndCons = {
       ...prosAndCons,
@@ -1145,21 +1142,55 @@ function ProsConsTab({ prosAndCons, updateProsAndCons }: any) {
   );
 }
 
-// Alternatives Tab Component
-function AlternativesTab({ alternatives, updateAlternatives }: any) {
-  const addAlternative = () => {
-    updateAlternatives([...alternatives, { name: "", url: "", description: "" }]);
+// Enhanced Alternatives Tab Component
+function AlternativesTab({ toolId }: { toolId: string }) {
+  const { data: alternatives = [], refetch } = useQuery({
+    queryKey: ['/api/tools', toolId, 'alternatives'],
+    enabled: !!toolId
+  });
+  
+  const { data: suggestedAlternatives = [] } = useQuery({
+    queryKey: ['/api/admin/tools', toolId, 'suggested-alternatives'],
+    enabled: !!toolId
+  });
+
+  const { data: allTools = [] } = useQuery({
+    queryKey: ['/api/admin/tools'],
+    select: (data: any[]) => data.filter((tool: any) => tool.id !== toolId && tool.status === 'approved')
+  });
+
+  const addAlternativeMutation = useMutation({
+    mutationFn: async (alternativeId: string) => {
+      return fetch(`/api/admin/tools/${toolId}/alternatives`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alternativeId })
+      }).then(res => res.json());
+    },
+    onSuccess: () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+    }
+  });
+
+  const removeAlternativeMutation = useMutation({
+    mutationFn: async (alternativeId: string) => {
+      return fetch(`/api/admin/tools/${toolId}/alternatives/${alternativeId}`, {
+        method: 'DELETE'
+      }).then(res => res.json());
+    },
+    onSuccess: () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+    }
+  });
+
+  const handleAddAlternative = (alternativeId: string) => {
+    addAlternativeMutation.mutate(alternativeId);
   };
 
-  const removeAlternative = (index: number) => {
-    const newAlternatives = alternatives.filter((_: any, i: number) => i !== index);
-    updateAlternatives(newAlternatives);
-  };
-
-  const updateAlternative = (index: number, field: string, value: string) => {
-    const newAlternatives = [...alternatives];
-    newAlternatives[index] = { ...newAlternatives[index], [field]: value };
-    updateAlternatives(newAlternatives);
+  const handleRemoveAlternative = (alternativeId: string) => {
+    removeAlternativeMutation.mutate(alternativeId);
   };
 
   return (
@@ -1167,81 +1198,141 @@ function AlternativesTab({ alternatives, updateAlternatives }: any) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Alternative Tools</h3>
-          <p className="text-sm text-gray-600">List similar or competing tools</p>
+          <p className="text-sm text-gray-600">Manage database-driven alternatives with auto-matching</p>
         </div>
-        <Button onClick={addAlternative}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Alternative
-        </Button>
+        <Badge variant="secondary" className="text-xs">
+          {alternatives.length} alternatives
+        </Badge>
       </div>
 
-      {alternatives.length === 0 ? (
+      {/* Auto-Suggested Alternatives */}
+      {suggestedAlternatives.length > 0 && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <Users2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No alternatives added yet</p>
-            <Button onClick={addAlternative} variant="outline" className="mt-4">
-              Add First Alternative
-            </Button>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bot className="w-4 h-4" />
+              Auto-Suggested Alternatives
+            </CardTitle>
+            <CardDescription>
+              Based on similarity scoring (category, pricing, ratings)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {suggestedAlternatives.map((tool: any) => (
+              <div key={tool.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={tool.logoUrl || '/api/placeholder/40/40'} 
+                    alt={tool.name}
+                    className="w-8 h-8 rounded object-cover"
+                  />
+                  <div>
+                    <h4 className="font-medium">{tool.name}</h4>
+                    <p className="text-sm text-gray-600">{tool.pricingType} • ⭐ {tool.rating}/5</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleAddAlternative(tool.id)}
+                  size="sm"
+                  disabled={addAlternativeMutation.isPending}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            ))}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-4">
-          {alternatives.map((alternative: any, index: number) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-4">
-                  <h4 className="text-sm font-medium text-gray-500">Alternative {index + 1}</h4>
+      )}
+
+      {/* Current Alternatives */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Current Alternatives</CardTitle>
+          <CardDescription>
+            Active alternatives displayed on the tool page
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {alternatives.length === 0 ? (
+            <div className="text-center py-8">
+              <Users2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">No alternatives configured yet</p>
+              <p className="text-sm text-gray-500 mt-1">Use auto-suggestions above or manual selection below</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alternatives.map((alternative: any) => (
+                <div key={alternative.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={alternative.logoUrl || '/api/placeholder/40/40'} 
+                      alt={alternative.name}
+                      className="w-8 h-8 rounded object-cover"
+                    />
+                    <div>
+                      <h4 className="font-medium">{alternative.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        {alternative.pricingType} • ⭐ {alternative.rating}/5 • {alternative.upvotes} upvotes
+                      </p>
+                    </div>
+                  </div>
                   <Button
-                    onClick={() => removeAlternative(index)}
+                    onClick={() => handleRemoveAlternative(alternative.id)}
                     variant="ghost"
                     size="sm"
                     className="text-red-600 hover:text-red-800"
+                    disabled={removeAlternativeMutation.isPending}
                   >
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Tool Name</Label>
-                    <Input
-                      value={alternative.name || ""}
-                      onChange={(e) => updateAlternative(index, 'name', e.target.value)}
-                      placeholder="e.g. Competitor Tool"
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Manual Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Add Manual Alternative</CardTitle>
+          <CardDescription>
+            Select from all approved tools in the database
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select onValueChange={handleAddAlternative}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a tool to add as alternative" />
+            </SelectTrigger>
+            <SelectContent>
+              {allTools.map((tool: any) => (
+                <SelectItem 
+                  key={tool.id} 
+                  value={tool.id}
+                  disabled={alternatives.some((alt: any) => alt.id === tool.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={tool.logoUrl || '/api/placeholder/20/20'} 
+                      alt={tool.name}
+                      className="w-4 h-4 rounded object-cover"
                     />
+                    {tool.name} ({tool.category?.name})
                   </div>
-                  
-                  <div>
-                    <Label>URL</Label>
-                    <Input
-                      value={alternative.url || ""}
-                      onChange={(e) => updateAlternative(index, 'url', e.target.value)}
-                      placeholder="https://..."
-                      type="url"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Description</Label>
-                    <Input
-                      value={alternative.description || ""}
-                      onChange={(e) => updateAlternative(index, 'description', e.target.value)}
-                      placeholder="Brief comparison..."
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 // Q&A Tab Component
-function QATab({ faqs, updateFaqs }: any) {
+function QATab({ faqs, updateFaqs }: { faqs: any[], updateFaqs: (faqs: any[]) => void }) {
   const addFaq = () => {
     updateFaqs([...faqs, { question: "", answer: "" }]);
   };

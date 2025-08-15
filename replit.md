@@ -8,6 +8,14 @@ The application provides both public browsing for non-authenticated users and fu
 
 ## Recent Changes (January 2025)
 
+### Enhanced Alternatives System (January 2025)
+- **Database-Driven Alternatives**: Complete replacement of static alternatives with dynamic database system
+- **Auto-Matching Intelligence**: Intelligent similarity scoring algorithm (40% category, 30% subcategory, 20% pricing, 10% rating)
+- **Bidirectional Relationships**: Tool alternatives create automatic reciprocal relationships (A→B means B→A)
+- **Admin Management Interface**: Enhanced WordPress-style alternatives tab with auto-suggestions and manual selection
+- **Real-time Sync**: Frontend automatically displays admin-managed alternatives with cache invalidation
+- **Scalable Architecture**: New toolAlternatives table with autoSuggested flag for performance optimization
+
 ### WordPress-Style Admin Panel Redesign (January 2025)
 - **Complete Interface Restructure**: Replaced tab-based navigation with WordPress-style hierarchical sidebar navigation
 - **Hierarchical Navigation**: Tools section with expandable submenu (All Tools, Add New Tool, Categories)

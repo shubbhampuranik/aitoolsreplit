@@ -94,6 +94,20 @@ export const tools = pgTable("tools", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Tool Alternatives Junction Table for bidirectional relationships
+export const toolAlternatives = pgTable("tool_alternatives", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  toolId: varchar("tool_id").references(() => tools.id, { onDelete: "cascade" }).notNull(),
+  alternativeId: varchar("alternative_id").references(() => tools.id, { onDelete: "cascade" }).notNull(),
+  isAutoSuggested: boolean("is_auto_suggested").default(false),
+  similarityScore: decimal("similarity_score", { precision: 5, scale: 2 }).default("0.00"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueRelationship: index("unique_tool_alternative").on(table.toolId, table.alternativeId),
+  };
+});
+
 // Prompts
 export const promptTypeEnum = pgEnum("prompt_type", ["chatgpt", "midjourney", "claude", "gemini", "other"]);
 
@@ -359,6 +373,18 @@ export const toolsRelations = relations(tools, ({ one, many }) => ({
   bookmarks: many(bookmarks),
   votes: many(votes),
   reviews: many(reviews),
+  toolAlternatives: many(toolAlternatives),
+}));
+
+export const toolAlternativesRelations = relations(toolAlternatives, ({ one }) => ({
+  tool: one(tools, {
+    fields: [toolAlternatives.toolId],
+    references: [tools.id],
+  }),
+  alternative: one(tools, {
+    fields: [toolAlternatives.alternativeId],
+    references: [tools.id],
+  }),
 }));
 
 export const promptsRelations = relations(prompts, ({ one, many }) => ({
@@ -583,6 +609,11 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   helpful: true,
 });
 
+export const insertToolAlternativeSchema = createInsertSchema(toolAlternatives).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertCollectionSchema = createInsertSchema(collections).omit({
   id: true,
   createdAt: true,
@@ -603,3 +634,5 @@ export type InsertPost = z.infer<typeof insertPostSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type InsertToolAlternative = z.infer<typeof insertToolAlternativeSchema>;
+export type ToolAlternative = typeof toolAlternatives.$inferSelect;

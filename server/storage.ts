@@ -17,6 +17,7 @@ import {
   toolTags,
   promptTags,
   collectionItems,
+  toolAlternatives,
   type User,
   type UpsertUser,
   type Category,
@@ -40,6 +41,8 @@ import {
   type InsertReview,
   type InsertCategory,
   type InsertCollection,
+  type InsertToolAlternative,
+  type ToolAlternative,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, ilike, and, or, sql, count, inArray } from "drizzle-orm";
@@ -1585,7 +1588,128 @@ export class DatabaseStorage implements IStorage {
     await db.delete(prompts).where(eq(prompts.id, id));
   }
 
+  // Tool Alternatives Management
+  async calculateSimilarityScore(tool1: Tool, tool2: Tool): Promise<number> {
+    let score = 0;
+    
+    // Category Match (40 points)
+    if (tool1.categoryId === tool2.categoryId) {
+      score += 40;
+    }
+    
+    // Pricing Similarity (20 points)
+    if (tool1.pricingType === tool2.pricingType) {
+      score += 20;
+    }
+    
+    // Rating Range (10 points) - within 1 star
+    const ratingDiff = Math.abs(parseFloat(tool1.rating || "0") - parseFloat(tool2.rating || "0"));
+    if (ratingDiff <= 1) {
+      score += 10;
+    }
+    
+    return score;
+  }
 
+  async getAutoSuggestedAlternatives(toolId: string): Promise<Tool[]> {
+    const tool = await this.getTool(toolId);
+    if (!tool) return [];
+
+    // Get all approved tools in same category, excluding the current tool
+    const candidateTools = await db
+      .select()
+      .from(tools)
+      .where(
+        and(
+          eq(tools.status, "approved"),
+          eq(tools.categoryId, tool.categoryId!),
+          sql`${tools.id} != ${toolId}`
+        )
+      )
+      .limit(20);
+
+    // Calculate similarity scores and sort
+    const scoredAlternatives = await Promise.all(
+      candidateTools.map(async (candidate) => ({
+        tool: candidate,
+        score: await this.calculateSimilarityScore(tool, candidate),
+      }))
+    );
+
+    // Filter by minimum score (50+ points) and sort by score
+    return scoredAlternatives
+      .filter(item => item.score >= 50)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(item => item.tool);
+  }
+
+  async getToolAlternatives(toolId: string): Promise<Tool[]> {
+    const alternatives = await db
+      .select({
+        tool: tools,
+        alternative: toolAlternatives,
+      })
+      .from(toolAlternatives)
+      .innerJoin(tools, eq(toolAlternatives.alternativeId, tools.id))
+      .where(eq(toolAlternatives.toolId, toolId))
+      .orderBy(desc(toolAlternatives.similarityScore));
+
+    return alternatives.map(alt => alt.tool);
+  }
+
+  async addToolAlternative(toolId: string, alternativeId: string, isAutoSuggested: boolean = false): Promise<void> {
+    const tool = await this.getTool(toolId);
+    const alternative = await this.getTool(alternativeId);
+    
+    if (!tool || !alternative) {
+      throw new Error("Tool or alternative not found");
+    }
+
+    const similarityScore = await this.calculateSimilarityScore(tool, alternative);
+
+    // Add bidirectional relationship
+    await Promise.all([
+      db.insert(toolAlternatives).values({
+        toolId,
+        alternativeId,
+        isAutoSuggested,
+        similarityScore: similarityScore.toString(),
+      }).onConflictDoNothing(),
+      db.insert(toolAlternatives).values({
+        toolId: alternativeId,
+        alternativeId: toolId,
+        isAutoSuggested,
+        similarityScore: similarityScore.toString(),
+      }).onConflictDoNothing(),
+    ]);
+  }
+
+  async removeToolAlternative(toolId: string, alternativeId: string): Promise<void> {
+    // Remove bidirectional relationship
+    await Promise.all([
+      db.delete(toolAlternatives).where(
+        and(
+          eq(toolAlternatives.toolId, toolId),
+          eq(toolAlternatives.alternativeId, alternativeId)
+        )
+      ),
+      db.delete(toolAlternatives).where(
+        and(
+          eq(toolAlternatives.toolId, alternativeId),
+          eq(toolAlternatives.alternativeId, toolId)
+        )
+      ),
+    ]);
+  }
+
+  async initializeAutoAlternatives(toolId: string): Promise<void> {
+    const autoSuggested = await this.getAutoSuggestedAlternatives(toolId);
+    
+    for (const alternative of autoSuggested) {
+      await this.addToolAlternative(toolId, alternative.id, true);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
