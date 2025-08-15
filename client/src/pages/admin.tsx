@@ -657,7 +657,7 @@ function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
 
         {/* Alternatives Tab */}
         <TabsContent value="alternatives">
-          <AlternativesTab toolId={selectedTool?.id || ''} />
+          <AlternativesTab toolId={tool.id} />
         </TabsContent>
 
         {/* Q&A Tab */}
