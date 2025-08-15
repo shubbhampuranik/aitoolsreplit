@@ -166,8 +166,24 @@ export default function AdminPage() {
 
     const data = aiAnalysisResult.data;
     
-    if (currentUpdateFormData && currentView === 'tool-edit') {
-      console.log('✅ Applying AI data to existing tool form');
+    if (currentView === 'tool-edit' && selectedTool) {
+      console.log('✅ In edit mode - applying AI data to existing tool');
+      
+      if (!currentUpdateFormData) {
+        console.log('⚠️ No form updater available, storing data for form to pick up');
+        // Store AI data temporarily for the form to pick up
+        sessionStorage.setItem('editToolAIData', JSON.stringify(data));
+        setShowAiPreview(false);
+        setAiAnalysisResult(null);
+        
+        toast({
+          title: "Data Ready",
+          description: "AI data is ready. The form will update automatically."
+        });
+        return;
+      }
+      
+      console.log('✅ Form updater available - applying data directly');
       const updateFormData = currentUpdateFormData;
       
       // Apply the AI-generated data using updateFormData function
@@ -1348,6 +1364,46 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       onSetUpdateFormData(null);
     };
   }, [onSetUpdateFormData]);
+
+  // Check for stored AI data and apply it
+  useEffect(() => {
+    const editToolAIData = sessionStorage.getItem('editToolAIData');
+    if (editToolAIData) {
+      try {
+        const aiData = JSON.parse(editToolAIData);
+        console.log('📝 Applying stored AI data to edit form:', aiData.name);
+        
+        // Apply the AI data to form
+        updateFormData('name', aiData.name);
+        updateFormData('description', aiData.description);
+        updateFormData('shortDescription', aiData.shortDescription);
+        updateFormData('pricingType', aiData.pricingType);
+        updateFormData('pricingDetails', aiData.pricingDetails || '');
+        
+        if (aiData.features && aiData.features.length > 0) {
+          updateFormData('features', aiData.features);
+        }
+
+        if (aiData.pros && aiData.cons) {
+          updateFormData('prosAndCons', {
+            pros: aiData.pros,
+            cons: aiData.cons
+          });
+        }
+
+        // Clean up stored data
+        sessionStorage.removeItem('editToolAIData');
+        
+        toast({
+          title: "AI Data Applied",
+          description: "AI-generated content has been applied to the form. Review and save when ready."
+        });
+      } catch (error) {
+        console.error('Error applying stored AI data:', error);
+        sessionStorage.removeItem('editToolAIData');
+      }
+    }
+  }, []);
 
   return (
     <div className="max-w-6xl">
