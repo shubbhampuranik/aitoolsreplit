@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext, createContext } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -24,7 +24,8 @@ import {
   Filter, CheckCircle, XCircle, Clock, AlertTriangle, MoreHorizontal,
   FileText, List, Image, Scale, ArrowRight, HelpCircle, ChevronDown,
   ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil,
-  Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot, RotateCcw
+  Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot, RotateCcw,
+  Loader2
 } from "lucide-react";
 
 interface Tool {
@@ -68,6 +69,9 @@ interface Category {
 }
 
 type AdminView = 'dashboard' | 'tools-list' | 'tools-add' | 'tools-categories' | 'tool-edit' | 'prompts-list' | 'courses-list' | 'jobs-list' | 'news-list' | 'users-list' | 'reviews-list' | 'settings';
+
+// Create context for view management
+const ViewContext = createContext<[AdminView, React.Dispatch<React.SetStateAction<AdminView>>]>(['dashboard', () => {}]);
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -203,85 +207,24 @@ export default function AdminPage() {
         description: "AI-generated data has been applied to the form. Review and save when ready."
       });
     } else {
-      // If not in tool editor, create a new tool directly with AI data
-      try {
-        // Get categories for mapping
-        const categoriesResponse = await apiRequest('GET', '/api/categories');
-        const categories = await categoriesResponse.json();
-        
-        // Find matching category
-        const category = categories.find((cat: any) => 
-          cat.name.toLowerCase() === data.category.toLowerCase()
-        );
-        
-        // Prepare tool data for creation
-        let toolUrl = '';
-        console.log('webContentPreview:', aiAnalysisResult.webContentPreview);
-        
-        try {
-          if (aiAnalysisResult.webContentPreview) {
-            toolUrl = new URL(aiAnalysisResult.webContentPreview).origin;
-          }
-        } catch (e) {
-          console.log('URL parsing failed, using fallback');
-          // If URL parsing fails, use a default URL based on the tool name
-          toolUrl = `https://${data.name.toLowerCase().replace(/\s+/g, '')}.com`;
-        }
-        
-        const newToolData = {
-          name: data.name,
-          description: data.description,
-          shortDescription: data.shortDescription,
-          url: toolUrl,
-          categoryId: category?.id || categories[0]?.id,
-          pricingType: data.pricingType,
-          pricingDetails: data.pricingDetails || null,
-          logoUrl: data.logoUrl || null,
-          gallery: data.screenshots || [],
-          features: data.features || [],
-          prosAndCons: {
-            pros: data.pros || [],
-            cons: data.cons || []
-          },
-          tags: data.tags || [],
-          targetAudience: data.targetAudience || null,
-          useCases: data.useCases || [],
-          status: 'approved',
-          aiGenerated: true,
-          aiConfidenceScore: data.confidenceScore?.toString() || '0.80'
-        };
-
-        // Create the tool
-        console.log('Sending tool data:', newToolData);
-        const response = await apiRequest('POST', '/api/tools', newToolData);
-        const result = await response.json();
-        
-        setShowAiPreview(false);
-        setAiAnalysisResult(null);
-        
-        // Refresh the tools list
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/tools'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tools'] });
-        
-        toast({
-          title: "Tool Created Successfully",
-          description: `${data.name} has been created and added to the platform with AI-generated content.`
-        });
-        
-      } catch (error) {
-        console.error('Error creating tool:', error);
-        toast({
-          title: "Creation Failed",
-          description: "Failed to create the tool. Please try again.",
-          variant: "destructive"
-        });
-      }
+      // If not in tool editor, navigate to Add New Tool with AI data
+      setShowAiPreview(false);
+      setCurrentView('tools-add');
+      
+      // Store the AI data temporarily for the Add New Tool form
+      sessionStorage.setItem('pendingAIData', JSON.stringify(data));
+      
+      toast({
+        title: "AI Data Ready",
+        description: "Navigate to Add New Tool to create a tool with this AI-generated data."
+      });
     }
   };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-100 flex">
+      <ViewContext.Provider value={[currentView, setCurrentView]}>
+        <div className="min-h-screen bg-gray-100 flex">
         {/* WordPress-style Sidebar */}
         <div className="w-64 bg-gray-800 text-white flex-shrink-0">
           <div className="p-4 border-b border-gray-700">
@@ -449,7 +392,7 @@ export default function AdminPage() {
           {/* Content Area */}
           <div className="flex-1 p-6 bg-white overflow-auto">
             {currentView === 'dashboard' && <AdminOverview />}
-            {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} />}
+            {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} onAddNewTool={() => setCurrentView('tools-add')} />}
             {currentView === 'tools-add' && <AddNewTool />}
             {currentView === 'tools-categories' && <ToolCategories />}
             {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} fetchingData={fetchingData} onFetchAIData={handleFetchAIData} />}
@@ -462,10 +405,10 @@ export default function AdminPage() {
             {currentView === 'settings' && <SettingsManagement />}
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* AI Analysis Preview Dialog */}
-      <Dialog open={showAiPreview} onOpenChange={setShowAiPreview}>
+        {/* AI Analysis Preview Dialog */}
+        <Dialog open={showAiPreview} onOpenChange={setShowAiPreview}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -635,7 +578,8 @@ export default function AdminPage() {
             </div>
           )}
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      </ViewContext.Provider>
     </Layout>
   );
 }
@@ -722,8 +666,461 @@ function AdminOverview() {
   );
 }
 
+// Add New Tool Component
+function AddNewTool() {
+  const [addMethod, setAddMethod] = useState<'ai' | 'manual' | null>(null);
+  const [aiUrl, setAiUrl] = useState('');
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    shortDescription: '',
+    description: '',
+    url: '',
+    logoUrl: '',
+    pricingType: 'freemium' as const,
+    pricingDetails: '',
+    categoryId: '',
+    status: 'approved' as const,
+    featured: false,
+    features: [] as Array<{title: string; description: string}>,
+    gallery: [] as string[],
+    prosAndCons: { pros: [] as string[], cons: [] as string[] },
+    tags: [] as string[],
+    targetAudience: '',
+    useCases: [] as string[]
+  });
+  
+  const { toast } = useToast();
+  const [currentView, setCurrentView] = useContext(ViewContext);
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  // Check for pending AI data on component mount
+  useEffect(() => {
+    const pendingData = sessionStorage.getItem('pendingAIData');
+    if (pendingData) {
+      try {
+        const aiData = JSON.parse(pendingData);
+        setAddMethod('ai');
+        populateFromAIData(aiData);
+        sessionStorage.removeItem('pendingAIData');
+        toast({
+          title: "AI Data Applied",
+          description: "Pre-generated AI data has been loaded into the form."
+        });
+      } catch (error) {
+        console.error('Error loading pending AI data:', error);
+      }
+    }
+  }, []);
+
+  const populateFromAIData = (aiData: any) => {
+    // Find matching category
+    const category = categories.find((cat: any) => 
+      cat.name.toLowerCase() === aiData.category?.toLowerCase()
+    );
+
+    setFormData({
+      name: aiData.name || '',
+      shortDescription: aiData.shortDescription || '',
+      description: aiData.description || '',
+      url: aiData.url || '',
+      logoUrl: aiData.logoUrl || '',
+      pricingType: aiData.pricingType || 'freemium',
+      pricingDetails: aiData.pricingDetails || '',
+      categoryId: category?.id || categories[0]?.id || '',
+      status: 'approved',
+      featured: false,
+      features: aiData.features || [],
+      gallery: aiData.screenshots || [],
+      prosAndCons: {
+        pros: aiData.pros || [],
+        cons: aiData.cons || []
+      },
+      tags: aiData.tags || [],
+      targetAudience: aiData.targetAudience || '',
+      useCases: aiData.useCases || []
+    });
+  };
+
+  const handleAIGeneration = async () => {
+    if (!aiUrl.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a valid URL to analyze",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoadingAI(true);
+    try {
+      const response = await apiRequest('POST', '/api/tools/fetch-data', { url: aiUrl });
+      const result = await response.json();
+      
+      if (result.success) {
+        populateFromAIData(result.data);
+        setAddMethod('ai');
+        toast({
+          title: "AI Analysis Complete",
+          description: "Tool data has been generated and populated in the form."
+        });
+      } else {
+        throw new Error(result.error || 'Failed to analyze website');
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      toast({
+        title: "AI Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze the website",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const toolData = {
+        ...formData,
+        aiGenerated: addMethod === 'ai',
+        aiConfidenceScore: addMethod === 'ai' ? '0.85' : null
+      };
+
+      const response = await apiRequest('POST', '/api/tools', toolData);
+      
+      if (response.ok) {
+        toast({
+          title: "Tool Created Successfully",
+          description: `${formData.name} has been added to the platform.`
+        });
+        
+        // Refresh tools list and go back
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/tools'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tools'] });
+        setCurrentView('tools-list');
+      } else {
+        throw new Error('Failed to create tool');
+      }
+    } catch (error) {
+      console.error('Error creating tool:', error);
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create the tool. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateField = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Method selection screen
+  if (!addMethod) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Add New Tool</h2>
+          <p className="text-gray-600">Choose how you'd like to add a new AI tool to the platform</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* AI-Powered Option */}
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-500">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">AI-Powered Analysis</h3>
+              <p className="text-gray-600 mb-4">Enter a website URL and let AI automatically generate tool details, features, and descriptions</p>
+              
+              <div className="space-y-3">
+                <Input
+                  placeholder="Enter website URL (e.g., https://example.com)"
+                  value={aiUrl}
+                  onChange={(e) => setAiUrl(e.target.value)}
+                  className="text-left"
+                />
+                <Button 
+                  onClick={handleAIGeneration}
+                  disabled={isLoadingAI || !aiUrl.trim()}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {isLoadingAI ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Bot className="w-4 h-4 mr-2" />
+                      Generate with AI
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Manual Option */}
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-green-500" onClick={() => setAddMethod('manual')}>
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Edit className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Manual Entry</h3>
+              <p className="text-gray-600 mb-4">Fill out the tool details manually with complete control over all information</p>
+              <Button className="w-full bg-green-600 hover:bg-green-700">
+                <Edit className="w-4 h-4 mr-2" />
+                Create Manually
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentView('tools-list')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Tools
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Form screen (both AI and manual use the same form)
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">
+            {addMethod === 'ai' ? 'AI-Generated Tool' : 'Manual Tool Entry'}
+          </h2>
+          <p className="text-gray-600">
+            {addMethod === 'ai' 
+              ? 'Review and edit the AI-generated content before saving' 
+              : 'Fill in all the required information for the new tool'
+            }
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setAddMethod(null)}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Change Method
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentView('tools-list')}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Tool Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="url">Website URL *</Label>
+                  <Input
+                    id="url"
+                    type="url"
+                    value={formData.url}
+                    onChange={(e) => updateField('url', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="shortDescription">Short Description *</Label>
+                <Input
+                  id="shortDescription"
+                  value={formData.shortDescription}
+                  onChange={(e) => updateField('shortDescription', e.target.value)}
+                  placeholder="150-300 characters"
+                  maxLength={300}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">{formData.shortDescription.length}/300 characters</p>
+              </div>
+
+              <div>
+                <Label htmlFor="description">Full Description *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => updateField('description', e.target.value)}
+                  placeholder="500-1000 characters detailed description"
+                  className="min-h-[120px]"
+                  maxLength={1000}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">{formData.description.length}/1000 characters</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="category">Category *</Label>
+                  <Select value={formData.categoryId} onValueChange={(value) => updateField('categoryId', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category: any) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="pricingType">Pricing Type *</Label>
+                  <Select value={formData.pricingType} onValueChange={(value) => updateField('pricingType', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="freemium">Freemium</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="contact">Contact for Pricing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => updateField('status', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="pricingDetails">Pricing Details</Label>
+                <Input
+                  id="pricingDetails"
+                  value={formData.pricingDetails}
+                  onChange={(e) => updateField('pricingDetails', e.target.value)}
+                  placeholder="e.g., Free plan available, Pro from $10/month"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Features */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Features</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {formData.features.map((feature, index) => (
+                  <div key={index} className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Feature title"
+                        value={feature.title}
+                        onChange={(e) => {
+                          const newFeatures = [...formData.features];
+                          newFeatures[index].title = e.target.value;
+                          updateField('features', newFeatures);
+                        }}
+                      />
+                      <Input
+                        placeholder="Feature description"
+                        value={feature.description}
+                        onChange={(e) => {
+                          const newFeatures = [...formData.features];
+                          newFeatures[index].description = e.target.value;
+                          updateField('features', newFeatures);
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newFeatures = formData.features.filter((_, i) => i !== index);
+                        updateField('features', newFeatures);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => updateField('features', [...formData.features, { title: '', description: '' }])}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Feature
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCurrentView('tools-list')}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              <Save className="w-4 h-4 mr-2" />
+              Create Tool
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // Tools List Component (previously AIToolsManagement)
-function ToolsList({ onEditTool }: { onEditTool: (tool: Tool) => void }) {
+function ToolsList({ onEditTool, onAddNewTool }: { onEditTool: (tool: Tool) => void; onAddNewTool: () => void }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -742,6 +1139,18 @@ function ToolsList({ onEditTool }: { onEditTool: (tool: Tool) => void }) {
 
   return (
     <div className="space-y-6">
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">All Tools</h2>
+        <Button
+          onClick={onAddNewTool}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Tool
+        </Button>
+      </div>
+      
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
@@ -1814,84 +2223,6 @@ function QATab({ faqs, updateFaqs }: { faqs: any[], updateFaqs: (faqs: any[]) =>
 }
 
 // Placeholder components for other views
-function AddNewTool() {
-  const { toast } = useToast();
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  // Check for pending AI data on component mount
-  useEffect(() => {
-    const pendingData = sessionStorage.getItem('pendingAIData');
-    if (pendingData && !isInitialized) {
-      try {
-        const aiData = JSON.parse(pendingData);
-        sessionStorage.removeItem('pendingAIData'); // Clean up
-        setIsInitialized(true);
-        
-        toast({
-          title: "AI Data Loaded",
-          description: `Loaded AI-generated data for ${aiData.name}. You can review and edit before creating the tool.`
-        });
-      } catch (error) {
-        console.error('Error loading AI data:', error);
-        sessionStorage.removeItem('pendingAIData');
-      }
-    }
-  }, [isInitialized, toast]);
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="p-8">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <Plus className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-semibold mb-2">Add New AI Tool</h3>
-              <p className="text-gray-600">Create a new tool entry for the community platform</p>
-            </div>
-            
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Bot className="w-5 h-5 text-blue-600" />
-                <h4 className="text-lg font-medium text-blue-900">AI-Powered Tool Creation</h4>
-              </div>
-              <p className="text-blue-800 mb-4">
-                Use our AI analysis feature to automatically generate comprehensive tool data from any website URL.
-              </p>
-              <div className="space-y-3 text-sm text-blue-700">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span>Enter any AI tool website URL</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span>AI analyzes and generates descriptions, features, pros/cons</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span>Review and edit the generated data before publishing</span>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-white rounded border">
-                <p className="text-sm text-gray-600 mb-3">
-                  <strong>How to use:</strong> Go to any existing tool and click "Fetch Data" to analyze a new tool, or edit an existing tool to generate improved content.
-                </p>
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  variant="outline"
-                  className="w-full"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Refresh to Check for AI Data
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 function ToolCategories() {
   const [searchTerm, setSearchTerm] = useState("");
