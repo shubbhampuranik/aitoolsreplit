@@ -118,19 +118,20 @@ export default function AdminPage() {
     setFetchingData(true);
     try {
       const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
-      console.log('Frontend received response:', response);
+      const data = await response.json();
+      console.log('Frontend received response:', data);
       
       // Check if response has success property and data
-      if (response && response.success && response.data) {
-        setAiAnalysisResult(response);
+      if (data && data.success && data.data) {
+        setAiAnalysisResult(data);
         setShowAiPreview(true);
         toast({
           title: "AI Analysis Complete",
-          description: `Successfully analyzed ${response.data.name}. Review the data before applying.`
+          description: `Successfully analyzed ${data.data.name}. Review the data before applying.`
         });
       } else {
-        console.error('Response validation failed:', response);
-        throw new Error(response?.error || response?.message || 'Failed to fetch data');
+        console.error('Response validation failed:', data);
+        throw new Error(data?.error || data?.message || 'Failed to fetch data');
       }
     } catch (error) {
       console.error('AI fetch error:', error);
