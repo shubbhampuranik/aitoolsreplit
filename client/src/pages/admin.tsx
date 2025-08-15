@@ -207,11 +207,24 @@ export default function AdminPage() {
         );
         
         // Prepare tool data for creation
+        let toolUrl = '';
+        console.log('webContentPreview:', aiAnalysisResult.webContentPreview);
+        
+        try {
+          if (aiAnalysisResult.webContentPreview) {
+            toolUrl = new URL(aiAnalysisResult.webContentPreview).origin;
+          }
+        } catch (e) {
+          console.log('URL parsing failed, using fallback');
+          // If URL parsing fails, use a default URL based on the tool name
+          toolUrl = `https://${data.name.toLowerCase().replace(/\s+/g, '')}.com`;
+        }
+        
         const newToolData = {
           name: data.name,
           description: data.description,
           shortDescription: data.shortDescription,
-          url: aiAnalysisResult.webContentPreview ? new URL(aiAnalysisResult.webContentPreview).origin : '',
+          url: toolUrl,
           categoryId: category?.id || categories[0]?.id, // Use matching category or first available
           pricingType: data.pricingType,
           pricingDetails: data.pricingDetails || '',
