@@ -456,11 +456,14 @@ export default function AdminPage() {
                     <CardTitle className="text-lg">Features</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 gap-2">
-                      {aiAnalysisResult.data.features.map((feature: string, index: number) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                          <span>{feature}</span>
+                    <div className="grid grid-cols-1 gap-4">
+                      {aiAnalysisResult.data.features.map((feature: any, index: number) => (
+                        <div key={index} className="p-3 bg-gray-50 rounded border">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span className="font-medium">{feature.title}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 ml-4">{feature.description}</p>
                         </div>
                       ))}
                     </div>
