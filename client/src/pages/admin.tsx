@@ -117,7 +117,7 @@ export default function AdminPage() {
 
     setFetchingData(true);
     try {
-      const response = await apiRequest(`/api/tools/fetch-data`, 'POST', { url });
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
       
       if (response.success) {
         setAiAnalysisResult(response);
