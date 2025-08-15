@@ -156,7 +156,7 @@ export default function AdminPage() {
     const data = aiAnalysisResult.data;
     
     // If we're in the tool editor, apply data directly to form
-    if (currentUpdateFormData) {
+    if (currentUpdateFormData && currentView === 'tool-edit') {
       console.log('Applying AI data to existing tool form');
       const updateFormData = currentUpdateFormData;
       
