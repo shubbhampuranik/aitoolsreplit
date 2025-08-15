@@ -239,7 +239,7 @@ Always respond with valid JSON matching the required schema.`;
   }
 
   private buildAnalysisPrompt(url: string, content: string, images: { logos: string[], screenshots: string[] }): string {
-    return `Please analyze this AI tool/software and provide comprehensive information in JSON format:
+    return `Please analyze this AI tool/software and provide comprehensive information in the exact JSON format specified below:
 
 URL: ${url}
 
@@ -250,19 +250,39 @@ FOUND IMAGES:
 Logos: ${images.logos.join(', ') || 'None found'}
 Screenshots: ${images.screenshots.join(', ') || 'None found'}
 
-Please provide a detailed analysis including:
-1. Tool name and descriptions
-2. Category classification
-3. Pricing model (analyze content for pricing information)
-4. Key features with explanations
-5. Pros and cons (be honest and balanced)
-6. Use cases and target audience
-7. Relevant tags
-8. Confidence score (0-1) based on available information quality
-9. Best logo URL from the found images (if any)
-10. Best screenshot URLs (if any)
+REQUIRED JSON FORMAT (follow this structure exactly):
+{
+  "name": "Tool Name (2-100 chars)",
+  "description": "Comprehensive overview (100-1000 chars)",
+  "shortDescription": "Concise summary (50-300 chars)",
+  "category": "Primary category from: ${this.categories.join(', ')}",
+  "subcategory": "Optional subcategory",
+  "pricingType": "free, freemium, or paid",
+  "pricingDetails": "Optional pricing details",
+  "features": [
+    {"title": "Feature Name", "description": "Feature description"},
+    {"title": "Feature Name", "description": "Feature description"}
+  ],
+  "pros": ["Advantage 1", "Advantage 2", "Advantage 3"],
+  "cons": ["Limitation 1", "Limitation 2", "Limitation 3"],
+  "useCases": ["Use case 1", "Use case 2"],
+  "tags": ["tag1", "tag2", "tag3"],
+  "targetAudience": "Primary user demographics",
+  "logoUrl": "Best logo URL if available",
+  "screenshots": ["screenshot1.jpg", "screenshot2.jpg"],
+  "confidenceScore": 0.8
+}
 
-Respond with valid JSON only.`;
+IMPORTANT: 
+- Use only the exact field names shown above
+- Features must be objects with "title" and "description" fields
+- Pros/cons/useCases/tags must be arrays of strings
+- PricingType must be exactly "free", "freemium", or "paid"
+- ConfidenceScore must be a number between 0 and 1
+- Category must match one from the provided list
+- Only include logoUrl and screenshots if they exist in the found images
+
+Respond with valid JSON only, no markdown or explanations.`;
   }
 
   async suggestAlternatives(toolFeatures: string[], toolCategory: string, existingTools: Array<{ id: string, name: string, category: string, features?: string[] }>): Promise<Array<{ id: string, name: string, similarity: number }>> {
