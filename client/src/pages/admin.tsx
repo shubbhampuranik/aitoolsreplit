@@ -891,6 +891,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
             formData={formData} 
             updateFormData={updateFormData} 
             categories={categories} 
+            fetchingData={fetchingData}
+            onFetchAIData={onFetchAIData}
           />
         </TabsContent>
 
@@ -936,7 +938,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
 }
 
 // Overview Tab Component
-function OverviewTab({ formData, updateFormData, categories }: any) {
+function OverviewTab({ formData, updateFormData, categories, fetchingData, onFetchAIData }: any) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Main Content */}
