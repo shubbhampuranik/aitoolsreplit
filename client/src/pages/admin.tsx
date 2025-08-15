@@ -160,8 +160,14 @@ export default function AdminPage() {
     const data = aiAnalysisResult.data;
     
     // If we're in the tool editor, apply data directly to form
+    console.log('Check conditions:', { 
+      hasUpdateFormData: !!currentUpdateFormData, 
+      currentView, 
+      isEditMode: currentView === 'tool-edit' 
+    });
+    
     if (currentUpdateFormData && currentView === 'tool-edit') {
-      console.log('Applying AI data to existing tool form');
+      console.log('✅ Applying AI data to existing tool form');
       const updateFormData = currentUpdateFormData;
       
       // Apply the AI-generated data using updateFormData function
@@ -216,7 +222,7 @@ export default function AdminPage() {
       
       toast({
         title: "AI Data Ready",
-        description: "Navigate to Add New Tool to create a tool with this AI-generated data."
+        description: "AI-generated data has been prepared for new tool creation."
       });
     }
   };
