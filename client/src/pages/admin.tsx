@@ -1177,6 +1177,7 @@ function AlternativesTab({ toolId }: { toolId: string }) {
     onSuccess: () => {
       refetch();
       queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tools', toolId, 'suggested-alternatives'] });
     },
     onError: (error: any) => {
       // Toast notification will be handled by error boundary
@@ -1193,6 +1194,7 @@ function AlternativesTab({ toolId }: { toolId: string }) {
     onSuccess: () => {
       refetch();
       queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tools', toolId, 'suggested-alternatives'] });
     }
   });
 
