@@ -65,6 +65,10 @@ type Tool = {
   views: number;
   createdAt: string;
   gallery?: string[];
+  features?: Array<{ title: string; description: string; }>;
+  prosAndCons?: { pros: string[]; cons: string[]; };
+  alternatives?: Array<{ name: string; url: string; description: string; }>;
+  faqs?: Array<{ question: string; answer: string; }>;
 };
 
 type Review = {
@@ -125,11 +129,7 @@ export default function ToolDetailsPage() {
     }, {} as Record<number, number>)
   };
 
-  // Fetch alternatives
-  const { data: alternatives = [] } = useQuery<Tool[]>({
-    queryKey: [`/api/tools/${toolId}/alternatives`],
-    enabled: !!toolId
-  });
+
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -677,46 +677,28 @@ export default function ToolDetailsPage() {
                       <CardTitle>Key Features</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                              <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">AI-Powered</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Advanced artificial intelligence capabilities</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">Easy to Use</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Intuitive user interface and workflow</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                              <Monitor className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">Cross-Platform</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Works seamlessly across all devices and platforms</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-                              <ExternalLink className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">API Integration</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Robust API for custom integrations and workflows</p>
-                            </div>
+                      {tool.features && tool.features.length > 0 ? (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {tool.features.map((feature, index) => (
+                              <div key={index} className="flex items-start gap-3">
+                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                  <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900 dark:text-white">{feature.title}</h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <Star className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                          <p className="text-gray-500 dark:text-gray-400">No features information available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
@@ -787,44 +769,54 @@ export default function ToolDetailsPage() {
                       <CardTitle>Pros and Cons</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-medium text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4" />
-                            Pros
-                          </h4>
-                          <ul className="space-y-2">
-                            <li className="flex items-start gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
-                              <span>Powerful AI capabilities</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
-                              <span>User-friendly interface</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
-                              <span>Regular updates and improvements</span>
-                            </li>
-                          </ul>
+                      {tool.prosAndCons && (tool.prosAndCons.pros?.length > 0 || tool.prosAndCons.cons?.length > 0) ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-medium text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4" />
+                              Pros
+                            </h4>
+                            {tool.prosAndCons.pros && tool.prosAndCons.pros.length > 0 ? (
+                              <ul className="space-y-2">
+                                {tool.prosAndCons.pros.map((pro, index) => (
+                                  <li key={index} className="flex items-start gap-2 text-sm">
+                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                                    <span>{pro}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">No pros listed</p>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                              <XCircle className="w-4 h-4" />
+                              Cons
+                            </h4>
+                            {tool.prosAndCons.cons && tool.prosAndCons.cons.length > 0 ? (
+                              <ul className="space-y-2">
+                                {tool.prosAndCons.cons.map((con, index) => (
+                                  <li key={index} className="flex items-start gap-2 text-sm">
+                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                                    <span>{con}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">No cons listed</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
-                            <XCircle className="w-4 h-4" />
-                            Cons
-                          </h4>
-                          <ul className="space-y-2">
-                            <li className="flex items-start gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
-                              <span>Learning curve for new users</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
-                              <span>Premium features require subscription</span>
-                            </li>
-                          </ul>
+                      ) : (
+                        <div className="text-center py-12">
+                          <div className="flex items-center justify-center gap-2 mb-4">
+                            <CheckCircle className="w-6 h-6 text-gray-400 dark:text-gray-600" />
+                            <XCircle className="w-6 h-6 text-gray-400 dark:text-gray-600" />
+                          </div>
+                          <p className="text-gray-500 dark:text-gray-400">No pros and cons information available</p>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
@@ -1055,24 +1047,45 @@ export default function ToolDetailsPage() {
                       <CardTitle>Compare {tool.name} with Alternatives</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid gap-4">
-                        {alternatives.slice(0, 6).map((alt) => (
-                          <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                            <img 
-                              src={alt.logoUrl || "/api/placeholder/40/40"} 
-                              alt={alt.name}
-                              className="w-10 h-10 rounded object-cover"
-                            />
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{alt.shortDescription}</p>
+                      {tool.alternatives && tool.alternatives.length > 0 ? (
+                        <div className="grid gap-4">
+                          {tool.alternatives.map((alt, index) => (
+                            <div key={index} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                                <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{alt.description}</p>
+                                {alt.url && (
+                                  <a 
+                                    href={alt.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block"
+                                  >
+                                    Visit website →
+                                  </a>
+                                )}
+                              </div>
+                              {alt.url && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => window.open(alt.url, '_blank')}
+                                >
+                                  Visit
+                                </Button>
+                              )}
                             </div>
-                            <Button variant="outline" size="sm">
-                              Compare
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <ExternalLink className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                          <p className="text-gray-500 dark:text-gray-400">No alternatives information available</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
@@ -1084,20 +1097,21 @@ export default function ToolDetailsPage() {
                       <CardTitle>Frequently Asked Questions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">How do I get started with {tool.name}?</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Getting started is easy! Simply sign up for an account and follow the onboarding process.</p>
+                      {tool.faqs && tool.faqs.length > 0 ? (
+                        <div className="space-y-4">
+                          {tool.faqs.map((faq, index) => (
+                            <div key={index} className={index < tool.faqs.length - 1 ? "border-b border-gray-200 dark:border-gray-700 pb-4" : ""}>
+                              <h4 className="font-medium text-gray-900 dark:text-white mb-2">{faq.question}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{faq.answer}</p>
+                            </div>
+                          ))}
                         </div>
-                        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">What are the pricing options?</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">We offer flexible pricing plans to suit different needs, including free and premium tiers.</p>
+                      ) : (
+                        <div className="text-center py-12">
+                          <MessageSquare className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                          <p className="text-gray-500 dark:text-gray-400">No frequently asked questions available</p>
                         </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Is there customer support available?</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Yes, we provide comprehensive customer support through multiple channels including email and live chat.</p>
-                        </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
