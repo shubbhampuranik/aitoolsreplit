@@ -365,7 +365,7 @@ export default function AdminPage() {
             {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} />}
             {currentView === 'tools-add' && <AddNewTool />}
             {currentView === 'tools-categories' && <ToolCategories />}
-            {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} />}
+            {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} fetchingData={fetchingData} onFetchAIData={handleFetchAIData} />}
             {currentView === 'prompts-list' && <PromptsManagement />}
             {currentView === 'courses-list' && <CoursesManagement />}
             {currentView === 'jobs-list' && <JobsManagement />}
@@ -764,7 +764,7 @@ function ToolsList({ onEditTool }: { onEditTool: (tool: Tool) => void }) {
 }
 
 // Comprehensive Tool Editor with Tabbed Interface
-function ToolEditor({ tool, onBack, onSetUpdateFormData }: { tool: Tool; onBack: () => void; onSetUpdateFormData: (fn: any) => void }) {
+function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAIData }: { tool: Tool; onBack: () => void; onSetUpdateFormData: (fn: any) => void; fetchingData: boolean; onFetchAIData: (url: string) => void }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [formData, setFormData] = useState({
     // Overview fields
@@ -989,7 +989,7 @@ function OverviewTab({ formData, updateFormData, categories }: any) {
                 />
                 <Button
                   type="button"
-                  onClick={() => handleFetchAIData(formData.url)}
+                  onClick={() => onFetchAIData(formData.url)}
                   disabled={fetchingData || !formData.url}
                   variant="outline"
                   className="flex items-center gap-2 whitespace-nowrap"
