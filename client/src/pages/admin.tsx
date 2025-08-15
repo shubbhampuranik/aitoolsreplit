@@ -150,62 +150,73 @@ export default function AdminPage() {
     console.log('aiAnalysisResult:', aiAnalysisResult);
     console.log('currentUpdateFormData:', currentUpdateFormData);
     
-    if (!aiAnalysisResult?.data || !currentUpdateFormData) {
-      console.log('Missing required data - cannot apply');
-      toast({
-        title: "Cannot Apply Data",
-        description: "Please ensure you're in the tool editor before applying AI data.",
-        variant: "destructive"
-      });
+    if (!aiAnalysisResult?.data) {
+      console.log('No AI analysis data available');
       return;
     }
 
     const data = aiAnalysisResult.data;
-    const updateFormData = currentUpdateFormData;
     
-    // Apply the AI-generated data using updateFormData function
-    updateFormData('name', data.name);
-    updateFormData('description', data.description);
-    updateFormData('shortDescription', data.shortDescription);
-    updateFormData('pricingType', data.pricingType);
-    updateFormData('pricingDetails', data.pricingDetails || '');
-    
-    if (data.logoUrl) {
-      updateFormData('logoUrl', data.logoUrl);
-    }
-    
-    if (data.screenshots && data.screenshots.length > 0) {
-      updateFormData('gallery', data.screenshots);
-    }
+    // If we're in the tool editor, apply data directly
+    if (currentUpdateFormData) {
+      const updateFormData = currentUpdateFormData;
+      
+      // Apply the AI-generated data using updateFormData function
+      updateFormData('name', data.name);
+      updateFormData('description', data.description);
+      updateFormData('shortDescription', data.shortDescription);
+      updateFormData('pricingType', data.pricingType);
+      updateFormData('pricingDetails', data.pricingDetails || '');
+      
+      if (data.logoUrl) {
+        updateFormData('logoUrl', data.logoUrl);
+      }
+      
+      if (data.screenshots && data.screenshots.length > 0) {
+        updateFormData('gallery', data.screenshots);
+      }
 
-    // Handle features
-    if (data.features && data.features.length > 0) {
-      updateFormData('features', data.features);
-    }
+      // Handle features
+      if (data.features && data.features.length > 0) {
+        updateFormData('features', data.features);
+      }
 
-    // Handle pros and cons
-    if (data.pros && data.cons) {
-      updateFormData('prosAndCons', {
-        pros: data.pros,
-        cons: data.cons
+      // Handle pros and cons
+      if (data.pros && data.cons) {
+        updateFormData('prosAndCons', {
+          pros: data.pros,
+          cons: data.cons
+        });
+      }
+
+      // Set AI-generated flag (if these fields exist in the form)
+      try {
+        updateFormData('aiGenerated', true);
+        updateFormData('aiConfidenceScore', data.confidenceScore);
+      } catch (e) {
+        // These fields might not exist in the form schema
+      }
+
+      setShowAiPreview(false);
+      setAiAnalysisResult(null);
+      
+      toast({
+        title: "Data Applied",
+        description: "AI-generated data has been applied to the form. Review and edit as needed."
+      });
+    } else {
+      // If not in tool editor, navigate to Add New Tool and store data for later use
+      setShowAiPreview(false);
+      setCurrentView('tools-add');
+      
+      // Store the AI data temporarily (we'll need to pass this to AddNewTool component)
+      sessionStorage.setItem('pendingAIData', JSON.stringify(data));
+      
+      toast({
+        title: "AI Data Ready",
+        description: "Navigated to Add New Tool. You can now create a new tool with the AI-generated data."
       });
     }
-
-    // Set AI-generated flag (if these fields exist in the form)
-    try {
-      updateFormData('aiGenerated', true);
-      updateFormData('aiConfidenceScore', data.confidenceScore);
-    } catch (e) {
-      // These fields might not exist in the form schema
-    }
-
-    setShowAiPreview(false);
-    setAiAnalysisResult(null);
-    
-    toast({
-      title: "Data Applied",
-      description: "AI-generated data has been applied to the form. Review and edit as needed."
-    });
   };
 
   return (
