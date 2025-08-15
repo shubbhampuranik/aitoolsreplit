@@ -832,8 +832,15 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
 
   // Set the updateFormData function reference for AI data application
   useEffect(() => {
-    onSetUpdateFormData(updateFormData);
-    return () => onSetUpdateFormData(null);
+    // Use setTimeout to defer the state update until after render
+    const timer = setTimeout(() => {
+      onSetUpdateFormData(updateFormData);
+    }, 0);
+    
+    return () => {
+      clearTimeout(timer);
+      onSetUpdateFormData(null);
+    };
   }, [onSetUpdateFormData]);
 
   return (

@@ -1,0 +1,32 @@
+Warning: Cannot update a component (`ToolEditor`) while rendering a different component (`AdminPage`). To locate the bad setState() call inside `AdminPage`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at AdminPage (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/src/pages/admin.tsx:79:20)
+    at Route (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65f8d8d4:323:16)
+    at Switch (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65f8d8d4:379:17)
+    at Router (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/src/App.tsx?v=ZEAOZV1tyftbJ-ejDL1S3:43:42)
+    at Provider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=65f8d8d4:38:15)
+    at TooltipProvider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=65f8d8d4:61:5)
+    at QueryClientProvider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=65f8d8d4:2805:3)
+    at App
+printWarning @ chunk-WERSD76P.js?v=65f8d8d4:521
+error @ chunk-WERSD76P.js?v=65f8d8d4:505
+warnAboutRenderPhaseUpdatesInDEV @ chunk-WERSD76P.js?v=65f8d8d4:19793
+scheduleUpdateOnFiber @ chunk-WERSD76P.js?v=65f8d8d4:18546
+dispatchSetState @ chunk-WERSD76P.js?v=65f8d8d4:12403
+updateFormData @ admin.tsx:830
+basicStateReducer @ chunk-WERSD76P.js?v=65f8d8d4:11703
+updateReducer @ chunk-WERSD76P.js?v=65f8d8d4:11794
+updateState @ chunk-WERSD76P.js?v=65f8d8d4:12021
+useState @ chunk-WERSD76P.js?v=65f8d8d4:12753
+useState @ chunk-3TFVT2CW.js?v=65f8d8d4:1066
+AdminPage @ admin.tsx:80
+renderWithHooks @ chunk-WERSD76P.js?v=65f8d8d4:11548
+updateFunctionComponent @ chunk-WERSD76P.js?v=65f8d8d4:14582
+beginWork @ chunk-WERSD76P.js?v=65f8d8d4:15924
+beginWork$1 @ chunk-WERSD76P.js?v=65f8d8d4:19753
+performUnitOfWork @ chunk-WERSD76P.js?v=65f8d8d4:19198
+workLoopSync @ chunk-WERSD76P.js?v=65f8d8d4:19137
+renderRootSync @ chunk-WERSD76P.js?v=65f8d8d4:19116
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=65f8d8d4:18678
+workLoop @ chunk-WERSD76P.js?v=65f8d8d4:197
+flushWork @ chunk-WERSD76P.js?v=65f8d8d4:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=65f8d8d4:384Understand this error
