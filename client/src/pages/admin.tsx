@@ -145,10 +145,8 @@ export default function AdminPage() {
     }
   };
 
-  const applyAIData = () => {
-    console.log('Apply AI Data called');
-    console.log('aiAnalysisResult:', aiAnalysisResult);
-    console.log('currentUpdateFormData:', currentUpdateFormData);
+  const applyAIData = async () => {
+    console.log('Apply and Save AI Data called');
     
     if (!aiAnalysisResult?.data) {
       console.log('No AI analysis data available');
@@ -157,7 +155,7 @@ export default function AdminPage() {
 
     const data = aiAnalysisResult.data;
     
-    // If we're in the tool editor, apply data directly
+    // If we're in the tool editor, apply data directly to form
     if (currentUpdateFormData) {
       const updateFormData = currentUpdateFormData;
       
@@ -189,33 +187,73 @@ export default function AdminPage() {
         });
       }
 
-      // Set AI-generated flag (if these fields exist in the form)
-      try {
-        updateFormData('aiGenerated', true);
-        updateFormData('aiConfidenceScore', data.confidenceScore);
-      } catch (e) {
-        // These fields might not exist in the form schema
-      }
-
       setShowAiPreview(false);
       setAiAnalysisResult(null);
       
       toast({
         title: "Data Applied",
-        description: "AI-generated data has been applied to the form. Review and edit as needed."
+        description: "AI-generated data has been applied to the form. Review and save when ready."
       });
     } else {
-      // If not in tool editor, navigate to Add New Tool and store data for later use
-      setShowAiPreview(false);
-      setCurrentView('tools-add');
-      
-      // Store the AI data temporarily (we'll need to pass this to AddNewTool component)
-      sessionStorage.setItem('pendingAIData', JSON.stringify(data));
-      
-      toast({
-        title: "AI Data Ready",
-        description: "Navigated to Add New Tool. You can now create a new tool with the AI-generated data."
-      });
+      // If not in tool editor, create a new tool directly with AI data
+      try {
+        // Get categories for mapping
+        const categoriesResponse = await apiRequest('GET', '/api/categories');
+        const categories = await categoriesResponse.json();
+        
+        // Find matching category
+        const category = categories.find((cat: any) => 
+          cat.name.toLowerCase() === data.category.toLowerCase()
+        );
+        
+        // Prepare tool data for creation
+        const newToolData = {
+          name: data.name,
+          description: data.description,
+          shortDescription: data.shortDescription,
+          url: aiAnalysisResult.webContentPreview ? new URL(aiAnalysisResult.webContentPreview).origin : '',
+          categoryId: category?.id || categories[0]?.id, // Use matching category or first available
+          pricingType: data.pricingType,
+          pricingDetails: data.pricingDetails || '',
+          logoUrl: data.logoUrl || '',
+          gallery: data.screenshots || [],
+          features: data.features || [],
+          prosAndCons: {
+            pros: data.pros || [],
+            cons: data.cons || []
+          },
+          tags: data.tags || [],
+          targetAudience: data.targetAudience || '',
+          useCases: data.useCases || [],
+          status: 'approved', // Auto-approve AI-generated tools
+          aiGenerated: true,
+          aiConfidenceScore: data.confidenceScore
+        };
+
+        // Create the tool
+        const response = await apiRequest('POST', '/api/tools', newToolData);
+        const result = await response.json();
+        
+        setShowAiPreview(false);
+        setAiAnalysisResult(null);
+        
+        // Refresh the tools list
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/tools'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tools'] });
+        
+        toast({
+          title: "Tool Created Successfully",
+          description: `${data.name} has been created and added to the platform with AI-generated content.`
+        });
+        
+      } catch (error) {
+        console.error('Error creating tool:', error);
+        toast({
+          title: "Creation Failed",
+          description: "Failed to create the tool. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -423,7 +461,7 @@ export default function AdminPage() {
                     <Badge variant="outline">{Math.round((aiAnalysisResult.data.confidenceScore || 0) * 100)}%</Badge>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Review the generated data before applying to your tool
+                    Review the generated data. "Apply & Save" will create/update the tool immediately.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -435,9 +473,9 @@ export default function AdminPage() {
                   </Button>
                   <Button
                     onClick={() => applyAIData()}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-green-600 hover:bg-green-700"
                   >
-                    Apply Data
+                    Apply & Save Tool
                   </Button>
                 </div>
               </div>
