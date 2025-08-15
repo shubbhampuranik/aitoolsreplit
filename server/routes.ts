@@ -578,8 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Tool not found" });
       }
 
-      // Get stored alternatives first
-      const storedAlternatives = await storage.getToolAlternatives(toolId);
+      // Get stored alternatives first with enhanced data
+      const storedAlternatives = await storage.getToolAlternativesWithDetails(toolId);
       
       // If no stored alternatives, get auto-suggested ones and save them
       if (storedAlternatives.length === 0) {
@@ -590,7 +590,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.addToolAlternative(toolId, alternative.id, true);
         }
         
-        return res.json(autoSuggested);
+        // Return auto-suggested with enhanced data
+        const enhancedAutoSuggested = await storage.getToolAlternativesWithDetails(toolId);
+        return res.json(enhancedAutoSuggested);
       }
 
       res.json(storedAlternatives);
@@ -600,11 +602,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add a tool alternative (manual)
+  // Add a tool alternative (manual) with duplicate prevention
   app.post('/api/admin/tools/:id/alternatives', isAuthenticated, async (req, res) => {
     try {
       const { id: toolId } = req.params;
       const { alternativeId } = req.body;
+      
+      // Check if alternative already exists
+      const currentAlternatives = await storage.getToolAlternatives(toolId);
+      const isDuplicate = currentAlternatives.some(alt => alt.id === alternativeId);
+      
+      if (isDuplicate) {
+        return res.status(400).json({ message: "Alternative already exists" });
+      }
+      
+      if (alternativeId === toolId) {
+        return res.status(400).json({ message: "Cannot add tool as alternative to itself" });
+      }
       
       await storage.addToolAlternative(toolId, alternativeId, false);
       res.json({ message: "Alternative added successfully" });
@@ -632,8 +646,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id: toolId } = req.params;
       
-      const suggestions = await storage.getAutoSuggestedAlternatives(toolId);
-      res.json(suggestions);
+      // Get current alternatives to exclude from suggestions
+      const currentAlternatives = await storage.getToolAlternatives(toolId);
+      const currentAlternativeIds = currentAlternatives.map(alt => alt.id);
+      
+      // Get suggested alternatives and filter out current ones
+      const allSuggestions = await storage.getAutoSuggestedAlternatives(toolId);
+      const filteredSuggestions = allSuggestions.filter(alt => 
+        !currentAlternativeIds.includes(alt.id) && alt.id !== toolId
+      );
+      
+      res.json(filteredSuggestions);
     } catch (error) {
       console.error("Error fetching suggested alternatives:", error);
       res.status(500).json({ message: "Failed to fetch suggested alternatives" });

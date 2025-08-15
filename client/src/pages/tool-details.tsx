@@ -85,6 +85,102 @@ type Review = {
   };
 };
 
+// Alternatives Section Component
+function AlternativesSection({ toolId, toolName }: { toolId: string; toolName: string }) {
+  const { data: alternatives = [], isLoading } = useQuery<Array<Tool & { upvotes: number }>>({
+    queryKey: ['/api/tools', toolId, 'alternatives'],
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Compare {toolName} with Alternatives</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Compare {toolName} with Alternatives</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {alternatives.length > 0 ? (
+          <div className="grid gap-4">
+            {alternatives.map((alt) => (
+              <div key={alt.id} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  {alt.logoUrl ? (
+                    <img 
+                      src={alt.logoUrl} 
+                      alt={alt.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ExternalLink className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <ThumbsUp className="w-3 h-3" />
+                      <span>{alt.upvotes || 0}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    {alt.shortDescription || alt.description || 'No description available'}
+                  </p>
+                  {alt.url && (
+                    <a 
+                      href={alt.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-block"
+                    >
+                      Visit website →
+                    </a>
+                  )}
+                </div>
+                {alt.url && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(alt.url, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Visit
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <ExternalLink className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No alternatives available yet</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ToolDetailsPage() {
   const [location] = useLocation();
   const toolId = location.split('/')[2];
@@ -710,7 +806,7 @@ export default function ToolDetailsPage() {
                       <CardTitle>Screenshots & Videos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {tool.gallery && tool.gallery.length > 0 ? (
+                      {tool.gallery?.length ? (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {tool.gallery.slice(0, 3).map((url, index) => (
                             <div 
@@ -1042,52 +1138,7 @@ export default function ToolDetailsPage() {
 
                 {/* Alternatives Section */}
                 <section id="alternatives" className="scroll-mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Compare {tool.name} with Alternatives</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {tool.alternatives && tool.alternatives.length > 0 ? (
-                        <div className="grid gap-4">
-                          {tool.alternatives.map((alt, index) => (
-                            <div key={index} className="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
-                                <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">{alt.name}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{alt.description}</p>
-                                {alt.url && (
-                                  <a 
-                                    href={alt.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block"
-                                  >
-                                    Visit website →
-                                  </a>
-                                )}
-                              </div>
-                              {alt.url && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => window.open(alt.url, '_blank')}
-                                >
-                                  Visit
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12">
-                          <ExternalLink className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                          <p className="text-gray-500 dark:text-gray-400">No alternatives information available</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <AlternativesSection toolId={tool.id} toolName={tool.name} />
                 </section>
 
                 {/* Q&A Section */}
@@ -1097,10 +1148,10 @@ export default function ToolDetailsPage() {
                       <CardTitle>Frequently Asked Questions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {tool.faqs && tool.faqs.length > 0 ? (
+                      {tool.faqs?.length ? (
                         <div className="space-y-4">
                           {tool.faqs.map((faq, index) => (
-                            <div key={index} className={index < tool.faqs.length - 1 ? "border-b border-gray-200 dark:border-gray-700 pb-4" : ""}>
+                            <div key={index} className={index < (tool.faqs?.length || 0) - 1 ? "border-b border-gray-200 dark:border-gray-700 pb-4" : ""}>
                               <h4 className="font-medium text-gray-900 dark:text-white mb-2">{faq.question}</h4>
                               <p className="text-sm text-gray-600 dark:text-gray-400">{faq.answer}</p>
                             </div>

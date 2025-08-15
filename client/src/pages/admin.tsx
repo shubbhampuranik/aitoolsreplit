@@ -541,7 +541,7 @@ function ToolEditor({ tool, onBack }: { tool: Tool; onBack: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -802,7 +802,7 @@ function OverviewTab({ formData, updateFormData, categories }: any) {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category: any) => (
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -1144,32 +1144,43 @@ function ProsConsTab({ prosAndCons, updateProsAndCons }: { prosAndCons: any, upd
 
 // Enhanced Alternatives Tab Component
 function AlternativesTab({ toolId }: { toolId: string }) {
-  const { data: alternatives = [], refetch } = useQuery({
+  const { data: alternatives = [], refetch } = useQuery<Tool[]>({
     queryKey: ['/api/tools', toolId, 'alternatives'],
     enabled: !!toolId
   });
   
-  const { data: suggestedAlternatives = [] } = useQuery({
+  const { data: suggestedAlternatives = [] } = useQuery<Tool[]>({
     queryKey: ['/api/admin/tools', toolId, 'suggested-alternatives'],
     enabled: !!toolId
   });
 
-  const { data: allTools = [] } = useQuery({
+  const { data: allTools = [] } = useQuery<Tool[]>({
     queryKey: ['/api/admin/tools'],
-    select: (data: any[]) => data.filter((tool: any) => tool.id !== toolId && tool.status === 'approved')
+    select: (data: Tool[]) => data.filter((tool: Tool) => tool.id !== toolId && tool.status === 'approved')
   });
 
   const addAlternativeMutation = useMutation({
     mutationFn: async (alternativeId: string) => {
-      return fetch(`/api/admin/tools/${toolId}/alternatives`, {
+      const response = await fetch(`/api/admin/tools/${toolId}/alternatives`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alternativeId })
-      }).then(res => res.json());
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       refetch();
       queryClient.invalidateQueries({ queryKey: ['/api/tools', toolId, 'alternatives'] });
+    },
+    onError: (error: any) => {
+      // Toast notification will be handled by error boundary
+      console.error("Error adding alternative:", error.message);
     }
   });
 

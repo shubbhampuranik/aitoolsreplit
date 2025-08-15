@@ -1658,6 +1658,41 @@ export class DatabaseStorage implements IStorage {
     return alternatives.map(alt => alt.tool);
   }
 
+  async getToolAlternativesWithDetails(toolId: string): Promise<Array<Tool & { upvotes: number }>> {
+    const alternatives = await db
+      .select({
+        tool: tools,
+        alternative: toolAlternatives,
+      })
+      .from(toolAlternatives)
+      .innerJoin(tools, eq(toolAlternatives.alternativeId, tools.id))
+      .where(eq(toolAlternatives.toolId, toolId))
+      .orderBy(desc(toolAlternatives.similarityScore));
+
+    // Get vote counts for each alternative tool
+    const result = await Promise.all(
+      alternatives.map(async (alt) => {
+        const voteCount = await db
+          .select({ count: count() })
+          .from(votes)
+          .where(
+            and(
+              eq(votes.itemId, alt.tool.id),
+              eq(votes.itemType, 'tool'),
+              eq(votes.voteType, 1)
+            )
+          );
+
+        return {
+          ...alt.tool,
+          upvotes: voteCount[0]?.count || 0,
+        };
+      })
+    );
+
+    return result;
+  }
+
   async addToolAlternative(toolId: string, alternativeId: string, isAutoSuggested: boolean = false): Promise<void> {
     const tool = await this.getTool(toolId);
     const alternative = await this.getTool(alternativeId);
