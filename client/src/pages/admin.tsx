@@ -395,9 +395,10 @@ export default function AdminPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">
-                    Confidence Score: <Badge variant="outline">{Math.round((aiAnalysisResult.data.confidenceScore || 0) * 100)}%</Badge>
-                  </p>
+                  <div className="text-sm text-gray-600 flex items-center gap-2">
+                    <span>Confidence Score:</span>
+                    <Badge variant="outline">{Math.round((aiAnalysisResult.data.confidenceScore || 0) * 100)}%</Badge>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
                     Review the generated data before applying to your tool
                   </p>
