@@ -1431,6 +1431,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
   });
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -1531,7 +1532,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       return;
     }
     
-    setIsLoading(true);
+    setIsGenerating(true);
     try {
       const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
       const result = await response.json();
@@ -1561,7 +1562,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -1575,7 +1576,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       return;
     }
     
-    setIsLoading(true);
+    setIsGenerating(true);
     try {
       const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
       const result = await response.json();
@@ -1658,7 +1659,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -1729,6 +1730,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
             updateFeatures={(features) => updateFormData('features', features)}
             toolUrl={formData.url}
             onGenerateAIFeatures={generateAIFeatures}
+            isGenerating={isGenerating}
           />
         </TabsContent>
 
@@ -1760,6 +1762,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
             updateFaqs={(faqs) => updateFormData('faqs', faqs)}
             toolUrl={formData.url}
             onGenerateAIQA={generateAIQA}
+            isGenerating={isGenerating}
           />
         </TabsContent>
       </Tabs>
@@ -1959,11 +1962,12 @@ function OverviewTab({ formData, updateFormData, categories, fetchingData, onFet
 }
 
 // Features Tab Component
-function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }: { 
+function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures, isGenerating }: { 
   features: any[], 
   updateFeatures: (features: any[]) => void,
   toolUrl?: string,
-  onGenerateAIFeatures?: (url: string, count: number) => void
+  onGenerateAIFeatures?: (url: string, count: number) => void,
+  isGenerating?: boolean
 }) {
   const [showCountDialog, setShowCountDialog] = useState(false);
   const [itemCount, setItemCount] = useState(5);
@@ -2006,9 +2010,18 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }
         </div>
         <div className="flex gap-2">
           {toolUrl && onGenerateAIFeatures && (
-            <Button onClick={handleGenerateAI} variant="outline">
-              <Bot className="w-4 h-4 mr-2" />
-              Generate with AI
+            <Button onClick={handleGenerateAI} variant="outline" disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Bot className="w-4 h-4 mr-2" />
+                  Generate with AI
+                </>
+              )}
             </Button>
           )}
           <Button onClick={addFeature}>
@@ -2526,11 +2539,12 @@ function AlternativesTab({ toolId }: { toolId: string }) {
 }
 
 // Q&A Tab Component
-function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: { 
+function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA, isGenerating }: { 
   faqs: any[], 
   updateFaqs: (faqs: any[]) => void,
   toolUrl?: string,
-  onGenerateAIQA?: (url: string, count: number) => void
+  onGenerateAIQA?: (url: string, count: number) => void,
+  isGenerating?: boolean
 }) {
   const [showCountDialog, setShowCountDialog] = useState(false);
   const [itemCount, setItemCount] = useState(3);
@@ -2573,9 +2587,18 @@ function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: {
         </div>
         <div className="flex gap-2">
           {toolUrl && onGenerateAIQA && (
-            <Button onClick={handleGenerateAI} variant="outline">
-              <Bot className="w-4 h-4 mr-2" />
-              Generate with AI
+            <Button onClick={handleGenerateAI} variant="outline" disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Bot className="w-4 h-4 mr-2" />
+                  Generate with AI
+                </>
+              )}
             </Button>
           )}
           <Button onClick={addFaq}>
