@@ -243,6 +243,119 @@ export default function AdminPage() {
     }
   };
 
+  const generateAIFeatures = async (url: string) => {
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a tool URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFetchingData(true);
+    try {
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
+      const result = await response.json();
+      
+      if (result.success && result.data.features) {
+        console.log('🔧 Generated AI features:', result.data.features);
+        // Apply features directly to the current form data
+        if (currentUpdateFormData) {
+          currentUpdateFormData('features', result.data.features);
+        } else {
+          // Store for form to pick up
+          sessionStorage.setItem('aiFeatures', JSON.stringify(result.data.features));
+        }
+        
+        toast({
+          title: "Features Generated",
+          description: `Added ${result.data.features.length} AI-generated features`,
+        });
+      } else {
+        toast({
+          title: "Generation Failed", 
+          description: "Could not generate features from this URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI features:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate features",
+        variant: "destructive",
+      });
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
+  const generateAIQA = async (url: string) => {
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a tool URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFetchingData(true);
+    try {
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
+      const result = await response.json();
+      
+      if (result.success && result.data.name) {
+        // Generate Q&A based on the tool data
+        const aiQA = [
+          {
+            question: `What is ${result.data.name}?`,
+            answer: result.data.description || result.data.shortDescription || `${result.data.name} is an AI tool that helps users with various tasks.`
+          },
+          {
+            question: `How much does ${result.data.name} cost?`,
+            answer: result.data.pricingDetails || `${result.data.name} is ${result.data.pricingType || 'available'} to use.`
+          },
+          {
+            question: `What are the main features of ${result.data.name}?`,
+            answer: result.data.features && result.data.features.length > 0 
+              ? result.data.features.map((f: any) => f.title).join(', ')
+              : `${result.data.name} offers various features to enhance productivity.`
+          }
+        ];
+
+        console.log('💬 Generated AI Q&A:', aiQA);
+        
+        if (currentUpdateFormData) {
+          currentUpdateFormData('faqs', aiQA);
+        } else {
+          sessionStorage.setItem('aiFaqs', JSON.stringify(aiQA));
+        }
+        
+        toast({
+          title: "Q&A Generated",
+          description: `Added ${aiQA.length} AI-generated Q&A items`,
+        });
+      } else {
+        toast({
+          title: "Generation Failed", 
+          description: "Could not generate Q&A from this URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI Q&A:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate Q&A",
+        variant: "destructive",
+      });
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
   return (
     <Layout>
       <ViewContext.Provider value={[currentView, setCurrentView]}>
@@ -1381,7 +1494,10 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         updateFormData('pricingDetails', aiData.pricingDetails || '');
         
         if (aiData.features && aiData.features.length > 0) {
+          console.log('📋 Applying features data:', aiData.features);
           updateFormData('features', aiData.features);
+        } else {
+          console.log('⚠️ No features data to apply');
         }
 
         if (aiData.pros && aiData.cons) {
@@ -1404,6 +1520,107 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       }
     }
   }, []);
+
+  const generateAIFeatures = async (url: string) => {
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a tool URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
+      const result = await response.json();
+      
+      if (result.success && result.data.features) {
+        console.log('🔧 Generated AI features:', result.data.features);
+        updateFormData('features', result.data.features);
+        
+        toast({
+          title: "Features Generated",
+          description: `Added ${result.data.features.length} AI-generated features`,
+        });
+      } else {
+        toast({
+          title: "Generation Failed", 
+          description: "Could not generate features from this URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI features:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate features",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateAIQA = async (url: string) => {
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a tool URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
+      const result = await response.json();
+      
+      if (result.success && result.data.name) {
+        const aiQA = [
+          {
+            question: `What is ${result.data.name}?`,
+            answer: result.data.description || result.data.shortDescription || `${result.data.name} is an AI tool that helps users with various tasks.`
+          },
+          {
+            question: `How much does ${result.data.name} cost?`,
+            answer: result.data.pricingDetails || `${result.data.name} is ${result.data.pricingType || 'available'} to use.`
+          },
+          {
+            question: `What are the main features of ${result.data.name}?`,
+            answer: result.data.features && result.data.features.length > 0 
+              ? result.data.features.map((f: any) => f.title).join(', ')
+              : `${result.data.name} offers various features to enhance productivity.`
+          }
+        ];
+
+        console.log('💬 Generated AI Q&A:', aiQA);
+        updateFormData('faqs', aiQA);
+        
+        toast({
+          title: "Q&A Generated",
+          description: `Added ${aiQA.length} AI-generated Q&A items`,
+        });
+      } else {
+        toast({
+          title: "Generation Failed", 
+          description: "Could not generate Q&A from this URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI Q&A:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate Q&A",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl">
@@ -1469,7 +1686,9 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         <TabsContent value="features">
           <FeaturesTab 
             features={formData.features} 
-            updateFeatures={(features) => updateFormData('features', features)} 
+            updateFeatures={(features) => updateFormData('features', features)}
+            toolUrl={formData.url}
+            onGenerateAIFeatures={generateAIFeatures}
           />
         </TabsContent>
 
@@ -1498,7 +1717,9 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         <TabsContent value="qa">
           <QATab 
             faqs={formData.faqs} 
-            updateFaqs={(faqs) => updateFormData('faqs', faqs)} 
+            updateFaqs={(faqs) => updateFormData('faqs', faqs)}
+            toolUrl={formData.url}
+            onGenerateAIQA={generateAIQA}
           />
         </TabsContent>
       </Tabs>
@@ -1698,7 +1919,12 @@ function OverviewTab({ formData, updateFormData, categories, fetchingData, onFet
 }
 
 // Features Tab Component
-function FeaturesTab({ features, updateFeatures }: { features: any[], updateFeatures: (features: any[]) => void }) {
+function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }: { 
+  features: any[], 
+  updateFeatures: (features: any[]) => void,
+  toolUrl?: string,
+  onGenerateAIFeatures?: (url: string) => void
+}) {
   const addFeature = () => {
     updateFeatures([...features, { title: "", description: "" }]);
   };
@@ -1721,10 +1947,18 @@ function FeaturesTab({ features, updateFeatures }: { features: any[], updateFeat
           <h3 className="text-lg font-semibold">Tool Features</h3>
           <p className="text-sm text-gray-600">Add key features and capabilities of this tool</p>
         </div>
-        <Button onClick={addFeature}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Feature
-        </Button>
+        <div className="flex gap-2">
+          {toolUrl && onGenerateAIFeatures && (
+            <Button onClick={() => onGenerateAIFeatures(toolUrl)} variant="outline">
+              <Bot className="w-4 h-4 mr-2" />
+              Generate with AI
+            </Button>
+          )}
+          <Button onClick={addFeature}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Feature
+          </Button>
+        </div>
       </div>
 
       {features.length === 0 ? (
@@ -2199,7 +2433,12 @@ function AlternativesTab({ toolId }: { toolId: string }) {
 }
 
 // Q&A Tab Component
-function QATab({ faqs, updateFaqs }: { faqs: any[], updateFaqs: (faqs: any[]) => void }) {
+function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: { 
+  faqs: any[], 
+  updateFaqs: (faqs: any[]) => void,
+  toolUrl?: string,
+  onGenerateAIQA?: (url: string) => void
+}) {
   const addFaq = () => {
     updateFaqs([...faqs, { question: "", answer: "" }]);
   };
@@ -2222,10 +2461,18 @@ function QATab({ faqs, updateFaqs }: { faqs: any[], updateFaqs: (faqs: any[]) =>
           <h3 className="text-lg font-semibold">Frequently Asked Questions</h3>
           <p className="text-sm text-gray-600">Add common questions and answers about this tool</p>
         </div>
-        <Button onClick={addFaq}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Q&A
-        </Button>
+        <div className="flex gap-2">
+          {toolUrl && onGenerateAIQA && (
+            <Button onClick={() => onGenerateAIQA(toolUrl)} variant="outline">
+              <Bot className="w-4 h-4 mr-2" />
+              Generate with AI
+            </Button>
+          )}
+          <Button onClick={addFaq}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Q&A
+          </Button>
+        </div>
       </div>
 
       {faqs.length === 0 ? (
