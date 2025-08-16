@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -1521,7 +1521,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     }
   }, []);
 
-  const generateAIFeatures = async (url: string) => {
+  const generateAIFeatures = async (url: string, count: number = 5) => {
     if (!url.trim()) {
       toast({
         title: "URL Required",
@@ -1538,11 +1538,13 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       
       if (result.success && result.data.features) {
         console.log('🔧 Generated AI features:', result.data.features);
-        updateFormData('features', result.data.features);
+        // Use only the requested number of features
+        const selectedFeatures = result.data.features.slice(0, count);
+        updateFormData('features', selectedFeatures);
         
         toast({
           title: "Features Generated",
-          description: `Added ${result.data.features.length} AI-generated features`,
+          description: `Added ${selectedFeatures.length} AI-generated features`,
         });
       } else {
         toast({
@@ -1563,7 +1565,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     }
   };
 
-  const generateAIQA = async (url: string) => {
+  const generateAIQA = async (url: string, count: number = 3) => {
     if (!url.trim()) {
       toast({
         title: "URL Required",
@@ -1579,7 +1581,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       const result = await response.json();
       
       if (result.success && result.data.name) {
-        const aiQA = [
+        // Generate the requested number of Q&A items
+        const baseQuestions = [
           {
             question: `What is ${result.data.name}?`,
             answer: result.data.description || result.data.shortDescription || `${result.data.name} is an AI tool that helps users with various tasks.`
@@ -1593,8 +1596,45 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
             answer: result.data.features && result.data.features.length > 0 
               ? result.data.features.map((f: any) => f.title).join(', ')
               : `${result.data.name} offers various features to enhance productivity.`
+          },
+          {
+            question: `Who is ${result.data.name} designed for?`,
+            answer: result.data.targetAudience || 'This tool is designed for professionals and individuals looking to improve their productivity.'
+          },
+          {
+            question: `What are the main benefits of using ${result.data.name}?`,
+            answer: result.data.pros && result.data.pros.length > 0 
+              ? result.data.pros.join(', ')
+              : `${result.data.name} offers various benefits to improve your workflow.`
+          },
+          {
+            question: `Are there any limitations to ${result.data.name}?`,
+            answer: result.data.cons && result.data.cons.length > 0 
+              ? result.data.cons.join(', ')
+              : 'Like any tool, it may have some limitations depending on your specific needs.'
+          },
+          {
+            question: `What are common use cases for ${result.data.name}?`,
+            answer: result.data.useCases && result.data.useCases.length > 0 
+              ? result.data.useCases.join(', ')
+              : 'This tool can be used for various productivity and workflow enhancement tasks.'
+          },
+          {
+            question: `How do I get started with ${result.data.name}?`,
+            answer: `You can start using ${result.data.name} by visiting their website at ${result.data.url || 'their official website'}.`
+          },
+          {
+            question: `Is ${result.data.name} suitable for beginners?`,
+            answer: `${result.data.name} is designed to be user-friendly and accessible to users of all skill levels.`
+          },
+          {
+            question: `Does ${result.data.name} offer customer support?`,
+            answer: `Most modern AI tools like ${result.data.name} typically provide customer support through various channels.`
           }
         ];
+
+        // Select the requested number of questions
+        const aiQA = baseQuestions.slice(0, Math.min(count, baseQuestions.length));
 
         console.log('💬 Generated AI Q&A:', aiQA);
         updateFormData('faqs', aiQA);
@@ -1923,8 +1963,25 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }
   features: any[], 
   updateFeatures: (features: any[]) => void,
   toolUrl?: string,
-  onGenerateAIFeatures?: (url: string) => void
+  onGenerateAIFeatures?: (url: string, count: number) => void
 }) {
+  const [showCountDialog, setShowCountDialog] = useState(false);
+  const [itemCount, setItemCount] = useState(5);
+
+  const handleGenerateAI = () => {
+    if (!toolUrl) {
+      return;
+    }
+    setShowCountDialog(true);
+  };
+
+  const confirmGenerate = () => {
+    if (onGenerateAIFeatures && toolUrl) {
+      onGenerateAIFeatures(toolUrl, itemCount);
+    }
+    setShowCountDialog(false);
+  };
+
   const addFeature = () => {
     updateFeatures([...features, { title: "", description: "" }]);
   };
@@ -1949,7 +2006,7 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }
         </div>
         <div className="flex gap-2">
           {toolUrl && onGenerateAIFeatures && (
-            <Button onClick={() => onGenerateAIFeatures(toolUrl)} variant="outline">
+            <Button onClick={handleGenerateAI} variant="outline">
               <Bot className="w-4 h-4 mr-2" />
               Generate with AI
             </Button>
@@ -2013,6 +2070,42 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures }
           ))}
         </div>
       )}
+
+      {/* Count Selection Dialog */}
+      <Dialog open={showCountDialog} onOpenChange={setShowCountDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Features with AI</DialogTitle>
+            <DialogDescription>
+              How many features would you like to generate for this tool?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="feature-count">Number of Features</Label>
+              <Input
+                id="feature-count"
+                type="number"
+                min="1"
+                max="10"
+                value={itemCount}
+                onChange={(e) => setItemCount(parseInt(e.target.value) || 1)}
+                className="mt-1"
+              />
+              <p className="text-sm text-gray-500 mt-1">Choose between 1-10 features</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCountDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmGenerate}>
+              <Bot className="w-4 h-4 mr-2" />
+              Generate Features
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -2437,8 +2530,25 @@ function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: {
   faqs: any[], 
   updateFaqs: (faqs: any[]) => void,
   toolUrl?: string,
-  onGenerateAIQA?: (url: string) => void
+  onGenerateAIQA?: (url: string, count: number) => void
 }) {
+  const [showCountDialog, setShowCountDialog] = useState(false);
+  const [itemCount, setItemCount] = useState(3);
+
+  const handleGenerateAI = () => {
+    if (!toolUrl) {
+      return;
+    }
+    setShowCountDialog(true);
+  };
+
+  const confirmGenerate = () => {
+    if (onGenerateAIQA && toolUrl) {
+      onGenerateAIQA(toolUrl, itemCount);
+    }
+    setShowCountDialog(false);
+  };
+
   const addFaq = () => {
     updateFaqs([...faqs, { question: "", answer: "" }]);
   };
@@ -2463,7 +2573,7 @@ function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: {
         </div>
         <div className="flex gap-2">
           {toolUrl && onGenerateAIQA && (
-            <Button onClick={() => onGenerateAIQA(toolUrl)} variant="outline">
+            <Button onClick={handleGenerateAI} variant="outline">
               <Bot className="w-4 h-4 mr-2" />
               Generate with AI
             </Button>
@@ -2527,6 +2637,42 @@ function QATab({ faqs, updateFaqs, toolUrl, onGenerateAIQA }: {
           ))}
         </div>
       )}
+
+      {/* Count Selection Dialog */}
+      <Dialog open={showCountDialog} onOpenChange={setShowCountDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Q&A with AI</DialogTitle>
+            <DialogDescription>
+              How many Q&A items would you like to generate for this tool?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="qa-count">Number of Q&A Items</Label>
+              <Input
+                id="qa-count"
+                type="number"
+                min="1"
+                max="10"
+                value={itemCount}
+                onChange={(e) => setItemCount(parseInt(e.target.value) || 1)}
+                className="mt-1"
+              />
+              <p className="text-sm text-gray-500 mt-1">Choose between 1-10 Q&A items</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCountDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmGenerate}>
+              <Bot className="w-4 h-4 mr-2" />
+              Generate Q&A
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
