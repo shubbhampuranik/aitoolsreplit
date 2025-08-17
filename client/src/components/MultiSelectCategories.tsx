@@ -31,6 +31,21 @@ export function MultiSelectCategories({
 }: MultiSelectCategoriesProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Handle clicks outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-headlessui-combobox]')) {
+        setIsOpen(false);
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
 
   const filteredCategories = query === ''
     ? categories.filter(cat => !selectedCategories.find(selected => selected.id === cat.id))
@@ -54,7 +69,7 @@ export function MultiSelectCategories({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Combobox value={selectedCategories} onChange={handleSelect}>
+      <Combobox as="div" value={selectedCategories} onChange={handleSelect}>
         <div className="relative">
           <Combobox.Input
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -71,8 +86,7 @@ export function MultiSelectCategories({
           </Combobox.Button>
         </div>
 
-        {isOpen && (
-          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-background border border-input py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-background border border-input py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
           {filteredCategories.length === 0 && query !== '' ? (
             <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
               No categories found.
@@ -110,7 +124,6 @@ export function MultiSelectCategories({
             ))
           )}
         </Combobox.Options>
-        )}
       </Combobox>
 
       {/* Selected Categories */}
