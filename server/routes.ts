@@ -600,6 +600,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let toolData = analysis.data!;
 
+      // Auto-create category if it doesn't exist
+      if (toolData.category) {
+        try {
+          const existingCategories = await storage.getCategories();
+          const categoryExists = existingCategories.some(cat => 
+            cat.name.toLowerCase() === toolData.category.toLowerCase()
+          );
+          
+          if (!categoryExists) {
+            const slug = toolData.category.toLowerCase()
+              .replace(/[^a-z0-9]/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '');
+            
+            await storage.createCategory({
+              name: toolData.category,
+              description: `${toolData.category} related tools and services`,
+              icon: 'Bot', // Default icon
+              color: '#2563eb', // Default blue color
+              slug: slug
+            });
+            console.log(`Auto-created category: ${toolData.category}`);
+          }
+        } catch (categoryError) {
+          console.error("Error creating category:", categoryError);
+          // Continue even if category creation fails
+        }
+      }
+
       // Download and store images if found
       if (toolData.logoUrl) {
         console.log(`Downloading logo: ${toolData.logoUrl}`);

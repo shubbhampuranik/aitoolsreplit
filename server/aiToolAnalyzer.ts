@@ -42,11 +42,27 @@ interface AnalysisResult {
 
 export class AIToolAnalyzer {
   private openai: OpenAI;
-  private categories = [
+  private defaultCategories = [
     'Content Creation', 'Data Analysis', 'Development', 'Design', 'Marketing',
     'Productivity', 'Communication', 'Education', 'Healthcare', 'Finance',
     'Sales', 'Customer Support', 'HR', 'Legal', 'Research', 'Entertainment'
   ];
+
+  private async getAvailableCategories(): Promise<string[]> {
+    try {
+      // Import storage dynamically to avoid circular imports
+      const { storage } = await import('./storage');
+      const categories = await storage.getCategories();
+      const categoryNames = categories.map(cat => cat.name);
+      
+      // Merge with default categories to ensure we have a good set
+      const uniqueCategories = new Set([...categoryNames, ...this.defaultCategories]);
+      return Array.from(uniqueCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return this.defaultCategories;
+    }
+  }
 
   private getCategoryFromUrl(url: string): string {
     const domain = url.toLowerCase();
@@ -277,14 +293,17 @@ export class AIToolAnalyzer {
   }
 
   private async analyzeWithAI(url: string, content: string, images: { logos: string[], screenshots: string[] }): Promise<AIToolData> {
-    const prompt = this.buildAnalysisPrompt(url, content, images);
+    const [prompt, systemPrompt] = await Promise.all([
+      this.buildAnalysisPrompt(url, content, images),
+      this.getSystemPrompt()
+    ]);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",
-          content: this.getSystemPrompt()
+          content: systemPrompt
         },
         {
           role: "user",
@@ -318,7 +337,8 @@ export class AIToolAnalyzer {
     }
   }
 
-  private getSystemPrompt(): string {
+  private async getSystemPrompt(): Promise<string> {
+    const availableCategories = await this.getAvailableCategories();
     return `You are an expert AI tool analyst. Your job is to analyze websites and extract comprehensive, accurate information about AI tools and software products.
 
 IMPORTANT GUIDELINES:
@@ -341,12 +361,13 @@ CONTENT REQUIREMENTS:
 - Tags: 3-15 relevant keywords for searchability
 - Target Audience: Primary user demographics
 
-CATEGORIES: ${this.categories.join(', ')}
+CATEGORIES: ${availableCategories.join(', ')}
 
 Always respond with valid JSON matching the required schema.`;
   }
 
-  private buildAnalysisPrompt(url: string, content: string, images: { logos: string[], screenshots: string[] }): string {
+  private async buildAnalysisPrompt(url: string, content: string, images: { logos: string[], screenshots: string[] }): Promise<string> {
+    const availableCategories = await this.getAvailableCategories();
     return `Please analyze this AI tool/software and provide comprehensive information in the exact JSON format specified below:
 
 URL: ${url}
@@ -363,7 +384,7 @@ REQUIRED JSON FORMAT (follow this structure exactly):
   "name": "Tool Name (2-100 chars)",
   "description": "Comprehensive overview (100-1000 chars)",
   "shortDescription": "Concise summary (50-300 chars)",
-  "category": "Primary category from: ${this.categories.join(', ')}",
+  "category": "Primary category from: ${availableCategories.join(', ')}",
   "subcategory": "Optional subcategory",
   "pricingType": "free, freemium, or paid",
   "pricingDetails": "Optional pricing details",

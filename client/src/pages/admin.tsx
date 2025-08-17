@@ -853,10 +853,27 @@ function AddNewTool() {
   }, []);
 
   const populateFromAIData = (aiData: any) => {
-    // Find matching category
-    const category = categories.find((cat: any) => 
+    console.log('Populating form with AI data:', aiData);
+    console.log('Available categories:', categories);
+    
+    // Find matching category with better matching logic
+    let category = categories.find((cat: any) => 
       cat.name.toLowerCase() === aiData.category?.toLowerCase()
     );
+    
+    // If no exact match, try partial matching
+    if (!category && aiData.category) {
+      category = categories.find((cat: any) => 
+        cat.name.toLowerCase().includes(aiData.category.toLowerCase()) ||
+        aiData.category.toLowerCase().includes(cat.name.toLowerCase())
+      );
+    }
+    
+    // Refresh categories if we still don't have a match (auto-created category)
+    if (!category && aiData.category) {
+      console.log('Category not found, refetching categories...');
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+    }
 
     setFormData({
       name: aiData.name || '',
@@ -880,6 +897,8 @@ function AddNewTool() {
       useCases: aiData.useCases || [],
       qaItems: aiData.qaItems || [] // Add Q&A items
     });
+    
+    console.log('Form data set with category ID:', category?.id || 'default');
   };
 
   const handleAIGeneration = async () => {
