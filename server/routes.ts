@@ -132,21 +132,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!tool) {
         return res.status(404).json({ message: "Tool not found" });
       }
-      res.json(tool);
+      
+      // Get tool categories for the new many-to-many system
+      const categories = await storage.getToolCategories(req.params.id);
+      
+      res.json({ ...tool, categories });
     } catch (error) {
       console.error("Error fetching tool:", error);
       res.status(500).json({ message: "Failed to fetch tool" });
     }
   });
 
+  app.get('/api/tools/:id/categories', async (req, res) => {
+    try {
+      const categories = await storage.getToolCategories(req.params.id);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching tool categories:", error);
+      res.status(500).json({ message: "Failed to fetch tool categories" });
+    }
+  });
+
   app.post('/api/tools', isAuthenticated, async (req: any, res) => {
     try {
+      const { categoryIds, ...toolData } = req.body;
+      
       const validatedData = insertToolSchema.parse({
-        ...req.body,
+        ...toolData,
         submittedBy: req.user.claims.sub,
       });
       
-      const tool = await storage.createTool(validatedData);
+      const tool = await storage.createTool({ ...validatedData, categoryIds });
       
       // Initialize auto-alternatives for new tools
       if (tool.status === "approved") {
@@ -1124,7 +1140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!tool) {
         return res.status(404).json({ message: "Tool not found" });
       }
-      res.json(tool);
+      
+      // Get tool categories for admin interface
+      const categories = await storage.getToolCategories(req.params.id);
+      
+      res.json({ ...tool, categories });
     } catch (error) {
       console.error("Error fetching tool:", error);
       res.status(500).json({ message: "Failed to fetch tool" });
@@ -1144,9 +1164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const updates = req.body;
+      const { categoryIds, ...updates } = req.body;
       
-      const updatedTool = await storage.updateTool(id, updates);
+      const updatedTool = await storage.updateTool(id, { ...updates, categoryIds });
       res.json(updatedTool);
     } catch (error) {
       console.error("Error updating tool:", error);
@@ -1271,7 +1291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const tool = await storage.updateTool(id, processedUpdates);
+      const { categoryIds, ...finalUpdates } = processedUpdates;
+      const tool = await storage.updateTool(id, { ...finalUpdates, categoryIds });
       res.json(tool);
     } catch (error) {
       console.error("Error updating tool:", error);

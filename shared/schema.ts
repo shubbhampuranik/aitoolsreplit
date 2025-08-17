@@ -10,6 +10,7 @@ import {
   boolean,
   decimal,
   pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -77,7 +78,7 @@ export const tools = pgTable("tools", {
   gallery: text("gallery").array(),
   pricingType: pricingTypeEnum("pricing_type").default("freemium"),
   pricingDetails: text("pricing_details"),
-  categoryId: varchar("category_id").references(() => categories.id),
+  // categoryId removed - using many-to-many relationship via toolCategories table
   submittedBy: varchar("submitted_by").references(() => users.id),
   status: statusEnum("status").default("pending"),
   upvotes: integer("upvotes").default(0),
@@ -99,6 +100,20 @@ export const tools = pgTable("tools", {
   targetAudience: text("target_audience"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Junction table for many-to-many relationship between tools and categories
+export const toolCategories = pgTable("tool_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  toolId: varchar("tool_id").references(() => tools.id, { onDelete: "cascade" }).notNull(),
+  categoryId: varchar("category_id").references(() => categories.id, { onDelete: "cascade" }).notNull(),
+  isPrimary: boolean("is_primary").default(false), // Mark one category as primary for display
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // Ensure a tool can't be assigned to the same category multiple times
+    uniqueToolCategory: index("unique_tool_category").on(table.toolId, table.categoryId),
+  };
 });
 
 // Tool Alternatives Junction Table for bidirectional relationships
@@ -373,18 +388,15 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
-  tools: many(tools),
   prompts: many(prompts),
   courses: many(courses),
   jobs: many(jobs),
   posts: many(posts),
+  // Many-to-many relationship with tools
+  toolCategories: many(toolCategories),
 }));
 
 export const toolsRelations = relations(tools, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [tools.categoryId],
-    references: [categories.id],
-  }),
   submitter: one(users, {
     fields: [tools.submittedBy],
     references: [users.id],
@@ -395,6 +407,20 @@ export const toolsRelations = relations(tools, ({ one, many }) => ({
   votes: many(votes),
   reviews: many(reviews),
   toolAlternatives: many(toolAlternatives),
+  // Many-to-many relationship with categories
+  toolCategories: many(toolCategories),
+}));
+
+// Tool Categories relations
+export const toolCategoriesRelations = relations(toolCategories, ({ one }) => ({
+  tool: one(tools, {
+    fields: [toolCategories.toolId],
+    references: [tools.id],
+  }),
+  category: one(categories, {
+    fields: [toolCategories.categoryId],
+    references: [categories.id],
+  }),
 }));
 
 export const toolAlternativesRelations = relations(toolAlternatives, ({ one }) => ({
@@ -562,6 +588,8 @@ export type Collection = typeof collections.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
+export type ToolCategory = typeof toolCategories.$inferSelect;
+export type InsertToolCategory = typeof toolCategories.$inferInsert;
 export type PromptPurchase = typeof promptPurchases.$inferSelect;
 export type InsertPromptPurchase = typeof promptPurchases.$inferInsert;
 
@@ -585,6 +613,13 @@ export const insertToolSchema = createInsertSchema(tools).omit({
   views: true,
   rating: true,
   ratingCount: true,
+}).extend({
+  categoryIds: z.array(z.string()).optional(), // Add support for multiple category IDs
+});
+
+export const insertToolCategorySchema = createInsertSchema(toolCategories).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertPromptSchema = createInsertSchema(prompts).omit({

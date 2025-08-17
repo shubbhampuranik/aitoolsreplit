@@ -19,6 +19,7 @@ import {
   collectionItems,
   toolAlternatives,
   alternativeVotes,
+  toolCategories,
   type User,
   type UpsertUser,
   type Category,
@@ -32,6 +33,8 @@ import {
   type Collection,
   type Review,
   type Tag,
+  type ToolCategory,
+  type InsertToolCategory,
   type InsertTool,
   type InsertPrompt,
   type InsertCourse,
@@ -262,6 +265,33 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
+  // Tool Categories methods
+  async getToolCategories(toolId: string): Promise<Category[]> {
+    const result = await db
+      .select({ category: categories })
+      .from(toolCategories)
+      .innerJoin(categories, eq(toolCategories.categoryId, categories.id))
+      .where(eq(toolCategories.toolId, toolId));
+    
+    return result.map(r => r.category);
+  }
+
+  async addToolToCategories(toolId: string, categoryIds: string[], primaryCategoryId?: string): Promise<void> {
+    // Remove existing category assignments for this tool
+    await db.delete(toolCategories).where(eq(toolCategories.toolId, toolId));
+
+    // Add new category assignments
+    const insertData = categoryIds.map(categoryId => ({
+      toolId,
+      categoryId,
+      isPrimary: primaryCategoryId ? categoryId === primaryCategoryId : categoryIds[0] === categoryId
+    }));
+
+    if (insertData.length > 0) {
+      await db.insert(toolCategories).values(insertData);
+    }
+  }
+
   // Tools
   async getTools(params: {
     categoryId?: string;
@@ -284,7 +314,11 @@ export class DatabaseStorage implements IStorage {
     const conditions = [eq(tools.status, status as any)];
 
     if (categoryId) {
-      conditions.push(eq(tools.categoryId, categoryId));
+      // Use subquery to find tools in the specified category
+      const toolIdsInCategory = db.select({ toolId: toolCategories.toolId })
+        .from(toolCategories)
+        .where(eq(toolCategories.categoryId, categoryId));
+      conditions.push(inArray(tools.id, toolIdsInCategory));
     }
 
     if (featured !== undefined) {
@@ -312,11 +346,9 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({
         tool: tools,
-        category: categories,
         submittedBy: users,
       })
       .from(tools)
-      .leftJoin(categories, eq(tools.categoryId, categories.id))
       .leftJoin(users, eq(tools.submittedBy, users.id))
       .where(eq(tools.id, id));
 
@@ -332,17 +364,32 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createTool(tool: InsertTool): Promise<Tool> {
-    const [newTool] = await db.insert(tools).values(tool).returning();
+  async createTool(tool: InsertTool & { categoryIds?: string[] }): Promise<Tool> {
+    const { categoryIds, ...toolData } = tool;
+    const [newTool] = await db.insert(tools).values(toolData).returning();
+    
+    // Handle category assignments
+    if (categoryIds && categoryIds.length > 0) {
+      await this.addToolToCategories(newTool.id, categoryIds);
+    }
+    
     return newTool;
   }
 
-  async updateTool(id: string, updates: Partial<Tool>): Promise<Tool> {
+  async updateTool(id: string, updates: Partial<Tool> & { categoryIds?: string[] }): Promise<Tool> {
+    const { categoryIds, ...toolUpdates } = updates;
+    
     const [updatedTool] = await db
       .update(tools)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...toolUpdates, updatedAt: new Date() })
       .where(eq(tools.id, id))
       .returning();
+    
+    // Handle category assignments
+    if (categoryIds !== undefined) {
+      await this.addToolToCategories(id, categoryIds);
+    }
+    
     return updatedTool;
   }
 
@@ -379,10 +426,8 @@ export class DatabaseStorage implements IStorage {
     const baseQuery = db
       .select({
         tool: tools,
-        category: categories,
       })
-      .from(tools)
-      .leftJoin(categories, eq(tools.categoryId, categories.id));
+      .from(tools);
 
     const results = conditions.length > 0 
       ? await baseQuery
@@ -395,10 +440,7 @@ export class DatabaseStorage implements IStorage {
           .limit(limit)
           .offset(offset);
 
-    return results.map(result => ({
-      ...result.tool,
-      category: result.category || undefined,
-    })) as Tool[];
+    return results.map(result => result.tool);
   }
 
   async getAdminStats(): Promise<{
@@ -1595,8 +1637,15 @@ export class DatabaseStorage implements IStorage {
   async calculateSimilarityScore(tool1: Tool, tool2: Tool): Promise<number> {
     let score = 0;
     
-    // Category Match (40 points)
-    if (tool1.categoryId === tool2.categoryId) {
+    // Category Match (40 points) - now using many-to-many relationships
+    const tool1Categories = await this.getToolCategories(tool1.id);
+    const tool2Categories = await this.getToolCategories(tool2.id);
+    
+    const hasCommonCategory = tool1Categories.some(cat1 => 
+      tool2Categories.some(cat2 => cat1.id === cat2.id)
+    );
+    
+    if (hasCommonCategory) {
       score += 40;
     }
     
@@ -1618,14 +1667,25 @@ export class DatabaseStorage implements IStorage {
     const tool = await this.getTool(toolId);
     if (!tool) return [];
 
-    // Get all approved tools in same category, excluding the current tool
+    // Get categories for the current tool
+    const toolCategories = await this.getToolCategories(toolId);
+    if (toolCategories.length === 0) return [];
+
+    // Get all approved tools in same categories, excluding the current tool
+    const categoryIds = toolCategories.map(c => c.id);
+    const toolsInSameCategories = await db
+      .select({ toolId: toolCategories.toolId })
+      .from(toolCategories)
+      .where(inArray(toolCategories.categoryId, categoryIds))
+      .groupBy(toolCategories.toolId);
+
     const candidateTools = await db
       .select()
       .from(tools)
       .where(
         and(
           eq(tools.status, "approved"),
-          eq(tools.categoryId, tool.categoryId!),
+          inArray(tools.id, toolsInSameCategories.map(t => t.toolId)),
           sql`${tools.id} != ${toolId}`
         )
       )
