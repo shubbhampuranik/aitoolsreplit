@@ -922,7 +922,7 @@ function AddNewTool() {
     }
     
     // Refresh categories if we still don't have a match (auto-created category)
-    if (!category && aiData.category) {
+    if (matchedCategories.length === 0 && aiData.category) {
       console.log('Category not found, refetching categories...');
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
     }
@@ -951,7 +951,7 @@ function AddNewTool() {
       qaItems: aiData.qaItems || [] // Add Q&A items
     });
     
-    console.log('Form data set with category ID:', category?.id || 'default');
+    console.log('Form data set with category ID:', matchedCategories[0]?.id || 'default');
   };
 
   const handleAIGeneration = async () => {
