@@ -674,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         existingTools.map(t => ({ 
           id: t.id, 
           name: t.name, 
-          category: t.categoryId || '',
+          category: '', // Will be fetched from categories relationship if needed
           features: (t.features as any)?.map((f: any) => f.title) || []
         }))
       );

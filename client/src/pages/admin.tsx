@@ -27,6 +27,7 @@ import {
   Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot, RotateCcw,
   Loader2, FileUp
 } from "lucide-react";
+import { MultiSelectCategories } from "@/components/MultiSelectCategories";
 
 interface Tool {
   id: string;
@@ -38,11 +39,12 @@ interface Tool {
   gallery?: string[];
   pricingType: string;
   pricingDetails?: string;
-  categoryId?: string;
+  categoryId?: string; // Legacy field for backward compatibility
   category?: {
     name: string;
     id: string;
   };
+  categories?: Category[]; // New field for many-to-many relationships
   submittedBy?: string;
   status: string;
   upvotes: number;
@@ -68,7 +70,7 @@ interface Category {
   toolCount: number;
 }
 
-type AdminView = 'dashboard' | 'tools-list' | 'tools-add' | 'tools-categories' | 'tool-edit' | 'prompts-list' | 'courses-list' | 'jobs-list' | 'news-list' | 'users-list' | 'reviews-list' | 'settings';
+type AdminView = 'dashboard' | 'tools-list' | 'tools-add' | 'tools-categories' | 'tool-edit' | 'prompts-list' | 'courses-list' | 'jobs-list' | 'news-list' | 'users-list' | 'reviews-list' | 'settings' | 'categories-import';
 
 // Create context for view management
 const ViewContext = createContext<[AdminView, React.Dispatch<React.SetStateAction<AdminView>>]>(['dashboard', () => {}]);
@@ -853,7 +855,8 @@ function AddNewTool() {
     logoUrl: '',
     pricingType: 'freemium' as const,
     pricingDetails: '',
-    categoryId: '',
+    categoryId: '', // Legacy field
+    categories: [] as Category[], // New multi-select field
     status: 'approved' as const,
     featured: false,
     features: [] as Array<{title: string; description: string}>,
@@ -895,17 +898,26 @@ function AddNewTool() {
     console.log('Populating form with AI data:', aiData);
     console.log('Available categories:', categories);
     
-    // Find matching category with better matching logic
-    let category = categories.find((cat: any) => 
-      cat.name.toLowerCase() === aiData.category?.toLowerCase()
-    );
+    // Find matching categories with better matching logic
+    let matchedCategories: Category[] = [];
     
-    // If no exact match, try partial matching
-    if (!category && aiData.category) {
-      category = categories.find((cat: any) => 
-        cat.name.toLowerCase().includes(aiData.category.toLowerCase()) ||
-        aiData.category.toLowerCase().includes(cat.name.toLowerCase())
+    if (aiData.category) {
+      // Find exact match first
+      let category = categories.find((cat: any) => 
+        cat.name.toLowerCase() === aiData.category?.toLowerCase()
       );
+      
+      // If no exact match, try partial matching
+      if (!category) {
+        category = categories.find((cat: any) => 
+          cat.name.toLowerCase().includes(aiData.category.toLowerCase()) ||
+          aiData.category.toLowerCase().includes(cat.name.toLowerCase())
+        );
+      }
+      
+      if (category) {
+        matchedCategories = [category];
+      }
     }
     
     // Refresh categories if we still don't have a match (auto-created category)
@@ -922,7 +934,8 @@ function AddNewTool() {
       logoUrl: aiData.logoUrl || '',
       pricingType: aiData.pricingType || 'freemium',
       pricingDetails: aiData.pricingDetails || '',
-      categoryId: category?.id || categories[0]?.id || '',
+      categoryId: matchedCategories[0]?.id || categories[0]?.id || '', // Legacy field
+      categories: matchedCategories, // New multi-select field
       status: 'pending' as any, // Changed to pending by default
       featured: false,
       features: aiData.features || [],
@@ -987,7 +1000,13 @@ function AddNewTool() {
         aiConfidenceScore: addMethod === 'ai' ? '0.85' : null
       };
 
-      const response = await apiRequest('POST', '/api/tools', toolData);
+      // Convert categories array to categoryIds for API compatibility
+      const submitData = {
+        ...toolData,
+        categoryIds: formData.categories.map(cat => cat.id)
+      };
+      
+      const response = await apiRequest('POST', '/api/tools', submitData);
       
       if (response.ok) {
         toast({
@@ -1183,19 +1202,13 @@ function AddNewTool() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="category">Category *</Label>
-                  <Select value={formData.categoryId} onValueChange={(value) => updateField('categoryId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="categories">Categories *</Label>
+                  <MultiSelectCategories
+                    categories={categories}
+                    selectedCategories={formData.categories}
+                    onSelectionChange={(categories) => updateField('categories', categories)}
+                    placeholder="Select categories..."
+                  />
                 </div>
                 
                 <div>
@@ -1480,7 +1493,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     logoUrl: tool.logoUrl || "",
     pricingType: tool.pricingType || "freemium",
     pricingDetails: tool.pricingDetails || "",
-    categoryId: tool.categoryId || "",
+    categoryId: tool.categoryId || "", // Legacy field
+    categories: tool.categories || [], // New multi-select field
     status: tool.status || "pending",
     featured: tool.featured || false,
     
@@ -1513,7 +1527,13 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     setIsLoading(true);
     
     try {
-      const response = await apiRequest("PUT", `/api/admin/tools/${tool.id}`, formData);
+      // Convert categories array to categoryIds for API compatibility
+      const submitData = {
+        ...formData,
+        categoryIds: formData.categories.map(cat => cat.id)
+      };
+      
+      const response = await apiRequest("PUT", `/api/admin/tools/${tool.id}`, submitData);
       
       if (response.ok) {
         toast({ title: "Tool updated successfully" });
@@ -2051,19 +2071,15 @@ function OverviewTab({ formData, updateFormData, categories, fetchingData, onFet
             </div>
             
             <div>
-              <Label htmlFor="category">Category</Label>
-              <Select value={formData.categoryId} onValueChange={(value) => updateFormData('categoryId', value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="categories">Categories</Label>
+              <div className="mt-1">
+                <MultiSelectCategories
+                  categories={categories}
+                  selectedCategories={formData.categories}
+                  onSelectionChange={(categories) => updateFormData('categories', categories)}
+                  placeholder="Select categories..."
+                />
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
