@@ -113,6 +113,34 @@ export default function AdminPage() {
     setCurrentView('tool-edit');
   };
 
+  const handleToolDelete = async (tool: Tool) => {
+    if (confirm(`Are you sure you want to delete "${tool.name}"? This action cannot be undone.`)) {
+      try {
+        const response = await apiRequest("DELETE", `/api/admin/tools/${tool.id}`);
+        if (response.ok) {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/tools"] });
+          toast({
+            title: "Tool Deleted",
+            description: `${tool.name} has been successfully deleted.`
+          });
+        } else {
+          toast({
+            title: "Delete Failed",
+            description: "Failed to delete the tool. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting tool:", error);
+        toast({
+          title: "Delete Failed",
+          description: "An error occurred while deleting the tool.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   const handleFetchAIData = async (url: string) => {
     if (!url) {
       toast({ title: "Error", description: "Please enter a URL", variant: "destructive" });
@@ -527,7 +555,7 @@ export default function AdminPage() {
           {/* Content Area */}
           <div className="flex-1 p-6 bg-white overflow-auto">
             {currentView === 'dashboard' && <AdminOverview />}
-            {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} onAddNewTool={() => setCurrentView('tools-add')} />}
+            {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} onDeleteTool={handleToolDelete} onAddNewTool={() => setCurrentView('tools-add')} />}
             {currentView === 'tools-add' && <AddNewTool />}
             {currentView === 'tools-categories' && <ToolCategories />}
             {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} fetchingData={fetchingData} onFetchAIData={handleFetchAIData} />}
@@ -1276,7 +1304,7 @@ function AddNewTool() {
 }
 
 // Tools List Component (previously AIToolsManagement)
-function ToolsList({ onEditTool, onAddNewTool }: { onEditTool: (tool: Tool) => void; onAddNewTool: () => void }) {
+function ToolsList({ onEditTool, onDeleteTool, onAddNewTool }: { onEditTool: (tool: Tool) => void; onDeleteTool: (tool: Tool) => void; onAddNewTool: () => void }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -1398,14 +1426,24 @@ function ToolsList({ onEditTool, onAddNewTool }: { onEditTool: (tool: Tool) => v
                         </div>
                       </td>
                       <td className="p-4">
-                        <Button 
-                          onClick={() => onEditTool(tool)}
-                          variant="outline" 
-                          size="sm"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => onEditTool(tool)}
+                            variant="outline" 
+                            size="sm"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button 
+                            onClick={() => onDeleteTool(tool)}
+                            variant="destructive" 
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

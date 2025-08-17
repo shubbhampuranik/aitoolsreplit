@@ -73,6 +73,7 @@ export interface IStorage {
   getTool(id: string): Promise<Tool | undefined>;
   createTool(tool: InsertTool): Promise<Tool>;
   updateTool(id: string, updates: Partial<Tool>): Promise<Tool>;
+  deleteTool(id: string): Promise<boolean>;
   
   // Prompts
   getPrompts(params?: {
@@ -208,8 +209,7 @@ export interface IStorage {
     totalUpvotes: number;
   }>;
   
-  deleteTool(id: string): Promise<void>;
-  updateTool(id: string, updates: Partial<Tool>): Promise<Tool>;
+
 }
 
 export class DatabaseStorage implements IStorage {
@@ -346,8 +346,9 @@ export class DatabaseStorage implements IStorage {
     return updatedTool;
   }
 
-  async deleteTool(id: string): Promise<void> {
-    await db.delete(tools).where(eq(tools.id, id));
+  async deleteTool(id: string): Promise<boolean> {
+    const result = await db.delete(tools).where(eq(tools.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Admin specific methods

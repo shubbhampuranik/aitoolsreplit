@@ -1154,6 +1154,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete tool
+  app.delete("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = await storage.deleteTool(id);
+      if (!success) {
+        return res.status(404).json({ error: "Tool not found" });
+      }
+      
+      res.json({ success: true, message: "Tool deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting tool:", error);
+      res.status(500).json({ error: "Failed to delete tool" });
+    }
+  });
+
   app.patch("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
