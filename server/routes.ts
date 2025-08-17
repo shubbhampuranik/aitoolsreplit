@@ -157,6 +157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { categoryIds, ...toolData } = req.body;
       
+      console.log('Creating tool with categoryIds:', categoryIds);
+      
       const validatedData = insertToolSchema.parse({
         ...toolData,
         submittedBy: req.user.claims.sub,
@@ -1200,6 +1202,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { categoryIds, ...updates } = req.body;
+      
+      console.log('Updating tool', id, 'with categoryIds:', categoryIds);
       
       const updatedTool = await storage.updateTool(id, { ...updates, categoryIds });
       res.json(updatedTool);

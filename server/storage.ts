@@ -277,6 +277,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addToolToCategories(toolId: string, categoryIds: string[], primaryCategoryId?: string): Promise<void> {
+    console.log('Adding tool', toolId, 'to categories:', categoryIds);
+    
     // Remove existing category assignments for this tool
     await db.delete(toolCategories).where(eq(toolCategories.toolId, toolId));
 
@@ -286,6 +288,8 @@ export class DatabaseStorage implements IStorage {
       categoryId,
       isPrimary: primaryCategoryId ? categoryId === primaryCategoryId : categoryIds[0] === categoryId
     }));
+
+    console.log('Inserting toolCategories data:', insertData);
 
     if (insertData.length > 0) {
       await db.insert(toolCategories).values(insertData);
@@ -354,11 +358,26 @@ export class DatabaseStorage implements IStorage {
 
     if (!result) return undefined;
 
+    // Get categories for this tool
+    const toolCategoriesData = await db
+      .select({
+        category: categories,
+        isPrimary: toolCategories.isPrimary
+      })
+      .from(toolCategories)
+      .leftJoin(categories, eq(toolCategories.categoryId, categories.id))
+      .where(eq(toolCategories.toolId, id))
+      .orderBy(desc(toolCategories.isPrimary));
+
+    const toolCategories_list = toolCategoriesData.map(tc => tc.category).filter(Boolean);
+
     return {
       ...result.tool,
-      category: result.category || undefined,
+      categories: toolCategories_list, // New multi-select categories
+      category: toolCategories_list.length > 0 ? toolCategories_list[0] : undefined, // Legacy single category (primary)
       submittedBy: result.submittedBy || undefined,
     } as Tool & {
+      categories: typeof categories.$inferSelect[];
       category?: typeof categories.$inferSelect;
       submittedBy?: typeof users.$inferSelect;
     };
@@ -440,7 +459,31 @@ export class DatabaseStorage implements IStorage {
           .limit(limit)
           .offset(offset);
 
-    return results.map(result => result.tool);
+    // Enrich each tool with its categories
+    const enrichedTools = await Promise.all(
+      results.map(async (result) => {
+        // Get categories for this tool
+        const toolCategoriesData = await db
+          .select({
+            category: categories,
+            isPrimary: toolCategories.isPrimary
+          })
+          .from(toolCategories)
+          .leftJoin(categories, eq(toolCategories.categoryId, categories.id))
+          .where(eq(toolCategories.toolId, result.tool.id))
+          .orderBy(desc(toolCategories.isPrimary));
+
+        const toolCategories_list = toolCategoriesData.map(tc => tc.category).filter(Boolean);
+
+        return {
+          ...result.tool,
+          categories: toolCategories_list, // New multi-select categories
+          category: toolCategories_list.length > 0 ? toolCategories_list[0] : undefined, // Legacy single category (primary)
+        };
+      })
+    );
+
+    return enrichedTools;
   }
 
   async getAdminStats(): Promise<{

@@ -1007,6 +1007,9 @@ function AddNewTool() {
         categoryIds: formData.categories.map(cat => cat.id)
       };
       
+      console.log('Form categories:', formData.categories);
+      console.log('Submit data categoryIds:', submitData.categoryIds);
+      
       const response = await apiRequest('POST', '/api/tools', submitData);
       
       if (response.ok) {
@@ -1573,6 +1576,9 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         ...formData,
         categoryIds: formData.categories.map(cat => cat.id)
       };
+      
+      console.log('Edit Form categories:', formData.categories);
+      console.log('Edit Submit data categoryIds:', submitData.categoryIds);
       
       const response = await apiRequest("PUT", `/api/admin/tools/${tool.id}`, submitData);
       
