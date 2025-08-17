@@ -1171,6 +1171,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import categories from Google Sheets
+  app.post("/api/admin/import-categories", isAuthenticated, async (req, res) => {
+    try {
+      const { categoriesData } = req.body;
+      
+      if (!categoriesData || !Array.isArray(categoriesData)) {
+        return res.status(400).json({ error: "Invalid categories data" });
+      }
+
+      let imported = 0;
+      let skipped = 0;
+      
+      for (const categoryData of categoriesData) {
+        try {
+          // Check if category already exists
+          const existingCategories = await storage.getCategories();
+          const exists = existingCategories.find(cat => 
+            cat.slug === categoryData.slug || cat.name === categoryData.name
+          );
+          
+          if (!exists) {
+            await storage.createCategory({
+              name: categoryData.name,
+              slug: categoryData.slug,
+              description: categoryData.description || `${categoryData.name} AI tools and services`,
+              icon: '🤖', // Default icon
+            });
+            imported++;
+          } else {
+            skipped++;
+          }
+        } catch (error) {
+          console.error(`Error importing category ${categoryData.name}:`, error);
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `Categories import completed. ${imported} imported, ${skipped} skipped.`,
+        imported,
+        skipped
+      });
+    } catch (error) {
+      console.error("Error importing categories:", error);
+      res.status(500).json({ error: "Failed to import categories" });
+    }
+  });
+
   app.patch("/api/admin/tools/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

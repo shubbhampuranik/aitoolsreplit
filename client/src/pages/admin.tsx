@@ -25,7 +25,7 @@ import {
   FileText, List, Image, Scale, ArrowRight, HelpCircle, ChevronDown,
   ChevronRight, Home, Tag, FolderOpen, Save, Upload, ArrowLeft, Pencil,
   Layers, ThumbsDown, Users2, MessageCircle, Minus, X, Bot, RotateCcw,
-  Loader2
+  Loader2, FileUp
 } from "lucide-react";
 
 interface Tool {
@@ -450,6 +450,15 @@ export default function AdminPage() {
                     <Tag className="w-3 h-3" />
                     Categories
                   </button>
+                  <button
+                    onClick={() => setCurrentView('categories-import')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded text-left hover:bg-gray-700 text-sm ${
+                      currentView === 'categories-import' ? 'bg-blue-600' : ''
+                    }`}
+                  >
+                    <FileUp className="w-3 h-3" />
+                    Import Categories
+                  </button>
                 </div>
               )}
             </div>
@@ -537,6 +546,7 @@ export default function AdminPage() {
                 {currentView === 'tools-list' && 'All Tools'}
                 {currentView === 'tools-add' && 'Add New Tool'}
                 {currentView === 'tools-categories' && 'Tool Categories'}
+                {currentView === 'categories-import' && 'Import Categories'}
                 {currentView === 'tool-edit' && `Edit Tool: ${selectedTool?.name}`}
                 {currentView === 'prompts-list' && 'Prompts'}
                 {currentView === 'courses-list' && 'Courses'}
@@ -558,6 +568,7 @@ export default function AdminPage() {
             {currentView === 'tools-list' && <ToolsList onEditTool={handleToolEdit} onDeleteTool={handleToolDelete} onAddNewTool={() => setCurrentView('tools-add')} />}
             {currentView === 'tools-add' && <AddNewTool />}
             {currentView === 'tools-categories' && <ToolCategories />}
+            {currentView === 'categories-import' && <CategoriesImport />}
             {currentView === 'tool-edit' && selectedTool && <ToolEditor tool={selectedTool} onBack={() => setCurrentView('tools-list')} onSetUpdateFormData={setCurrentUpdateFormData} fetchingData={fetchingData} onFetchAIData={handleFetchAIData} />}
             {currentView === 'prompts-list' && <PromptsManagement />}
             {currentView === 'courses-list' && <CoursesManagement />}
@@ -3584,6 +3595,221 @@ function ReviewsManagement() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// Categories Import Component
+function CategoriesImport() {
+  const [csvData, setCsvData] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const { toast } = useToast();
+
+  const handleImport = async () => {
+    if (!csvData.trim()) {
+      toast({ title: "Please paste CSV data", variant: "destructive" });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      // Parse CSV data
+      const lines = csvData.trim().split('\n');
+      const headers = lines[0].split(',');
+      
+      if (headers.length < 3 || !headers.includes('Categories') || !headers.includes('Parent Category')) {
+        throw new Error('CSV must include Categories and Parent Category columns');
+      }
+
+      const categoriesData = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        if (values.length >= 3 && values[1]?.trim()) {
+          const categoryName = values[1].trim().replace(/^"/, '').replace(/"$/, '');
+          const parentCategory = values[2]?.trim().replace(/^"/, '').replace(/"$/, '') || '';
+          
+          if (categoryName) {
+            categoriesData.push({
+              name: categoryName,
+              slug: categoryName.toLowerCase()
+                .replace(/[^a-z0-9\s&-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/&/g, 'and')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, ''),
+              description: `${categoryName} AI tools and services${parentCategory ? ` in the ${parentCategory} category` : ''}`,
+              parentCategory: parentCategory || null
+            });
+          }
+        }
+      }
+
+      if (categoriesData.length === 0) {
+        throw new Error('No valid categories found in CSV data');
+      }
+
+      // Send to backend
+      const response = await apiRequest("POST", "/api/admin/import-categories", { categoriesData });
+      const result = await response.json();
+
+      if (response.ok) {
+        setImportResult(result);
+        toast({ title: `Successfully imported ${result.imported} categories`, description: `${result.skipped} categories were already present` });
+        setCsvData("");
+        
+        // Refresh categories
+        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      } else {
+        throw new Error(result.error || 'Import failed');
+      }
+
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({ title: "Import failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleClearData = () => {
+    setCsvData("");
+    setImportResult(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Import Categories from Google Sheets</h3>
+          <p className="text-sm text-gray-600">Bulk import 233+ categories from your Google Sheets CSV data</p>
+        </div>
+        <Badge variant="secondary">
+          {csvData ? `${csvData.split('\n').length - 1} rows` : 'No data'}
+        </Badge>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileUp className="w-5 h-5" />
+            CSV Data Input
+          </CardTitle>
+          <CardDescription>
+            Copy and paste your Google Sheets data as CSV format. Expected columns: S.No, Categories, Parent Category, Tags, SEO Title
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="csv-data">CSV Data</Label>
+            <Textarea
+              id="csv-data"
+              placeholder="S.No,Categories,Parent Category,Tags,SEO Title
+1,AI Blog Writer,Writing & Content,AI Blog Writer..."
+              value={csvData}
+              onChange={(e) => setCsvData(e.target.value)}
+              className="min-h-[200px] font-mono text-sm"
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-500">
+              Paste your CSV data from Google Sheets. Each row should contain category information.
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleClearData} 
+                variant="outline" 
+                disabled={!csvData}
+              >
+                Clear
+              </Button>
+              <Button 
+                onClick={handleImport} 
+                disabled={!csvData.trim() || isImporting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Categories
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Import Results */}
+      {importResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="w-5 h-5" />
+              Import Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-700">{importResult.imported}</div>
+                <div className="text-sm text-green-600">Categories Imported</div>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-700">{importResult.skipped}</div>
+                <div className="text-sm text-orange-600">Categories Skipped</div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mt-4">{importResult.message}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Instructions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>How to Import</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">1</div>
+            <div>
+              <p className="font-medium">Open your Google Sheets</p>
+              <p className="text-sm text-gray-600">Go to your Google Sheets with the 233 categories</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">2</div>
+            <div>
+              <p className="font-medium">Select all data</p>
+              <p className="text-sm text-gray-600">Select all data including headers (S.No, Categories, Parent Category, etc.)</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+            <div>
+              <p className="font-medium">Copy and paste</p>
+              <p className="text-sm text-gray-600">Copy the data (Ctrl+C) and paste it into the text area above</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-medium">4</div>
+            <div>
+              <p className="font-medium">Click Import</p>
+              <p className="text-sm text-gray-600">Review the data and click "Import Categories" to add them to the database</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
