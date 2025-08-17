@@ -28,6 +28,7 @@ import {
   Loader2, FileUp
 } from "lucide-react";
 import { MultiSelectCategories } from "@/components/MultiSelectCategories";
+import { QuickFixButton } from "@/components/QuickFixButton";
 
 interface Tool {
   id: string;
@@ -1153,7 +1154,17 @@ function AddNewTool() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Tool Name *</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="name">Tool Name *</Label>
+                    {formData.name && (
+                      <QuickFixButton
+                        content={formData.name}
+                        contentType="name"
+                        onApplyFix={(improved) => updateField('name', improved)}
+                        size="sm"
+                      />
+                    )}
+                  </div>
                   <Input
                     id="name"
                     value={formData.name}
@@ -1174,7 +1185,17 @@ function AddNewTool() {
               </div>
               
               <div>
-                <Label htmlFor="shortDescription">Short Description *</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="shortDescription">Short Description *</Label>
+                  {formData.shortDescription && (
+                    <QuickFixButton
+                      content={formData.shortDescription}
+                      contentType="description"
+                      onApplyFix={(improved) => updateField('shortDescription', improved)}
+                      size="sm"
+                    />
+                  )}
+                </div>
                 <Input
                   id="shortDescription"
                   value={formData.shortDescription}
@@ -1187,7 +1208,17 @@ function AddNewTool() {
               </div>
 
               <div>
-                <Label htmlFor="description">Full Description *</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="description">Full Description *</Label>
+                  {formData.description && (
+                    <QuickFixButton
+                      content={formData.description}
+                      contentType="description"
+                      onApplyFix={(improved) => updateField('description', improved)}
+                      size="sm"
+                    />
+                  )}
+                </div>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -1242,7 +1273,17 @@ function AddNewTool() {
               </div>
 
               <div>
-                <Label htmlFor="pricingDetails">Pricing Details</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="pricingDetails">Pricing Details</Label>
+                  {formData.pricingDetails && (
+                    <QuickFixButton
+                      content={formData.pricingDetails}
+                      contentType="pricing"
+                      onApplyFix={(improved) => updateField('pricingDetails', improved)}
+                      size="sm"
+                    />
+                  )}
+                </div>
                 <Input
                   id="pricingDetails"
                   value={formData.pricingDetails}

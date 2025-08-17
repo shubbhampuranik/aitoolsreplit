@@ -557,3 +557,71 @@ Respond with valid JSON only in this exact format:
 }
 
 export const aiToolAnalyzer = new AIToolAnalyzer();
+
+// Quick Fix AI service for suggesting improvements
+export async function generateQuickFixes(content: string, contentType: 'description' | 'code' | 'features' | 'name' | 'pricing'): Promise<{
+  suggestions: Array<{
+    type: 'grammar' | 'clarity' | 'structure' | 'completeness' | 'optimization';
+    original: string;
+    improved: string;
+    reason: string;
+  }>;
+  improvedContent: string;
+}> {
+  try {
+    const systemPrompt = getQuickFixSystemPrompt(contentType);
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analyze and improve this ${contentType}: "${content}"` }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      suggestions: result.suggestions || [],
+      improvedContent: result.improvedContent || content
+    };
+  } catch (error) {
+    console.error('Error generating quick fixes:', error);
+    throw new Error('Failed to generate quick fixes');
+  }
+}
+
+function getQuickFixSystemPrompt(contentType: string): string {
+  const basePrompt = `You are an AI writing assistant specializing in improving ${contentType} for AI tools and software products. 
+Analyze the provided content and suggest specific improvements focusing on clarity, professionalism, and user engagement.
+
+Respond with JSON in this exact format:
+{
+  "suggestions": [
+    {
+      "type": "grammar|clarity|structure|completeness|optimization",
+      "original": "exact text from input that needs improvement",
+      "improved": "improved version of that text",
+      "reason": "brief explanation of why this improvement helps"
+    }
+  ],
+  "improvedContent": "complete improved version of the entire input text"
+}`;
+
+  const specificGuidance = {
+    'description': 'Focus on making descriptions more engaging, clear, and benefit-focused. Ensure proper grammar, remove redundancy, and highlight unique value propositions.',
+    'code': 'Focus on code readability, best practices, performance optimizations, and proper documentation. Suggest cleaner syntax and better structure.',
+    'features': 'Focus on making features more compelling and benefit-focused. Use action-oriented language and highlight user value.',
+    'name': 'Focus on making names more memorable, descriptive, and brandable while maintaining clarity about the tools purpose.',
+    'pricing': 'Focus on clarity, value communication, and proper formatting of pricing information.'
+  };
+
+  return `${basePrompt}\n\nSpecific guidance for ${contentType}: ${specificGuidance[contentType as keyof typeof specificGuidance] || specificGuidance['description']}`;
+}
+
+export async function analyzeToolFromURL(url: string): Promise<AnalysisResult> {
+  const analyzer = new AIToolAnalyzer();
+  return analyzer.analyzeToolFromUrl(url);
+}

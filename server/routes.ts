@@ -695,6 +695,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Quick Fix endpoint
+  app.post("/api/tools/quick-fix", async (req, res) => {
+    try {
+      const { content, contentType } = req.body;
+      
+      if (!content || !contentType) {
+        return res.status(400).json({
+          success: false,
+          error: "Content and contentType are required"
+        });
+      }
+
+      if (!['description', 'code', 'features', 'name', 'pricing'].includes(contentType)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid contentType. Must be one of: description, code, features, name, pricing"
+        });
+      }
+
+      const { generateQuickFixes } = await import('./aiToolAnalyzer');
+      const result = await generateQuickFixes(content, contentType);
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Error in quick-fix endpoint:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Quick fix generation failed"
+      });
+    }
+  });
+
   // Tool alternatives endpoint - Enhanced with auto-matching
   app.get('/api/tools/:id/alternatives', async (req, res) => {
     try {
