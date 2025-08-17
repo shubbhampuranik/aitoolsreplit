@@ -1539,13 +1539,15 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       
       if (result.success && result.data.features) {
         console.log('🔧 Generated AI features:', result.data.features);
-        // Use only the requested number of features
+        // Use only the requested number of features and add to existing ones
         const selectedFeatures = result.data.features.slice(0, count);
-        updateFormData('features', selectedFeatures);
+        const currentFeatures = formData.features || [];
+        const newFeatures = [...currentFeatures, ...selectedFeatures];
+        updateFormData('features', newFeatures);
         
         toast({
-          title: "Features Generated",
-          description: `Added ${selectedFeatures.length} AI-generated features`,
+          title: "Features Added",
+          description: `Added ${selectedFeatures.length} new AI-generated features`,
         });
       } else {
         toast({
@@ -1638,11 +1640,13 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         const aiQA = baseQuestions.slice(0, Math.min(count, baseQuestions.length));
 
         console.log('💬 Generated AI Q&A:', aiQA);
-        updateFormData('faqs', aiQA);
+        const currentFaqs = formData.faqs || [];
+        const newFaqs = [...currentFaqs, ...aiQA];
+        updateFormData('faqs', newFaqs);
         
         toast({
-          title: "Q&A Generated",
-          description: `Added ${aiQA.length} AI-generated Q&A items`,
+          title: "Q&A Added",
+          description: `Added ${aiQA.length} new AI-generated Q&A items`,
         });
       } else {
         toast({
@@ -1656,6 +1660,74 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       toast({
         title: "Error",
         description: "Failed to generate Q&A",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateAIProsAndCons = async (url: string, prosCount: number = 3, consCount: number = 3) => {
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a tool URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGenerating(true);
+    try {
+      const response = await apiRequest('POST', `/api/tools/fetch-data`, { url });
+      const result = await response.json();
+      
+      if (result.success && result.data.name) {
+        const currentProsAndCons = formData.prosAndCons || { pros: [], cons: [] };
+        
+        // Generate pros (use existing or create new ones)
+        const generatedPros = result.data.pros || [
+          `Enhances productivity with ${result.data.name}`,
+          `User-friendly interface`,
+          `Reliable performance`,
+          `Good customer support`,
+          `Regular updates and improvements`
+        ];
+        const selectedPros = generatedPros.slice(0, prosCount);
+        
+        // Generate cons (use existing or create new ones)  
+        const generatedCons = result.data.cons || [
+          `May have a learning curve`,
+          `Requires internet connection`,
+          `Limited customization options`,
+          `Pricing may be expensive for some users`,
+          `May not integrate with all tools`
+        ];
+        const selectedCons = generatedCons.slice(0, consCount);
+        
+        const newProsAndCons = {
+          pros: [...currentProsAndCons.pros, ...selectedPros],
+          cons: [...currentProsAndCons.cons, ...selectedCons]
+        };
+        
+        updateFormData('prosAndCons', newProsAndCons);
+        
+        toast({
+          title: "Pros & Cons Added",
+          description: `Added ${selectedPros.length} pros and ${selectedCons.length} cons`,
+        });
+      } else {
+        toast({
+          title: "Generation Failed", 
+          description: "Could not generate pros and cons from this URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI pros and cons:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate pros and cons",
         variant: "destructive",
       });
     } finally {
@@ -1746,7 +1818,10 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         <TabsContent value="pros-cons">
           <ProsConsTab 
             prosAndCons={formData.prosAndCons} 
-            updateProsAndCons={(prosAndCons) => updateFormData('prosAndCons', prosAndCons)} 
+            updateProsAndCons={(prosAndCons) => updateFormData('prosAndCons', prosAndCons)}
+            toolUrl={formData.url}
+            onGenerateAIProsAndCons={generateAIProsAndCons}
+            isGenerating={isGenerating}
           />
         </TabsContent>
 
@@ -2193,7 +2268,30 @@ function GalleryTab({ gallery, updateGallery }: { gallery: any[], updateGallery:
 }
 
 // Pros & Cons Tab Component
-function ProsConsTab({ prosAndCons, updateProsAndCons }: { prosAndCons: any, updateProsAndCons: (prosAndCons: any) => void }) {
+function ProsConsTab({ prosAndCons, updateProsAndCons, toolUrl, onGenerateAIProsAndCons, isGenerating }: { 
+  prosAndCons: any, 
+  updateProsAndCons: (prosAndCons: any) => void,
+  toolUrl?: string,
+  onGenerateAIProsAndCons?: (url: string, prosCount: number, consCount: number) => void,
+  isGenerating?: boolean
+}) {
+  const [showCountDialog, setShowCountDialog] = useState(false);
+  const [prosCount, setProsCount] = useState(3);
+  const [consCount, setConsCount] = useState(3);
+
+  const handleGenerateAI = () => {
+    if (!toolUrl) {
+      return;
+    }
+    setShowCountDialog(true);
+  };
+
+  const confirmGenerate = () => {
+    if (onGenerateAIProsAndCons && toolUrl) {
+      onGenerateAIProsAndCons(toolUrl, prosCount, consCount);
+    }
+    setShowCountDialog(false);
+  };
   const addPro = () => {
     const newProsAndCons = {
       ...prosAndCons,
@@ -2234,9 +2332,26 @@ function ProsConsTab({ prosAndCons, updateProsAndCons }: { prosAndCons: any, upd
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold">Pros & Cons</h3>
-        <p className="text-sm text-gray-600">List the advantages and disadvantages of this tool</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Pros & Cons</h3>
+          <p className="text-sm text-gray-600">List the advantages and disadvantages of this tool</p>
+        </div>
+        {toolUrl && onGenerateAIProsAndCons && (
+          <Button onClick={handleGenerateAI} variant="outline" disabled={isGenerating}>
+            {isGenerating ? (
+              <>
+                <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Bot className="w-4 h-4 mr-2" />
+                Generate with AI
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -2324,6 +2439,55 @@ function ProsConsTab({ prosAndCons, updateProsAndCons }: { prosAndCons: any, upd
           </div>
         </div>
       </div>
+
+      {/* Count Selection Dialog */}
+      <Dialog open={showCountDialog} onOpenChange={setShowCountDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Pros & Cons with AI</DialogTitle>
+            <DialogDescription>
+              How many pros and cons would you like to generate for this tool?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="pros-count">Number of Pros</Label>
+              <Input
+                id="pros-count"
+                type="number"
+                min="1"
+                max="10"
+                value={prosCount}
+                onChange={(e) => setProsCount(parseInt(e.target.value) || 1)}
+                className="mt-1"
+              />
+              <p className="text-sm text-gray-500 mt-1">Choose between 1-10 pros</p>
+            </div>
+            <div>
+              <Label htmlFor="cons-count">Number of Cons</Label>
+              <Input
+                id="cons-count"
+                type="number"
+                min="1"
+                max="10"
+                value={consCount}
+                onChange={(e) => setConsCount(parseInt(e.target.value) || 1)}
+                className="mt-1"
+              />
+              <p className="text-sm text-gray-500 mt-1">Choose between 1-10 cons</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCountDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmGenerate}>
+              <Bot className="w-4 h-4 mr-2" />
+              Generate Pros & Cons
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
