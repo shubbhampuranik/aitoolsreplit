@@ -822,7 +822,8 @@ function AddNewTool() {
     prosAndCons: { pros: [] as string[], cons: [] as string[] },
     tags: [] as string[],
     targetAudience: '',
-    useCases: [] as string[]
+    useCases: [] as string[],
+    qaItems: [] as Array<{question: string; answer: string}>
   });
   
   const { toast } = useToast();
@@ -861,12 +862,12 @@ function AddNewTool() {
       name: aiData.name || '',
       shortDescription: aiData.shortDescription || '',
       description: aiData.description || '',
-      url: aiData.url || '',
+      url: aiUrl || aiData.url || '', // Use the URL from the input field
       logoUrl: aiData.logoUrl || '',
       pricingType: aiData.pricingType || 'freemium',
       pricingDetails: aiData.pricingDetails || '',
       categoryId: category?.id || categories[0]?.id || '',
-      status: 'approved',
+      status: 'pending' as any, // Changed to pending by default
       featured: false,
       features: aiData.features || [],
       gallery: aiData.screenshots || [],
@@ -876,7 +877,8 @@ function AddNewTool() {
       },
       tags: aiData.tags || [],
       targetAudience: aiData.targetAudience || '',
-      useCases: aiData.useCases || []
+      useCases: aiData.useCases || [],
+      qaItems: aiData.qaItems || [] // Add Q&A items
     });
   };
 

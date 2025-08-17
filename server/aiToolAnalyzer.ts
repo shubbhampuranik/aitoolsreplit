@@ -16,10 +16,14 @@ const ToolDataSchema = z.object({
   features: z.array(z.object({
     title: z.string(),
     description: z.string()
-  })).min(3).max(8),
-  pros: z.array(z.string()).min(3).max(5),
+  })).min(5).max(8),
+  pros: z.array(z.string()).min(4).max(6),
   cons: z.array(z.string()).min(3).max(5),
-  useCases: z.array(z.string()).min(2).max(6),
+  useCases: z.array(z.string()).min(3).max(6),
+  qaItems: z.array(z.object({
+    question: z.string(),
+    answer: z.string()
+  })).min(4).max(8),
   tags: z.array(z.string()).min(3).max(15),
   targetAudience: z.string(),
   logoUrl: z.string().url().optional().nullable(),
@@ -43,6 +47,43 @@ export class AIToolAnalyzer {
     'Productivity', 'Communication', 'Education', 'Healthcare', 'Finance',
     'Sales', 'Customer Support', 'HR', 'Legal', 'Research', 'Entertainment'
   ];
+
+  private getCategoryFromUrl(url: string): string {
+    const domain = url.toLowerCase();
+    
+    // Development tools
+    if (domain.includes('bolt.new') || domain.includes('github') || domain.includes('code') || 
+        domain.includes('dev') || domain.includes('programming') || domain.includes('api')) {
+      return 'Development';
+    }
+    
+    // Design tools
+    if (domain.includes('figma') || domain.includes('canva') || domain.includes('design') ||
+        domain.includes('logo') || domain.includes('graphic')) {
+      return 'Design';
+    }
+    
+    // Content creation
+    if (domain.includes('write') || domain.includes('content') || domain.includes('copy') ||
+        domain.includes('blog') || domain.includes('article')) {
+      return 'Content Creation';
+    }
+    
+    // Marketing tools
+    if (domain.includes('marketing') || domain.includes('seo') || domain.includes('ads') ||
+        domain.includes('campaign') || domain.includes('social')) {
+      return 'Marketing';
+    }
+    
+    // Communication tools
+    if (domain.includes('chat') || domain.includes('meet') || domain.includes('call') ||
+        domain.includes('video') || domain.includes('conference')) {
+      return 'Communication';
+    }
+    
+    // Default to Productivity for AI tools
+    return 'Productivity';
+  }
 
   constructor() {
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -327,13 +368,22 @@ REQUIRED JSON FORMAT (follow this structure exactly):
   "pricingType": "free, freemium, or paid",
   "pricingDetails": "Optional pricing details",
   "features": [
-    {"title": "Feature Name", "description": "Feature description"},
-    {"title": "Feature Name", "description": "Feature description"}
+    {"title": "Feature 1", "description": "Detailed feature description"},
+    {"title": "Feature 2", "description": "Detailed feature description"},
+    {"title": "Feature 3", "description": "Detailed feature description"},
+    {"title": "Feature 4", "description": "Detailed feature description"},
+    {"title": "Feature 5", "description": "Detailed feature description"}
   ],
-  "pros": ["Advantage 1", "Advantage 2", "Advantage 3"],
+  "pros": ["Advantage 1", "Advantage 2", "Advantage 3", "Advantage 4"],
   "cons": ["Limitation 1", "Limitation 2", "Limitation 3"],
-  "useCases": ["Use case 1", "Use case 2"],
-  "tags": ["tag1", "tag2", "tag3"],
+  "useCases": ["Use case 1", "Use case 2", "Use case 3"],
+  "qaItems": [
+    {"question": "Question 1", "answer": "Detailed answer 1"},
+    {"question": "Question 2", "answer": "Detailed answer 2"},
+    {"question": "Question 3", "answer": "Detailed answer 3"},
+    {"question": "Question 4", "answer": "Detailed answer 4"}
+  ],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "targetAudience": "Primary user demographics",
   "logoUrl": "Best logo URL if available",
   "screenshots": ["screenshot1.jpg", "screenshot2.jpg"],
@@ -360,33 +410,48 @@ Respond with valid JSON only, no markdown or explanations.`;
       const domain = urlParts[2] || '';
       const toolName = domain.split('.')[0] || 'Unknown Tool';
       
-      // Generate a basic analysis using AI with just the URL
-      const prompt = `Analyze this AI tool based only on its URL: ${url}
+      // Get suggested category from URL
+      const suggestedCategory = this.getCategoryFromUrl(url);
+      
+      // Generate a comprehensive analysis using AI with just the URL
+      const prompt = `Analyze this tool based on its URL: ${url}
 
-Generate comprehensive details for this tool. If you recognize this tool, provide accurate information. If not, make reasonable inferences based on the domain name and common patterns.
+If you recognize this specific tool, provide accurate detailed information. Otherwise, make intelligent inferences based on the domain name and URL structure.
+
+For tools like bolt.new (development), quillbot.com (writing), figma.com (design), etc., be specific about their actual capabilities and features.
+
+Generate comprehensive content including 5-8 features, 4-6 pros, 3-5 cons, 3-6 use cases, and 4-8 Q&A pairs.
 
 Respond with valid JSON only in this exact format:
 {
-  "name": "Tool Name",
-  "description": "Comprehensive tool description (100-1000 chars)",
-  "shortDescription": "Brief summary (50-300 chars)",
-  "category": "${this.categories[0]}",
-  "subcategory": null,
-  "pricingType": "freemium",
-  "pricingDetails": null,
+  "name": "Actual Tool Name",
+  "description": "Comprehensive description of what this tool actually does (200-1000 chars)",
+  "shortDescription": "Concise accurate summary (50-300 chars)",
+  "category": "${suggestedCategory}",
+  "subcategory": "Specific subcategory if applicable",
+  "pricingType": "free|freemium|paid",
+  "pricingDetails": "Specific pricing information if known",
   "features": [
-    {"title": "AI-Powered", "description": "Advanced AI capabilities"},
-    {"title": "User-Friendly", "description": "Easy to use interface"},
-    {"title": "Cloud-Based", "description": "Accessible from anywhere"}
+    {"title": "Feature 1", "description": "Detailed description"},
+    {"title": "Feature 2", "description": "Detailed description"},
+    {"title": "Feature 3", "description": "Detailed description"},
+    {"title": "Feature 4", "description": "Detailed description"},
+    {"title": "Feature 5", "description": "Detailed description"}
   ],
-  "pros": ["Easy to use", "Powerful features", "Good performance"],
-  "cons": ["May require learning", "Internet connection needed", "Limited free features"],
-  "useCases": ["Content creation", "Productivity enhancement"],
-  "tags": ["ai", "productivity", "tool"],
-  "targetAudience": "Professionals and content creators",
+  "pros": ["Specific advantage 1", "Specific advantage 2", "Specific advantage 3", "Specific advantage 4"],
+  "cons": ["Realistic limitation 1", "Realistic limitation 2", "Realistic limitation 3"],
+  "useCases": ["Specific use case 1", "Specific use case 2", "Specific use case 3"],
+  "qaItems": [
+    {"question": "What does this tool do?", "answer": "Detailed answer about functionality"},
+    {"question": "How much does it cost?", "answer": "Pricing information"},
+    {"question": "Who is it for?", "answer": "Target audience description"},
+    {"question": "What are the main benefits?", "answer": "Key advantages"}
+  ],
+  "tags": ["relevant", "tags", "based", "on", "actual", "tool"],
+  "targetAudience": "Specific target audience",
   "logoUrl": null,
   "screenshots": [],
-  "confidenceScore": 0.5
+  "confidenceScore": 0.7
 }`;
 
       const completion = await this.openai.chat.completions.create({
@@ -408,28 +473,39 @@ Respond with valid JSON only in this exact format:
     } catch (error) {
       console.error('Error in basic analysis generation:', error);
       
-      // Ultimate fallback - return a minimal valid structure
+      // Ultimate fallback - return category-specific valid structure
+      const category = this.getCategoryFromUrl(url);
+      const toolName = url.split('/')[2]?.split('.')[0]?.replace('www.', '') || 'Tool';
+      
       return {
-        name: url.split('/')[2]?.split('.')[0] || 'AI Tool',
-        description: 'An AI-powered tool that helps users with various tasks and productivity enhancement.',
-        shortDescription: 'AI-powered productivity tool',
-        category: 'Productivity' as const,
+        name: toolName.charAt(0).toUpperCase() + toolName.slice(1),
+        description: `A ${category.toLowerCase()} tool that provides AI-powered capabilities to enhance user workflows and productivity.`,
+        shortDescription: `AI-powered ${category.toLowerCase()} tool`,
+        category: category as any,
         subcategory: null,
         pricingType: 'freemium' as const,
-        pricingDetails: null,
+        pricingDetails: 'Free tier available with premium features',
         features: [
-          { title: "AI-Powered", description: "Uses advanced AI technology" },
-          { title: "User-Friendly", description: "Easy to use interface" },
-          { title: "Web-Based", description: "Accessible through web browser" }
+          { title: "AI-Powered Engine", description: "Advanced AI technology for enhanced performance" },
+          { title: "User-Friendly Interface", description: "Intuitive design for easy navigation and use" },
+          { title: "Cloud-Based Platform", description: "Accessible from anywhere with internet connection" },
+          { title: "Real-Time Processing", description: "Fast and efficient processing capabilities" },
+          { title: "Integration Support", description: "Compatible with popular tools and workflows" }
         ],
-        pros: ["Easy to use", "AI-powered features", "Accessible online"],
+        pros: ["Easy to use interface", "AI-powered capabilities", "Accessible online", "Regular updates"],
         cons: ["Requires internet connection", "May have learning curve", "Limited free features"],
-        useCases: ["Productivity", "Content creation"],
-        tags: ["ai", "productivity", "tool"],
-        targetAudience: "Professionals and creators",
+        useCases: [`${category} enhancement`, "Workflow optimization", "Productivity improvement"],
+        tags: ["ai", category.toLowerCase().replace(' ', '-'), "productivity", "tool", "automation"],
+        targetAudience: `${category} professionals and teams`,
         logoUrl: null,
         screenshots: [],
-        confidenceScore: 0.3
+        qaItems: [
+          { question: "What does this tool do?", answer: `This tool provides AI-powered ${category.toLowerCase()} capabilities to enhance your workflow.` },
+          { question: "How much does it cost?", answer: "It offers a freemium model with free basic features and premium paid options." },
+          { question: "Who is the target audience?", answer: `Designed for ${category.toLowerCase()} professionals and teams looking to improve productivity.` },
+          { question: "Is an account required?", answer: "Yes, most features require creating an account for personalized experience and data sync." }
+        ],
+        confidenceScore: 0.4
       };
     }
   }
