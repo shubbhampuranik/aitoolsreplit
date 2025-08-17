@@ -6,8 +6,12 @@ import { insertToolSchema, insertPromptSchema, insertCourseSchema, insertJobSche
 import { z } from "zod";
 import { aiToolAnalyzer } from "./aiToolAnalyzer";
 import { imageDownloader } from "./imageDownloader";
+import { LogoAutomationService } from "./logoAutomation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize services
+  const logoService = new LogoAutomationService();
+  
   // Auth middleware
   await setupAuth(app);
 
@@ -694,6 +698,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to analyze tool", 
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Logo Automation endpoint
+  app.post('/api/ai/discover-logo', isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+      
+      console.log('Discovering logo for:', url);
+      
+      const logos = await logoService.discoverLogo(url);
+      const bestLogo = logoService.selectBestLogo(logos);
+      
+      res.json({
+        logos: logos.slice(0, 5), // Return top 5 options
+        bestLogo,
+        totalFound: logos.length
+      });
+    } catch (error) {
+      console.error('Error discovering logo:', error);
+      res.status(500).json({ error: 'Failed to discover logo' });
     }
   });
 

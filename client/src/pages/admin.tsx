@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { MultiSelectCategories } from "@/components/MultiSelectCategories";
 import { QuickFixButton } from "@/components/QuickFixButton";
+import { LogoDiscoveryButton } from "@/components/LogoDiscoveryButton";
 
 interface Tool {
   id: string;
@@ -2049,13 +2050,20 @@ function OverviewTab({ formData, updateFormData, categories, fetchingData, onFet
 
             <div>
               <Label htmlFor="logoUrl">Logo URL</Label>
-              <Input
-                id="logoUrl"
-                type="url"
-                value={formData.logoUrl}
-                onChange={(e) => updateFormData('logoUrl', e.target.value)}
-                className="mt-1"
-              />
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="logoUrl"
+                  type="url"
+                  value={formData.logoUrl}
+                  onChange={(e) => updateFormData('logoUrl', e.target.value)}
+                  className="flex-1"
+                />
+                <LogoDiscoveryButton
+                  websiteUrl={formData.url}
+                  onLogoSelected={(logoUrl) => updateFormData('logoUrl', logoUrl)}
+                  disabled={!formData.url}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
