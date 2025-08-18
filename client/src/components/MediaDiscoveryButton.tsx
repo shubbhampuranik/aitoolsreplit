@@ -246,7 +246,13 @@ export function MediaDiscoveryButton({
                             alt={screenshot.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
+                              console.error('Failed to load screenshot:', screenshot.url);
+                              console.error('Screenshot error details:', e);
                               (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
+                            }}
+                            crossOrigin="anonymous"
+                            onLoad={() => {
+                              console.log('Successfully loaded screenshot:', screenshot.url);
                             }}
                           />
                         </div>
@@ -343,7 +349,13 @@ export function MediaDiscoveryButton({
                               className="w-full h-full object-cover cursor-pointer"
                               onClick={() => toggleMediaSelection(screenshot.url)}
                               onError={(e) => {
+                                console.error('Failed to load detailed screenshot:', screenshot.url);
+                                console.error('Detailed screenshot error:', e);
                                 (e.target as HTMLImageElement).src = '/api/placeholder/400/300';
+                              }}
+                              crossOrigin="anonymous"
+                              onLoad={() => {
+                                console.log('Successfully loaded detailed screenshot:', screenshot.url);
                               }}
                             />
                           </div>
