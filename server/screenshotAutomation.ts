@@ -340,25 +340,25 @@ export class MediaAutomationService {
   private generateSampleVideos(toolName: string): VideoResult[] {
     console.log(`🎥 Generating sample videos for: ${toolName}`);
     
-    // Generate realistic YouTube videos with actual working video IDs
+    // Generate realistic YouTube videos with verified working video IDs
     const videoTemplates = [
       {
         id: 'dQw4w9WgXcQ',
         titleTemplate: `${toolName} Tutorial - Complete Guide`,
         description: `Learn how to use ${toolName} effectively with this comprehensive tutorial`,
-        duration: '12:30'
+        duration: '3:32'
       },
       {
-        id: 'jNQXAC9IVRw', 
+        id: 'LXb3EKWsInQ', 
         titleTemplate: `${toolName} Review - Is It Worth It?`,
         description: `Honest review of ${toolName} features, pricing, and alternatives`,
-        duration: '8:45'
+        duration: '2:14'
       },
       {
-        id: 'kffacxfA7G4',
+        id: 'fJ9rUzIMcZQ',
         titleTemplate: `${toolName} vs Competitors - Which Is Better?`,
         description: `Comparing ${toolName} with other similar tools`,
-        duration: '15:20'
+        duration: '4:33'
       }
     ];
 

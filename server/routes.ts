@@ -762,18 +762,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid image URL' });
       }
 
+      console.log(`🖼️ Proxying image: ${imageUrl}`);
+
       const response = await fetch(imageUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Referer': new URL(imageUrl).origin,
+          'Sec-Fetch-Dest': 'image',
+          'Sec-Fetch-Mode': 'no-cors',
+          'Sec-Fetch-Site': 'cross-site'
+        },
+        timeout: 10000
       });
 
       if (!response.ok) {
-        return res.status(response.status).json({ error: 'Failed to fetch image' });
+        console.warn(`⚠️ Image fetch failed (${response.status}): ${imageUrl}`);
+        // Return placeholder instead of error
+        return res.redirect('/api/placeholder/400/300');
       }
 
       const contentType = response.headers.get('content-type') || 'image/png';
+      
+      // Validate content type
+      if (!contentType.startsWith('image/')) {
+        console.warn(`⚠️ Invalid content type (${contentType}): ${imageUrl}`);
+        return res.redirect('/api/placeholder/400/300');
+      }
+
       const buffer = await response.arrayBuffer();
+      
+      console.log(`✅ Successfully proxied image: ${imageUrl} (${contentType})`);
 
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
@@ -781,7 +802,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(Buffer.from(buffer));
     } catch (error) {
       console.error('Error proxying image:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      // Return placeholder instead of error
+      res.redirect('/api/placeholder/400/300');
     }
   });
 
