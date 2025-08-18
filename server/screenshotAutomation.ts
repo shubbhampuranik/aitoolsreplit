@@ -61,41 +61,33 @@ export class MediaAutomationService {
       // Get the website content to find key pages
       const keyPages = await this.findKeyPages(websiteUrl);
       
-      // Capture screenshots for each key page and viewport
-      const viewports = [
-        { name: 'desktop' as const, width: 1920, height: 1080 },
-        { name: 'tablet' as const, width: 768, height: 1024 },
-        { name: 'mobile' as const, width: 375, height: 667 }
-      ];
+      // Capture desktop screenshots only
+      const viewport = { name: 'desktop' as const, width: 1920, height: 1080 };
 
       for (const page of keyPages) {
-        for (const viewport of viewports) {
-          try {
-            const screenshotUrl = await this.takeScreenshot(page.url, viewport.width, viewport.height);
-            
-            if (screenshotUrl) {
-              screenshots.push({
-                url: screenshotUrl,
-                title: `${page.title} - ${viewport.name}`,
-                description: page.description,
-                type: page.type,
-                confidence: page.confidence,
-                viewport: viewport.name
-              });
-            }
-          } catch (error) {
-            console.error(`Error capturing screenshot for ${page.url} (${viewport.name}):`, error);
+        try {
+          const screenshotUrl = await this.takeScreenshot(page.url, viewport.width, viewport.height);
+          
+          if (screenshotUrl) {
+            screenshots.push({
+              url: screenshotUrl,
+              title: page.title,
+              description: page.description,
+              type: page.type,
+              confidence: page.confidence,
+              viewport: viewport.name
+            });
           }
+        } catch (error) {
+          console.error(`Error capturing screenshot for ${page.url}:`, error);
         }
       }
 
       // Sort by confidence and type priority
       return screenshots.sort((a, b) => {
         const typePriority = { homepage: 5, features: 4, pricing: 3, dashboard: 2, demo: 1 };
-        const viewportPriority = { desktop: 3, tablet: 2, mobile: 1 };
-        
-        const aScore = (typePriority[a.type] || 0) + (viewportPriority[a.viewport] || 0) + a.confidence;
-        const bScore = (typePriority[b.type] || 0) + (viewportPriority[b.viewport] || 0) + b.confidence;
+        const aScore = (typePriority[a.type] || 0) + a.confidence;
+        const bScore = (typePriority[b.type] || 0) + b.confidence;
         
         return bScore - aScore;
       });
@@ -209,19 +201,17 @@ export class MediaAutomationService {
   }
 
   private async generateScreenshotUrl(url: string, width: number, height: number): Promise<string> {
-    // For demonstration purposes, generate high-quality placeholder screenshots
-    // In a production environment, you would need to set up a proper screenshot service
-    // or use a paid API like URLBox.io, ScreenshotAPI, or implement Puppeteer server-side
-    
     const encodedUrl = encodeURIComponent(url);
     
-    // Generate a descriptive placeholder that represents the actual screenshot
-    const viewportName = width >= 1200 ? 'desktop' : width >= 768 ? 'tablet' : 'mobile';
-    const domain = new URL(url).hostname;
+    // Check if user has provided SCREENSHOT_API_KEY for screenshotapi.com
+    if (this.screenshotApiKey) {
+      // Use ScreenshotAPI.com with user's API key
+      return `https://shot.screenshotapi.net/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&file_type=png&wait_for_event=load&delay=3000`;
+    }
     
-    // Use a service that generates realistic website mockups based on the URL
-    // This is better than empty frames - it shows what the screenshot would look like
-    return `https://via.placeholder.com/${width}x${height}/1e293b/ffffff?text=${encodeURIComponent(domain + ' - ' + viewportName + ' view')}`;
+    // Fallback: Use Thum.io free service (no authentication required)
+    // This provides actual screenshots but with rate limits
+    return `https://image.thum.io/get/width/${width}/crop/${width}/${height}/${encodedUrl}`;
   }
 
   private async discoverVideos(websiteUrl: string): Promise<VideoResult[]> {
@@ -380,16 +370,16 @@ export class MediaAutomationService {
     bestScreenshots: ScreenshotResult[];
     bestVideos: VideoResult[];
   } {
-    // Select top 3 screenshots (1 desktop, 1 tablet, 1 mobile if available)
-    const bestScreenshots: ScreenshotResult[] = [];
-    const viewports = ['desktop', 'tablet', 'mobile'] as const;
-    
-    for (const viewport of viewports) {
-      const viewportScreenshots = result.screenshots.filter(s => s.viewport === viewport);
-      if (viewportScreenshots.length > 0) {
-        bestScreenshots.push(viewportScreenshots[0]);
-      }
-    }
+    // Select top 4 desktop screenshots (homepage, features, pricing, dashboard)
+    const bestScreenshots = result.screenshots
+      .filter(s => s.viewport === 'desktop')
+      .sort((a, b) => {
+        const typePriority = { homepage: 5, features: 4, pricing: 3, dashboard: 2, demo: 1 };
+        const aScore = (typePriority[a.type] || 0) + a.confidence;
+        const bScore = (typePriority[b.type] || 0) + b.confidence;
+        return bScore - aScore;
+      })
+      .slice(0, 4);
 
     // Select top 2 videos
     const bestVideos = result.videos
