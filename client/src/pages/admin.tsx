@@ -204,8 +204,9 @@ export default function AdminPage() {
       
       if (!currentUpdateFormData) {
         console.log('⚠️ No form updater available, storing data for form to pick up');
-        // Store AI data temporarily for the form to pick up
-        sessionStorage.setItem('editToolAIData', JSON.stringify(data));
+        // Store AI data temporarily for the specific tool
+        const editToolAIDataKey = `editToolAIData_${selectedTool.id}`;
+        sessionStorage.setItem(editToolAIDataKey, JSON.stringify(data));
         setShowAiPreview(false);
         setAiAnalysisResult(null);
         
@@ -1559,6 +1560,37 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     // Q&A
     faqs: tool.faqs || [],
   });
+
+  // Reset form data and clear stale AI cache when tool changes
+  useEffect(() => {
+    setFormData({
+      name: tool.name || "",
+      shortDescription: tool.shortDescription || "",
+      description: tool.description || "",
+      url: tool.url || "",
+      logoUrl: tool.logoUrl || "",
+      pricingType: tool.pricingType || "freemium",
+      pricingDetails: tool.pricingDetails || "",
+      categoryId: tool.categoryId || "",
+      categories: tool.categories || [],
+      status: tool.status || "pending",
+      featured: tool.featured || false,
+      features: tool.features || [],
+      gallery: tool.gallery || [],
+      prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
+      alternatives: tool.alternatives || [],
+      faqs: tool.faqs || [],
+    });
+    
+    // Clear any stale AI data for other tools when switching tools
+    const currentToolKey = `editToolAIData_${tool.id}`;
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('editToolAIData_') && key !== currentToolKey) {
+        sessionStorage.removeItem(key);
+        console.log(`🧹 Cleared stale AI cache: ${key}`);
+      }
+    });
+  }, [tool.id]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1618,13 +1650,14 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     };
   }, [onSetUpdateFormData]);
 
-  // Check for stored AI data and apply it
+  // Check for stored AI data and apply it - with tool-specific caching
   useEffect(() => {
-    const editToolAIData = sessionStorage.getItem('editToolAIData');
+    const editToolAIDataKey = `editToolAIData_${tool.id}`;
+    const editToolAIData = sessionStorage.getItem(editToolAIDataKey);
     if (editToolAIData) {
       try {
         const aiData = JSON.parse(editToolAIData);
-        console.log('📝 Applying stored AI data to edit form:', aiData.name);
+        console.log(`📝 Applying stored AI data for tool ${tool.id}:`, aiData.name);
         
         // Apply the AI data to form
         updateFormData('name', aiData.name);
@@ -1647,8 +1680,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
           });
         }
 
-        // Clean up stored data
-        sessionStorage.removeItem('editToolAIData');
+        // Clean up stored data for this specific tool
+        sessionStorage.removeItem(editToolAIDataKey);
         
         toast({
           title: "AI Data Applied",
@@ -1656,10 +1689,10 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         });
       } catch (error) {
         console.error('Error applying stored AI data:', error);
-        sessionStorage.removeItem('editToolAIData');
+        sessionStorage.removeItem(editToolAIDataKey);
       }
     }
-  }, []);
+  }, [tool.id]); // Include tool.id in dependency array
 
   const generateAIFeatures = async (url: string, count: number = 5) => {
     if (!url.trim()) {
