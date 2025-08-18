@@ -76,6 +76,7 @@ export const tools = pgTable("tools", {
   url: text("url").notNull(),
   logoUrl: text("logo_url"),
   gallery: text("gallery").array(),
+  videos: jsonb("videos"), // Store video URLs with metadata
   pricingType: pricingTypeEnum("pricing_type").default("freemium"),
   pricingDetails: text("pricing_details"),
   // categoryId removed - using many-to-many relationship via toolCategories table

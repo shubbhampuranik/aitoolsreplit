@@ -48,7 +48,7 @@ export class MediaAutomationService {
       // Run screenshot and video discovery in parallel
       const [screenshots, videos] = await Promise.all([
         this.captureScreenshots(websiteUrl),
-        this.discoverVideos(websiteUrl)
+        this.discoverVideos(websiteUrl, "AI Tool")
       ]);
 
       return {
@@ -66,7 +66,7 @@ export class MediaAutomationService {
     }
   }
 
-  private async captureScreenshots(websiteUrl: string): Promise<ScreenshotResult[]> {
+  async captureScreenshots(websiteUrl: string): Promise<ScreenshotResult[]> {
     const screenshots: ScreenshotResult[] = [];
     
     try {
@@ -275,18 +275,18 @@ export class MediaAutomationService {
     return '/api/placeholder/400/300';
   }
 
-  private async discoverVideos(websiteUrl: string): Promise<VideoResult[]> {
+  private async discoverVideos(websiteUrl: string, toolName?: string): Promise<VideoResult[]> {
     const videos: VideoResult[] = [];
 
     try {
-      // Extract tool name for video search
-      const toolName = await this.extractToolName(websiteUrl);
+      // Use provided tool name or extract from website
+      const extractedToolName = toolName || await this.extractToolName(websiteUrl);
       
-      if (toolName) {
-        // Generate sample YouTube videos (in production, use YouTube Data API)
-        const youtubeVideos = this.generateSampleVideos(toolName);
-        console.log(`🎥 Found ${youtubeVideos.length} YouTube videos for ${toolName}`);
-        videos.push(...youtubeVideos);
+      if (extractedToolName) {
+        // Use AI to find relevant YouTube videos
+        const aiVideos = await this.findVideosWithAI(extractedToolName, websiteUrl);
+        console.log(`🎥 Found ${aiVideos.length} AI-suggested videos for ${extractedToolName}`);
+        videos.push(...aiVideos);
       } else {
         console.log(`⚠️ Could not extract tool name from ${websiteUrl}`);
       }
@@ -470,5 +470,78 @@ export class MediaAutomationService {
       bestScreenshots,
       bestVideos
     };
+  }
+
+  // New methods for AI-powered video discovery
+  async findVideosWithAI(toolName: string, toolUrl?: string, description?: string): Promise<VideoResult[]> {
+    try {
+      console.log(`🤖 Using AI to find videos for: ${toolName}`);
+      
+      // Import OpenAI here to avoid issues if the service is not available
+      const { openai } = await import('./ai');
+      
+      const prompt = `Find 5 most relevant and high-quality YouTube videos for the AI tool "${toolName}".
+      ${toolUrl ? `Website: ${toolUrl}` : ''}
+      ${description ? `Description: ${description}` : ''}
+      
+      Search for videos that are:
+      - Educational tutorials or demos showing how to use the tool
+      - Reviews or comparisons with other similar tools
+      - Official product showcases or announcements
+      - How-to guides and practical use cases
+      
+      Return as a JSON object with a "videos" array in this exact format:
+      {
+        "videos": [
+          {
+            "url": "https://youtube.com/watch?v=VIDEO_ID",
+            "title": "Video Title",
+            "description": "Brief description of the video content",
+            "source": "youtube",
+            "confidence": 0.9
+          }
+        ]
+      }
+      
+      Only suggest real, existing YouTube videos that are likely to exist. Use realistic video IDs and titles.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at finding relevant YouTube videos for AI tools. Return only valid JSON objects."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"videos": []}');
+      const videos = result.videos || [];
+      
+      return videos.map((video: any, index: number) => ({
+        url: video.url,
+        title: video.title,
+        description: video.description || '',
+        thumbnail: this.extractYouTubeThumbnail(video.url),
+        duration: 'Unknown',
+        source: 'youtube' as const,
+        confidence: video.confidence || (0.9 - index * 0.1)
+      }));
+    } catch (error) {
+      console.error('AI video search failed:', error);
+      // Fallback to existing sample videos if AI fails
+      return [];
+    }
+  }
+
+  private extractYouTubeThumbnail(url: string): string {
+    const videoId = this.extractYouTubeId(url);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
   }
 }

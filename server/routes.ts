@@ -753,6 +753,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Gallery management routes
+  app.post("/api/media/capture-screenshots", async (req, res) => {
+    try {
+      const { url, toolId } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      const screenshots = await mediaService.captureScreenshots(url);
+      
+      res.json({
+        success: true,
+        screenshots: screenshots.map(s => ({
+          url: s.url,
+          title: s.title,
+          type: s.type
+        }))
+      });
+    } catch (error) {
+      console.error("Screenshot capture error:", error);
+      res.status(500).json({ 
+        error: "Failed to capture screenshots",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/media/discover-videos", async (req, res) => {
+    try {
+      const { toolName, toolUrl, description } = req.body;
+      
+      if (!toolName) {
+        return res.status(400).json({ error: "Tool name is required" });
+      }
+
+      const videos = await mediaService.findVideosWithAI(toolName, toolUrl, description);
+      
+      res.json({
+        success: true,
+        videos: videos.map(v => ({
+          id: Math.random().toString(36).substr(2, 9),
+          url: v.url,
+          title: v.title,
+          description: v.description,
+          thumbnail: v.thumbnail,
+          source: v.source
+        }))
+      });
+    } catch (error) {
+      console.error("Video discovery error:", error);
+      res.status(500).json({ 
+        error: "Failed to discover videos",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Image proxy endpoint to handle CORS issues
   app.get('/api/proxy-image', async (req, res) => {
     try {

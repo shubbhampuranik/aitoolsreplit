@@ -31,6 +31,7 @@ import { MultiSelectCategories } from "@/components/MultiSelectCategories";
 import { QuickFixButton } from "@/components/QuickFixButton";
 import { LogoDiscoveryButton } from "@/components/LogoDiscoveryButton";
 import { MediaDiscoveryButton } from "@/components/MediaDiscoveryButton";
+import { GalleryManager } from "@/components/GalleryManager";
 
 interface Tool {
   id: string;
@@ -1576,6 +1577,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     
     // Gallery
     gallery: tool.gallery || [],
+    videos: (tool as any).videos || [],
     
     // Pros and Cons
     prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
@@ -1603,6 +1605,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       featured: tool.featured || false,
       features: tool.features || [],
       gallery: tool.gallery || [],
+      videos: (tool as any).videos || [],
       prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
       alternatives: tool.alternatives || [],
       faqs: tool.faqs || [],
@@ -2009,9 +2012,13 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         {/* Gallery Tab */}
         <TabsContent value="gallery">
           <GalleryTab 
+            toolId={tool.id}
+            toolName={formData.name}
+            toolUrl={formData.url}
             gallery={formData.gallery} 
+            videos={formData.videos}
             updateGallery={(gallery) => updateFormData('gallery', gallery)}
-            websiteUrl={formData.url}
+            updateVideos={(videos) => updateFormData('videos', videos)}
           />
         </TabsContent>
 
@@ -2402,100 +2409,34 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures, 
   );
 }
 
-// Gallery Tab Component
+// Gallery Tab Component with enhanced media management
 function GalleryTab({ 
+  toolId,
+  toolName,
+  toolUrl,
   gallery, 
+  videos,
   updateGallery, 
-  websiteUrl 
+  updateVideos 
 }: { 
-  gallery: any[], 
-  updateGallery: (gallery: any[]) => void,
-  websiteUrl: string 
+  toolId: string;
+  toolName: string;
+  toolUrl: string;
+  gallery: string[]; 
+  videos: any[];
+  updateGallery: (gallery: string[]) => void; 
+  updateVideos: (videos: any[]) => void;
 }) {
-  const addImage = () => {
-    const url = prompt("Enter image URL:");
-    if (url) {
-      updateGallery([...gallery, url]);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    const newGallery = gallery.filter((_: any, i: number) => i !== index);
-    updateGallery(newGallery);
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Media Gallery</h3>
-          <p className="text-sm text-gray-600">Add screenshots, images, and videos showcasing the tool</p>
-        </div>
-        <div className="flex gap-2">
-          <MediaDiscoveryButton
-            websiteUrl={websiteUrl}
-            onMediaSelected={(mediaUrls) => {
-              const newGallery = [...gallery, ...mediaUrls];
-              updateGallery(newGallery);
-            }}
-            disabled={!websiteUrl}
-          />
-          <Button onClick={addImage} variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Manually
-          </Button>
-        </div>
-      </div>
-
-      {gallery.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No media added yet</p>
-            <p className="text-sm text-gray-500 mb-4">Use auto-discovery to find screenshots and videos automatically</p>
-            <div className="flex gap-2 justify-center">
-              <MediaDiscoveryButton
-                websiteUrl={websiteUrl}
-                onMediaSelected={(mediaUrls) => {
-                  updateGallery(mediaUrls);
-                }}
-                disabled={!websiteUrl}
-              />
-              <Button onClick={addImage} variant="outline">
-                Add Manually
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {gallery.map((imageUrl: string, index: number) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="relative group">
-                  <img
-                    src={imageUrl}
-                    alt={`Gallery image ${index + 1}`}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                    <Button
-                      onClick={() => removeImage(index)}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2 truncate">{imageUrl}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+    <GalleryManager
+      toolId={toolId}
+      toolName={toolName}
+      toolUrl={toolUrl}
+      gallery={gallery}
+      videos={videos}
+      onGalleryChange={updateGallery}
+      onVideosChange={updateVideos}
+    />
   );
 }
 
