@@ -366,7 +366,7 @@ export class MediaAutomationService {
       url: `https://www.youtube.com/watch?v=${template.id}`,
       title: template.titleTemplate,
       description: template.description,
-      thumbnail: `https://img.youtube.com/vi/${template.id}/maxresdefault.jpg`,
+      thumbnail: `/api/proxy-image?url=${encodeURIComponent(`https://img.youtube.com/vi/${template.id}/maxresdefault.jpg`)}`,
       duration: template.duration,
       source: 'youtube' as const,
       confidence: 0.9 - (index * 0.1)
@@ -401,7 +401,7 @@ export class MediaAutomationService {
               url: `https://www.youtube.com/watch?v=${videoId}`,
               title: 'Embedded demo video',
               description: 'Official demo or tutorial video',
-              thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+              thumbnail: `/api/proxy-image?url=${encodeURIComponent(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`)}`,
               duration: 'Unknown',
               source: 'embedded',
               confidence: 0.9
@@ -420,7 +420,7 @@ export class MediaAutomationService {
               url: `https://vimeo.com/${vimeoId}`,
               title: 'Vimeo demo video',
               description: 'Product demonstration video',
-              thumbnail: `https://vumbnail.com/${vimeoId}.jpg`,
+              thumbnail: `/api/proxy-image?url=${encodeURIComponent(`https://vumbnail.com/${vimeoId}.jpg`)}`,
               duration: 'Unknown',
               source: 'vimeo',
               confidence: 0.85
