@@ -35,8 +35,8 @@ interface GalleryManagerProps {
   toolName: string;
   gallery: string[];
   videos: VideoData[];
-  onGalleryUpdate: (gallery: string[]) => void;
-  onVideosUpdate: (videos: VideoData[]) => void;
+  onGalleryChange: (gallery: string[]) => void;
+  onVideosChange: (videos: VideoData[]) => void;
 }
 
 export function GalleryManager({
@@ -45,8 +45,8 @@ export function GalleryManager({
   toolName,
   gallery,
   videos,
-  onGalleryUpdate,
-  onVideosUpdate
+  onGalleryChange,
+  onVideosChange
 }: GalleryManagerProps) {
   const [isCapturingScreenshots, setIsCapturingScreenshots] = useState(false);
   const [isDiscoveringVideos, setIsDiscoveringVideos] = useState(false);
@@ -65,7 +65,7 @@ export function GalleryManager({
       if (response.ok) {
         const data = await response.json();
         const newScreenshots = data.screenshots.map((s: any) => s.url);
-        onGalleryUpdate([...gallery, ...newScreenshots]);
+        onGalleryChange([...gallery, ...newScreenshots]);
         toast({
           title: "Screenshots Captured",
           description: `Successfully captured ${newScreenshots.length} screenshots`
@@ -95,7 +95,7 @@ export function GalleryManager({
 
       if (response.ok) {
         const data = await response.json();
-        onVideosUpdate(data.videos);
+        onVideosChange(data.videos);
         toast({
           title: "Videos Discovered",
           description: `Found ${data.videos.length} relevant videos`
@@ -116,7 +116,7 @@ export function GalleryManager({
 
   const addImageUrl = () => {
     if (uploadUrl.trim()) {
-      onGalleryUpdate([...gallery, uploadUrl.trim()]);
+      onGalleryChange([...gallery, uploadUrl.trim()]);
       setUploadUrl("");
       toast({
         title: "Image Added",
@@ -127,12 +127,12 @@ export function GalleryManager({
 
   const removeImage = (index: number) => {
     const newGallery = gallery.filter((_, i) => i !== index);
-    onGalleryUpdate(newGallery);
+    onGalleryChange(newGallery);
   };
 
   const removeVideo = (index: number) => {
     const newVideos = videos.filter((_, i) => i !== index);
-    onVideosUpdate(newVideos);
+    onVideosChange(newVideos);
   };
 
   const extractYouTubeId = (url: string): string | null => {
