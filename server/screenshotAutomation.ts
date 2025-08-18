@@ -236,20 +236,28 @@ export class MediaAutomationService {
     }
     
     // Use Microlink API as primary fallback (more reliable)
-    const microlinkResponse = await fetch(`https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`);
-    
-    if (microlinkResponse.ok) {
-      const data = await microlinkResponse.json();
-      if (data.data && data.data.screenshot && data.data.screenshot.url) {
-        console.log(`✅ Using Microlink API for ${url}`);
-        return data.data.screenshot.url;
+    try {
+      const microlinkResponse = await fetch(`https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`);
+      
+      if (microlinkResponse.ok) {
+        const data = await microlinkResponse.json();
+        console.log(`📊 Microlink response:`, JSON.stringify(data, null, 2));
+        if (data.data && data.data.screenshot && data.data.screenshot.url) {
+          console.log(`✅ Using Microlink API screenshot URL for ${url}: ${data.data.screenshot.url}`);
+          return data.data.screenshot.url;
+        } else {
+          console.log(`⚠️ Microlink response missing screenshot URL`);
+        }
+      } else {
+        console.log(`⚠️ Microlink response not OK: ${microlinkResponse.status}`);
       }
+    } catch (error) {
+      console.log(`⚠️ Microlink API error:`, error);
     }
     
-    // Final fallback to direct Microlink URL (still better than placeholder)
-    const directMicrolinkUrl = `https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`;
-    console.log(`⚠️ Using direct Microlink URL for ${url}`);
-    return directMicrolinkUrl;
+    // Final fallback to a different service
+    console.log(`⚠️ All screenshot services failed for ${url}, using placeholder`);
+    return '/api/placeholder/400/300';
   }
 
   private async discoverVideos(websiteUrl: string): Promise<VideoResult[]> {
