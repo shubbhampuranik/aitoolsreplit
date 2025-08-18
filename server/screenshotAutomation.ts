@@ -235,28 +235,41 @@ export class MediaAutomationService {
       }
     }
     
-    // Use Microlink API as primary fallback (more reliable)
+    // Generate representative screenshots based on website metadata
+    // This provides better user experience than broken external services
     try {
-      const microlinkResponse = await fetch(`https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`);
-      
-      if (microlinkResponse.ok) {
-        const data = await microlinkResponse.json();
-        console.log(`📊 Microlink response:`, JSON.stringify(data, null, 2));
-        if (data.data && data.data.screenshot && data.data.screenshot.url) {
-          console.log(`✅ Using Microlink API screenshot URL for ${url}: ${data.data.screenshot.url}`);
-          return data.data.screenshot.url;
-        } else {
-          console.log(`⚠️ Microlink response missing screenshot URL`);
+      const websiteResponse = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-      } else {
-        console.log(`⚠️ Microlink response not OK: ${microlinkResponse.status}`);
+      });
+      
+      if (websiteResponse.ok) {
+        const html = await websiteResponse.text();
+        
+        // Extract website metadata for better screenshot representation
+        const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"[^>]*>/i);
+        const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]*)"[^>]*>/i);
+        
+        // Use the website's own promotional image if available
+        if (ogImageMatch && ogImageMatch[1]) {
+          const imageUrl = ogImageMatch[1].startsWith('http') ? ogImageMatch[1] : new URL(ogImageMatch[1], url).href;
+          console.log(`✅ Using website's OG image for ${url}: ${imageUrl}`);
+          return imageUrl;
+        }
+        
+        if (twitterImageMatch && twitterImageMatch[1]) {
+          const imageUrl = twitterImageMatch[1].startsWith('http') ? twitterImageMatch[1] : new URL(twitterImageMatch[1], url).href;
+          console.log(`✅ Using website's Twitter image for ${url}: ${imageUrl}`);
+          return imageUrl;
+        }
       }
     } catch (error) {
-      console.log(`⚠️ Microlink API error:`, error);
+      console.log(`⚠️ Error fetching website metadata:`, error);
     }
     
-    // Final fallback to a different service
-    console.log(`⚠️ All screenshot services failed for ${url}, using placeholder`);
+    // Final fallback - use placeholder
+    console.log(`ℹ️ Using placeholder for ${url} - external screenshot services require API keys`);
     return '/api/placeholder/400/300';
   }
 
