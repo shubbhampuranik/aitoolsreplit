@@ -31,7 +31,7 @@ export class MediaAutomationService {
 
   constructor() {
     // Load environment variables at runtime
-    this.screenshotApiKey = process.env.SCREENSHOT_API_KEY || 'key_sQC7yPoDMrkCzkW2x8ft6o';
+    this.screenshotApiKey = process.env.SCREENSHOTAPI_KEY;
     this.youtubeApiKey = process.env.YOUTUBE_API_KEY;
     
     console.log('🔑 MediaAutomationService initialized');
