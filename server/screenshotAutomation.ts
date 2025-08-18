@@ -216,19 +216,40 @@ export class MediaAutomationService {
     const encodedUrl = encodeURIComponent(url);
     
     console.log(`📸 Generating screenshot for ${url} (${width}x${height})`);
-    console.log(`🔑 API Key available: ${!!this.screenshotApiKey}`);
     
-    // Primary: Use ScreenshotAPI.com if available
+    // Test ScreenshotAPI first if available
     if (this.screenshotApiKey) {
-      const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&wait_for_event=load&delay=2000`;
-      console.log(`✅ Using ScreenshotAPI.com for ${url}`);
-      return screenshotUrl;
+      try {
+        const testUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=400&height=300&output=image`;
+        const response = await fetch(testUrl, { method: 'HEAD' });
+        
+        if (response.ok) {
+          const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&wait_for_event=load&delay=2000`;
+          console.log(`✅ Using ScreenshotAPI.com for ${url}`);
+          return screenshotUrl;
+        } else {
+          console.log(`⚠️ ScreenshotAPI test failed (${response.status}), switching to Microlink`);
+        }
+      } catch (error) {
+        console.log(`⚠️ ScreenshotAPI test error, switching to Microlink:`, error);
+      }
     }
     
-    // Secondary: Use Microlink free API (more reliable than Thum.io)
-    const microlinkUrl = `https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`;
-    console.log(`⚠️ Using Microlink fallback for ${url}`);
-    return microlinkUrl;
+    // Use Microlink API as primary fallback (more reliable)
+    const microlinkResponse = await fetch(`https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`);
+    
+    if (microlinkResponse.ok) {
+      const data = await microlinkResponse.json();
+      if (data.data && data.data.screenshot && data.data.screenshot.url) {
+        console.log(`✅ Using Microlink API for ${url}`);
+        return data.data.screenshot.url;
+      }
+    }
+    
+    // Final fallback to direct Microlink URL (still better than placeholder)
+    const directMicrolinkUrl = `https://api.microlink.io/screenshot?url=${encodedUrl}&viewport.width=${width}&viewport.height=${height}&viewport.deviceScaleFactor=1&waitFor=2000&type=png`;
+    console.log(`⚠️ Using direct Microlink URL for ${url}`);
+    return directMicrolinkUrl;
   }
 
   private async discoverVideos(websiteUrl: string): Promise<VideoResult[]> {

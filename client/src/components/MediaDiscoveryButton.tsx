@@ -247,8 +247,16 @@ export function MediaDiscoveryButton({
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               console.error('Failed to load screenshot:', screenshot.url);
-                              console.error('Screenshot error details:', e);
-                              (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
+                              // Try Microlink fallback if original fails
+                              const img = e.target as HTMLImageElement;
+                              if (!img.src.includes('api.microlink.io') && !img.src.includes('placeholder')) {
+                                const originalUrl = new URL(screenshot.url).searchParams.get('url');
+                                if (originalUrl) {
+                                  img.src = `https://api.microlink.io/screenshot?url=${encodeURIComponent(originalUrl)}&viewport.width=300&viewport.height=200&viewport.deviceScaleFactor=1&waitFor=2000&type=png`;
+                                  return;
+                                }
+                              }
+                              img.src = '/api/placeholder/300/200';
                             }}
                             crossOrigin="anonymous"
                             onLoad={() => {
@@ -350,8 +358,16 @@ export function MediaDiscoveryButton({
                               onClick={() => toggleMediaSelection(screenshot.url)}
                               onError={(e) => {
                                 console.error('Failed to load detailed screenshot:', screenshot.url);
-                                console.error('Detailed screenshot error:', e);
-                                (e.target as HTMLImageElement).src = '/api/placeholder/400/300';
+                                // Try Microlink fallback if original fails
+                                const img = e.target as HTMLImageElement;
+                                if (!img.src.includes('api.microlink.io') && !img.src.includes('placeholder')) {
+                                  const originalUrl = new URL(screenshot.url).searchParams.get('url');
+                                  if (originalUrl) {
+                                    img.src = `https://api.microlink.io/screenshot?url=${encodeURIComponent(originalUrl)}&viewport.width=400&viewport.height=300&viewport.deviceScaleFactor=1&waitFor=2000&type=png`;
+                                    return;
+                                  }
+                                }
+                                img.src = '/api/placeholder/400/300';
                               }}
                               crossOrigin="anonymous"
                               onLoad={() => {
