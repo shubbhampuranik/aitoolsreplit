@@ -30,6 +30,7 @@ import {
 import { MultiSelectCategories } from "@/components/MultiSelectCategories";
 import { QuickFixButton } from "@/components/QuickFixButton";
 import { LogoDiscoveryButton } from "@/components/LogoDiscoveryButton";
+import { MediaDiscoveryButton } from "@/components/MediaDiscoveryButton";
 
 interface Tool {
   id: string;
@@ -1948,7 +1949,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         <TabsContent value="gallery">
           <GalleryTab 
             gallery={formData.gallery} 
-            updateGallery={(gallery) => updateFormData('gallery', gallery)} 
+            updateGallery={(gallery) => updateFormData('gallery', gallery)}
+            websiteUrl={formData.url}
           />
         </TabsContent>
 
@@ -2340,7 +2342,15 @@ function FeaturesTab({ features, updateFeatures, toolUrl, onGenerateAIFeatures, 
 }
 
 // Gallery Tab Component
-function GalleryTab({ gallery, updateGallery }: { gallery: any[], updateGallery: (gallery: any[]) => void }) {
+function GalleryTab({ 
+  gallery, 
+  updateGallery, 
+  websiteUrl 
+}: { 
+  gallery: any[], 
+  updateGallery: (gallery: any[]) => void,
+  websiteUrl: string 
+}) {
   const addImage = () => {
     const url = prompt("Enter image URL:");
     if (url) {
@@ -2357,23 +2367,43 @@ function GalleryTab({ gallery, updateGallery }: { gallery: any[], updateGallery:
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Image Gallery</h3>
-          <p className="text-sm text-gray-600">Add screenshots and images showcasing the tool</p>
+          <h3 className="text-lg font-semibold">Media Gallery</h3>
+          <p className="text-sm text-gray-600">Add screenshots, images, and videos showcasing the tool</p>
         </div>
-        <Button onClick={addImage}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Image
-        </Button>
+        <div className="flex gap-2">
+          <MediaDiscoveryButton
+            websiteUrl={websiteUrl}
+            onMediaSelected={(mediaUrls) => {
+              const newGallery = [...gallery, ...mediaUrls];
+              updateGallery(newGallery);
+            }}
+            disabled={!websiteUrl}
+          />
+          <Button onClick={addImage} variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Manually
+          </Button>
+        </div>
       </div>
 
       {gallery.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No images added yet</p>
-            <Button onClick={addImage} variant="outline" className="mt-4">
-              Add First Image
-            </Button>
+            <p className="text-gray-600">No media added yet</p>
+            <p className="text-sm text-gray-500 mb-4">Use auto-discovery to find screenshots and videos automatically</p>
+            <div className="flex gap-2 justify-center">
+              <MediaDiscoveryButton
+                websiteUrl={websiteUrl}
+                onMediaSelected={(mediaUrls) => {
+                  updateGallery(mediaUrls);
+                }}
+                disabled={!websiteUrl}
+              />
+              <Button onClick={addImage} variant="outline">
+                Add Manually
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

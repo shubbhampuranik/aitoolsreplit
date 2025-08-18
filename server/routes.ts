@@ -7,10 +7,12 @@ import { z } from "zod";
 import { aiToolAnalyzer } from "./aiToolAnalyzer";
 import { imageDownloader } from "./imageDownloader";
 import { LogoAutomationService } from "./logoAutomation";
+import { MediaAutomationService } from "./screenshotAutomation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
   const logoService = new LogoAutomationService();
+  const mediaService = new MediaAutomationService();
   
   // Auth middleware
   await setupAuth(app);
@@ -723,6 +725,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error discovering logo:', error);
       res.status(500).json({ error: 'Failed to discover logo' });
+    }
+  });
+
+  // Media Automation endpoint
+  app.post('/api/ai/discover-media', isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+      
+      console.log('Discovering media for:', url);
+      
+      const mediaResult = await mediaService.discoverMedia(url);
+      const bestMedia = mediaService.selectBestMedia(mediaResult);
+      
+      res.json({
+        ...mediaResult,
+        bestScreenshots: bestMedia.bestScreenshots,
+        bestVideos: bestMedia.bestVideos
+      });
+    } catch (error) {
+      console.error('Error discovering media:', error);
+      res.status(500).json({ error: 'Failed to discover media' });
     }
   });
 
