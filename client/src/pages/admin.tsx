@@ -210,9 +210,20 @@ export default function AdminPage() {
         setShowAiPreview(false);
         setAiAnalysisResult(null);
         
+        // Force a small delay and then trigger a page refresh or form update
+        setTimeout(() => {
+          // Try to trigger form update by re-setting the current view
+          console.log('🔄 Attempting to trigger form data reload...');
+          setCurrentView('tools-list');
+          setTimeout(() => {
+            setSelectedTool(selectedTool);
+            setCurrentView('tool-edit');
+          }, 100);
+        }, 500);
+        
         toast({
           title: "Data Ready", 
-          description: "AI data is ready. The form will update automatically. If fields don't update, refresh the page."
+          description: "AI data is being applied to the form. Please wait a moment..."
         });
         return;
       }
@@ -220,48 +231,65 @@ export default function AdminPage() {
       console.log('✅ Form updater available - applying data directly');
       const updateFormData = currentUpdateFormData;
       
-      // Apply the AI-generated data using updateFormData function
-      console.log('Updating name:', data.name);
-      updateFormData('name', data.name);
-      console.log('Updating description:', data.description);
-      updateFormData('description', data.description);
-      console.log('Updating shortDescription:', data.shortDescription);
-      updateFormData('shortDescription', data.shortDescription);
-      console.log('Updating pricingType:', data.pricingType);
-      updateFormData('pricingType', data.pricingType);
-      updateFormData('pricingDetails', data.pricingDetails || '');
-      
-      if (data.logoUrl) {
-        updateFormData('logoUrl', data.logoUrl);
-      }
-      
-      if (data.screenshots && data.screenshots.length > 0) {
-        console.log('Updating gallery:', data.screenshots);
-        updateFormData('gallery', data.screenshots);
-      }
+      try {
+        // Apply the AI-generated data using updateFormData function
+        console.log('Updating name:', data.name);
+        updateFormData('name', data.name);
+        
+        console.log('Updating description:', data.description);
+        updateFormData('description', data.description);
+        
+        console.log('Updating shortDescription:', data.shortDescription);
+        updateFormData('shortDescription', data.shortDescription);
+        
+        console.log('Updating pricingType:', data.pricingType);
+        updateFormData('pricingType', data.pricingType);
+        
+        console.log('Updating pricingDetails:', data.pricingDetails || '');
+        updateFormData('pricingDetails', data.pricingDetails || '');
+        
+        if (data.logoUrl) {
+          console.log('Updating logoUrl:', data.logoUrl);
+          updateFormData('logoUrl', data.logoUrl);
+        }
+        
+        if (data.screenshots && data.screenshots.length > 0) {
+          console.log('Updating gallery:', data.screenshots);
+          updateFormData('gallery', data.screenshots);
+        }
 
-      // Handle features
-      if (data.features && data.features.length > 0) {
-        console.log('Updating features:', data.features);
-        updateFormData('features', data.features);
-      }
+        // Handle features
+        if (data.features && data.features.length > 0) {
+          console.log('Updating features:', data.features);
+          updateFormData('features', data.features);
+        }
 
-      // Handle pros and cons
-      if (data.pros && data.cons) {
-        console.log('Updating prosAndCons:', { pros: data.pros, cons: data.cons });
-        updateFormData('prosAndCons', {
-          pros: data.pros,
-          cons: data.cons
+        // Handle pros and cons
+        if (data.pros && data.cons) {
+          console.log('Updating prosAndCons:', { pros: data.pros, cons: data.cons });
+          updateFormData('prosAndCons', {
+            pros: data.pros,
+            cons: data.cons
+          });
+        }
+
+        setShowAiPreview(false);
+        setAiAnalysisResult(null);
+        
+        console.log('✅ All AI data applied successfully to form');
+        
+        toast({
+          title: "Data Applied",
+          description: "AI-generated data has been applied to the form. Review and save when ready."
+        });
+      } catch (error) {
+        console.error('❌ Error applying AI data:', error);
+        toast({
+          title: "Error Applying Data",
+          description: "There was an issue applying the AI data. Please try again.",
+          variant: "destructive"
         });
       }
-
-      setShowAiPreview(false);
-      setAiAnalysisResult(null);
-      
-      toast({
-        title: "Data Applied",
-        description: "AI-generated data has been applied to the form. Review and save when ready."
-      });
     } else {
       // If not in tool editor, navigate to Add New Tool with AI data
       setShowAiPreview(false);
@@ -1634,21 +1662,25 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
   };
 
   const updateFormData = (field: string, value: any) => {
+    console.log(`🔄 Updating form field '${field}' for tool ${tool.id}:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   // Set the updateFormData function reference for AI data application
   useEffect(() => {
+    console.log('🔧 Setting updateFormData function for tool:', tool.id);
     // Use setTimeout to defer the state update until after render
     const timer = setTimeout(() => {
       onSetUpdateFormData(updateFormData);
+      console.log('✅ updateFormData function set for tool:', tool.id);
     }, 0);
     
     return () => {
       clearTimeout(timer);
       onSetUpdateFormData(null);
+      console.log('🧹 Cleared updateFormData function for tool:', tool.id);
     };
-  }, [onSetUpdateFormData]);
+  }, [onSetUpdateFormData, tool.id]); // Add tool.id to dependencies
 
   // Check for stored AI data and apply it - with tool-specific caching
   useEffect(() => {
@@ -1687,6 +1719,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
           title: "AI Data Applied",
           description: "AI-generated content has been applied to the form. Review and save when ready."
         });
+        
+        console.log('✅ AI data applied successfully to form for tool:', tool.id);
       } catch (error) {
         console.error('Error applying stored AI data:', error);
         sessionStorage.removeItem(editToolAIDataKey);
