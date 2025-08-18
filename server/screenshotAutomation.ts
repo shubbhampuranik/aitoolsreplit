@@ -205,8 +205,8 @@ export class MediaAutomationService {
     
     // Check if user has provided SCREENSHOT_API_KEY for screenshotapi.com
     if (this.screenshotApiKey) {
-      // Use ScreenshotAPI.com with user's API key
-      return `https://shot.screenshotapi.net/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&file_type=png&wait_for_event=load&delay=3000`;
+      // Use ScreenshotAPI.com with user's API key (correct endpoint)
+      return `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&fresh=true&delay=3000`;
     }
     
     // Fallback: Use Thum.io free service (no authentication required)
