@@ -67,6 +67,7 @@ export function MediaDiscoveryButton({
     setSelectedMedia([]);
     
     try {
+      console.log('🔍 Starting media discovery for:', websiteUrl);
       const response = await apiRequest("POST", "/api/ai/discover-media", {
         url: websiteUrl
       });
@@ -76,13 +77,15 @@ export function MediaDiscoveryButton({
       }
       
       const data = await response.json();
+      console.log('📊 Media discovery results:', data);
       setResults(data);
       
-      // Auto-select best media
+      // Auto-select best media items
       const autoSelected = [
         ...data.bestScreenshots.map((s: ScreenshotResult) => s.url),
         ...data.bestVideos.map((v: VideoResult) => v.url)
       ];
+      console.log('✅ Auto-selected media:', autoSelected);
       setSelectedMedia(autoSelected);
       
       if (data.totalFound === 0) {
@@ -94,7 +97,7 @@ export function MediaDiscoveryButton({
       } else {
         toast({
           title: "Media discovered",
-          description: `Found ${data.totalFound} media items. Review and select the best ones.`
+          description: `Found ${data.totalFound} media items. ${autoSelected.length} automatically selected.`
         });
       }
     } catch (error) {
@@ -118,8 +121,19 @@ export function MediaDiscoveryButton({
   };
 
   const handleApplySelection = () => {
+    if (selectedMedia.length === 0) {
+      toast({
+        title: "No media selected",
+        description: "Please select at least one media item to apply.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onMediaSelected(selectedMedia);
     setIsOpen(false);
+    setResults(null);
+    setSelectedMedia([]);
     toast({
       title: "Media applied",
       description: `${selectedMedia.length} media items added to your tool gallery.`

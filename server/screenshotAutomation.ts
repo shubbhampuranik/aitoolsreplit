@@ -26,8 +26,20 @@ interface MediaAutomationResult {
 }
 
 export class MediaAutomationService {
-  private screenshotApiKey = process.env.SCREENSHOT_API_KEY;
-  private youtubeApiKey = process.env.YOUTUBE_API_KEY;
+  private screenshotApiKey: string | undefined;
+  private youtubeApiKey: string | undefined;
+
+  constructor() {
+    // Load environment variables at runtime
+    this.screenshotApiKey = process.env.SCREENSHOT_API_KEY || 'key_sQC7yPoDMrkCzkW2x8ft6o';
+    this.youtubeApiKey = process.env.YOUTUBE_API_KEY;
+    
+    console.log('🔑 MediaAutomationService initialized');
+    console.log('📷 ScreenshotAPI key available:', !!this.screenshotApiKey);
+    if (this.screenshotApiKey) {
+      console.log('📷 ScreenshotAPI key prefix:', this.screenshotApiKey.substring(0, 8) + '...');
+    }
+  }
 
   async discoverMedia(websiteUrl: string): Promise<MediaAutomationResult> {
     console.log(`🎬 Starting media discovery for: ${websiteUrl}`);
@@ -203,15 +215,20 @@ export class MediaAutomationService {
   private async generateScreenshotUrl(url: string, width: number, height: number): Promise<string> {
     const encodedUrl = encodeURIComponent(url);
     
+    console.log(`📸 Generating screenshot for ${url} (${width}x${height})`);
+    console.log(`🔑 API Key available: ${!!this.screenshotApiKey}`);
+    
     // Check if user has provided SCREENSHOT_API_KEY for screenshotapi.com
     if (this.screenshotApiKey) {
-      // Use ScreenshotAPI.com with user's API key (correct endpoint)
-      return `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&fresh=true&delay=3000`;
+      const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&fresh=true&delay=3000`;
+      console.log(`✅ Using ScreenshotAPI.com for ${url}`);
+      return screenshotUrl;
     }
     
     // Fallback: Use Thum.io free service (no authentication required)
-    // This provides actual screenshots but with rate limits
-    return `https://image.thum.io/get/width/${width}/crop/${width}/${height}/${encodedUrl}`;
+    const thumbUrl = `https://image.thum.io/get/width/${width}/crop/${width}/${height}/${encodedUrl}`;
+    console.log(`⚠️ Using Thum.io fallback for ${url}`);
+    return thumbUrl;
   }
 
   private async discoverVideos(websiteUrl: string): Promise<VideoResult[]> {
