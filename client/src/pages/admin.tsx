@@ -203,27 +203,25 @@ export default function AdminPage() {
       console.log('✅ In edit mode - applying AI data to existing tool');
       
       if (!currentUpdateFormData) {
-        console.log('⚠️ No form updater available, storing data for form to pick up');
+        console.log('⚠️ No form updater available, storing data and forcing re-render');
         // Store AI data temporarily for the specific tool
         const editToolAIDataKey = `editToolAIData_${selectedTool.id}`;
         sessionStorage.setItem(editToolAIDataKey, JSON.stringify(data));
+        
+        // Force the tool editor to re-mount by briefly switching views
         setShowAiPreview(false);
         setAiAnalysisResult(null);
         
-        // Force a small delay and then trigger a page refresh or form update
+        // Trigger a quick view change to force component re-mount
+        const currentTool = selectedTool;
+        setSelectedTool(null);
         setTimeout(() => {
-          // Try to trigger form update by re-setting the current view
-          console.log('🔄 Attempting to trigger form data reload...');
-          setCurrentView('tools-list');
-          setTimeout(() => {
-            setSelectedTool(selectedTool);
-            setCurrentView('tool-edit');
-          }, 100);
-        }, 500);
+          setSelectedTool(currentTool);
+        }, 50);
         
         toast({
-          title: "Data Ready", 
-          description: "AI data is being applied to the form. Please wait a moment..."
+          title: "Data Applied", 
+          description: "AI data has been applied to the form. The form is refreshing..."
         });
         return;
       }
@@ -1669,18 +1667,14 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
   // Set the updateFormData function reference for AI data application
   useEffect(() => {
     console.log('🔧 Setting updateFormData function for tool:', tool.id);
-    // Use setTimeout to defer the state update until after render
-    const timer = setTimeout(() => {
-      onSetUpdateFormData(updateFormData);
-      console.log('✅ updateFormData function set for tool:', tool.id);
-    }, 0);
+    onSetUpdateFormData(updateFormData);
+    console.log('✅ updateFormData function set for tool:', tool.id);
     
     return () => {
-      clearTimeout(timer);
       onSetUpdateFormData(null);
       console.log('🧹 Cleared updateFormData function for tool:', tool.id);
     };
-  }, [onSetUpdateFormData, tool.id]); // Add tool.id to dependencies
+  }, [tool.id]); // Only depend on tool.id
 
   // Check for stored AI data and apply it - with tool-specific caching
   useEffect(() => {
