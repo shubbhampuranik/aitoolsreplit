@@ -1417,26 +1417,43 @@ export default function ToolDetailsPage() {
                     />
                   ) : selectedMedia.type === 'video' ? (
                     // Handle YouTube and other video URLs
-                    selectedMedia.url.includes('youtube.com/watch?v=') || selectedMedia.url.includes('youtu.be/') ? (
-                      <div className="w-full aspect-video">
-                        <iframe
-                          src={selectedMedia.url.includes('youtube.com/watch?v=') 
-                            ? selectedMedia.url.replace('watch?v=', 'embed/').split('&')[0]
-                            : selectedMedia.url.replace('youtu.be/', 'youtube.com/embed/')
-                          }
-                          title="Video player"
-                          className="w-full h-full rounded-lg"
-                          allowFullScreen
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        />
-                      </div>
-                    ) : (
-                      <video 
-                        src={selectedMedia.url} 
-                        controls
-                        className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-                      />
-                    )
+                    (() => {
+                      let embedUrl = selectedMedia.url;
+                      
+                      // Convert YouTube URLs to embed format
+                      if (selectedMedia.url.includes('youtube.com/watch?v=')) {
+                        const videoId = selectedMedia.url.split('watch?v=')[1].split('&')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                      } else if (selectedMedia.url.includes('youtu.be/')) {
+                        const videoId = selectedMedia.url.split('youtu.be/')[1].split('?')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                      }
+                      
+                      // Check if it's a YouTube URL
+                      if (embedUrl.includes('youtube.com/embed/')) {
+                        return (
+                          <div className="w-full aspect-video">
+                            <iframe
+                              src={embedUrl}
+                              title="YouTube video player"
+                              className="w-full h-full rounded-lg"
+                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            />
+                          </div>
+                        );
+                      } else {
+                        // For non-YouTube videos, use HTML5 video player
+                        return (
+                          <video 
+                            src={selectedMedia.url} 
+                            controls
+                            className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                          />
+                        );
+                      }
+                    })()
                   ) : null}
                 </div>
               )}
