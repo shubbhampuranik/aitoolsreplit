@@ -1400,6 +1400,12 @@ export default function ToolDetailsPage() {
         {/* Gallery Media Modal */}
         <Dialog open={showGalleryModal} onOpenChange={closeMediaModal}>
           <DialogContent className="max-w-4xl w-full p-0" aria-describedby="gallery-modal-description">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Media Viewer</DialogTitle>
+            </DialogHeader>
+            <div id="gallery-modal-description" className="sr-only">
+              View screenshots and videos in full size
+            </div>
             <div className="relative">
               {selectedMedia && (
                 <div className="w-full">
