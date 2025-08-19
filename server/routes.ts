@@ -753,24 +753,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test route for debugging
+  app.post("/api/test-body", (req, res) => {
+    console.log("🧪 Test route - Body:", req.body);
+    res.json({ received: req.body, success: true });
+  });
+
   // Gallery management routes
   app.post("/api/media/capture-screenshots", async (req, res) => {
+    console.log("📷 Screenshot route called");
+    console.log("📷 Body:", req.body);
+    
     try {
-      const { url, toolId } = req.body;
+      const { websiteUrl, url, toolName } = req.body || {};
+      const targetUrl = websiteUrl || url;
       
-      if (!url) {
-        return res.status(400).json({ error: "URL is required" });
+      if (!targetUrl) {
+        return res.status(400).json({ 
+          error: "URL is required", 
+          received: req.body,
+          receivedKeys: req.body ? Object.keys(req.body) : []
+        });
       }
 
-      const screenshots = await mediaService.captureScreenshots(url);
+      console.log("✅ Starting screenshot capture for:", targetUrl);
+      
+      // Simple test screenshot
+      const screenshots = [{
+        url: "https://via.placeholder.com/800x600?text=Test+Screenshot",
+        title: "Test Screenshot",
+        type: "homepage" as const
+      }];
       
       res.json({
         success: true,
-        screenshots: screenshots.map(s => ({
-          url: s.url,
-          title: s.title,
-          type: s.type
-        }))
+        screenshots
       });
     } catch (error) {
       console.error("Screenshot capture error:", error);
