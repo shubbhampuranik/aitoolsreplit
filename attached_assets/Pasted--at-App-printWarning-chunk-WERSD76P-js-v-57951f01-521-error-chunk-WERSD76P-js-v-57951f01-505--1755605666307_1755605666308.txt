@@ -1,0 +1,38 @@
+    at App
+printWarning @ chunk-WERSD76P.js?v=57951f01:521
+error @ chunk-WERSD76P.js?v=57951f01:505
+warnAboutRenderPhaseUpdatesInDEV @ chunk-WERSD76P.js?v=57951f01:19793
+scheduleUpdateOnFiber @ chunk-WERSD76P.js?v=57951f01:18546
+dispatchSetState @ chunk-WERSD76P.js?v=57951f01:12403
+(anonymous) @ admin.tsx:1667
+basicStateReducer @ chunk-WERSD76P.js?v=57951f01:11703
+updateReducer @ chunk-WERSD76P.js?v=57951f01:11794
+updateState @ chunk-WERSD76P.js?v=57951f01:12021
+useState @ chunk-WERSD76P.js?v=57951f01:12753
+useState @ chunk-3TFVT2CW.js?v=57951f01:1066
+AdminPage @ admin.tsx:90
+renderWithHooks @ chunk-WERSD76P.js?v=57951f01:11548
+updateFunctionComponent @ chunk-WERSD76P.js?v=57951f01:14582
+beginWork @ chunk-WERSD76P.js?v=57951f01:15924
+beginWork$1 @ chunk-WERSD76P.js?v=57951f01:19753
+performUnitOfWork @ chunk-WERSD76P.js?v=57951f01:19198
+workLoopSync @ chunk-WERSD76P.js?v=57951f01:19137
+renderRootSync @ chunk-WERSD76P.js?v=57951f01:19116
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=57951f01:18678
+workLoop @ chunk-WERSD76P.js?v=57951f01:197
+flushWork @ chunk-WERSD76P.js?v=57951f01:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=57951f01:384Understand this error
+via.placeholder.com/800x600?text=Test+Screenshot:1  GET https://via.placeholder.com/800x600?text=Test+Screenshot net::ERR_NAME_NOT_RESOLVED
+Image
+commitMount @ chunk-WERSD76P.js?v=57951f01:8412
+commitLayoutEffectOnFiber @ chunk-WERSD76P.js?v=57951f01:17102
+commitLayoutMountEffects_complete @ chunk-WERSD76P.js?v=57951f01:17980
+commitLayoutEffects_begin @ chunk-WERSD76P.js?v=57951f01:17969
+commitLayoutEffects @ chunk-WERSD76P.js?v=57951f01:17920
+commitRootImpl @ chunk-WERSD76P.js?v=57951f01:19353
+commitRoot @ chunk-WERSD76P.js?v=57951f01:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=57951f01:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=57951f01:9119
+(anonymous) @ chunk-WERSD76P.js?v=57951f01:18627Understand this error
+admin.tsx:1666 🔄 Updating form field 'gallery' for tool 646b95a6-5ae1-483b-9a21-328a10c2a5c7: ['/api/placeholder/400/300']
+admin.tsx:1666 🔄 Updating form field 'gallery' for tool 646b95a6-5ae1-483b-9a21-328a10c2a5c7: (2) ['/api/placeholder/400/300', '/api/placeholder/400/300']

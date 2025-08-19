@@ -270,8 +270,8 @@ export class MediaAutomationService {
       console.log(`⚠️ Error fetching website metadata:`, error);
     }
     
-    // Final fallback - use placeholder
-    console.log(`ℹ️ Using placeholder for ${url} - external screenshot services require API keys`);
+    // Final fallback - use internal placeholder service (not via.placeholder.com)
+    console.log(`ℹ️ Using internal placeholder for ${url} - external screenshot services require API keys`);
     return '/api/placeholder/400/300';
   }
 

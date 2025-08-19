@@ -1663,8 +1663,16 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
   };
 
   const updateFormData = useCallback((field: string, value: any) => {
-    console.log(`🔄 Updating form field '${field}' for tool ${tool.id}:`, value);
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Prevent null/undefined field names and provide proper defaults
+    if (!field || field === 'null' || field === 'undefined') {
+      console.warn(`⚠️ Invalid field name '${field}' skipped for tool ${tool.id}`);
+      return;
+    }
+    
+    // Ensure value is never null/undefined for form fields
+    const safeValue = value ?? '';
+    console.log(`🔄 Updating form field '${field}' for tool ${tool.id}:`, safeValue);
+    setFormData(prev => ({ ...prev, [field]: safeValue }));
   }, [tool.id]);
 
   // Set the updateFormData function reference for AI data application
