@@ -778,16 +778,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("✅ Starting screenshot capture for:", targetUrl);
       
-      // Simple test screenshot
-      const screenshots = [{
-        url: "https://via.placeholder.com/800x600?text=Test+Screenshot",
-        title: "Test Screenshot",
-        type: "homepage" as const
-      }];
+      const screenshots = await mediaService.captureScreenshots(targetUrl);
       
       res.json({
         success: true,
-        screenshots
+        screenshots: screenshots.map(s => ({
+          url: s.url,
+          title: s.title,
+          type: s.type
+        }))
       });
     } catch (error) {
       console.error("Screenshot capture error:", error);

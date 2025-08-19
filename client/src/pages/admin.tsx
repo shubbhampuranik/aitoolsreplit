@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, createContext } from "react";
+import { useState, useEffect, useContext, createContext, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1662,10 +1662,10 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     }
   };
 
-  const updateFormData = (field: string, value: any) => {
+  const updateFormData = useCallback((field: string, value: any) => {
     console.log(`🔄 Updating form field '${field}' for tool ${tool.id}:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, [tool.id]);
 
   // Set the updateFormData function reference for AI data application
   useEffect(() => {
@@ -1674,10 +1674,13 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     console.log('✅ updateFormData function set for tool:', tool.id);
     
     return () => {
-      onSetUpdateFormData(null);
-      console.log('🧹 Cleared updateFormData function for tool:', tool.id);
+      // Use setTimeout to avoid state update during render
+      setTimeout(() => {
+        onSetUpdateFormData(null);
+        console.log('🧹 Cleared updateFormData function for tool:', tool.id);
+      }, 0);
     };
-  }, [tool.id]); // Only depend on tool.id
+  }, [tool.id, updateFormData]); // Include updateFormData to ensure proper cleanup
 
   // Check for stored AI data and apply it - with tool-specific caching
   useEffect(() => {

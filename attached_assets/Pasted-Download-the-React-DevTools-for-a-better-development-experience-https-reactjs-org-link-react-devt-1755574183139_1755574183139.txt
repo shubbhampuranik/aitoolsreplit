@@ -1,0 +1,38 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+admin.tsx:1672 🔧 Setting updateFormData function for tool: 646b95a6-5ae1-483b-9a21-328a10c2a5c7
+admin.tsx:1674 ✅ updateFormData function set for tool: 646b95a6-5ae1-483b-9a21-328a10c2a5c7
+admin.tsx:1666 🔄 Updating form field 'null' for tool 646b95a6-5ae1-483b-9a21-328a10c2a5c7: undefined
+admin.tsx:1667 Warning: Cannot update a component (`ToolEditor`) while rendering a different component (`AdminPage`). To locate the bad setState() call inside `AdminPage`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at AdminPage (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/src/pages/admin.tsx:87:20)
+    at Route (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=57951f01:265:16)
+    at Switch (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=57951f01:321:17)
+    at Router (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/src/App.tsx?v=qQmt12FFO27isJ9pkftZR:43:42)
+    at Provider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=57951f01:38:15)
+    at TooltipProvider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=57951f01:62:5)
+    at QueryClientProvider (https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=57951f01:2805:3)
+    at App
+printWarning @ chunk-WERSD76P.js?v=57951f01:521
+error @ chunk-WERSD76P.js?v=57951f01:505
+warnAboutRenderPhaseUpdatesInDEV @ chunk-WERSD76P.js?v=57951f01:19793
+scheduleUpdateOnFiber @ chunk-WERSD76P.js?v=57951f01:18546
+dispatchSetState @ chunk-WERSD76P.js?v=57951f01:12403
+updateFormData @ admin.tsx:1667
+basicStateReducer @ chunk-WERSD76P.js?v=57951f01:11703
+updateReducer @ chunk-WERSD76P.js?v=57951f01:11794
+updateState @ chunk-WERSD76P.js?v=57951f01:12021
+useState @ chunk-WERSD76P.js?v=57951f01:12753
+useState @ chunk-3TFVT2CW.js?v=57951f01:1066
+AdminPage @ admin.tsx:90
+renderWithHooks @ chunk-WERSD76P.js?v=57951f01:11548
+updateFunctionComponent @ chunk-WERSD76P.js?v=57951f01:14582
+beginWork @ chunk-WERSD76P.js?v=57951f01:15924
+beginWork$1 @ chunk-WERSD76P.js?v=57951f01:19753
+performUnitOfWork @ chunk-WERSD76P.js?v=57951f01:19198
+workLoopSync @ chunk-WERSD76P.js?v=57951f01:19137
+renderRootSync @ chunk-WERSD76P.js?v=57951f01:19116
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=57951f01:18678
+workLoop @ chunk-WERSD76P.js?v=57951f01:197
+flushWork @ chunk-WERSD76P.js?v=57951f01:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=57951f01:384Understand this error
+admin.tsx:1666 🔄 Updating form field 'gallery' for tool 646b95a6-5ae1-483b-9a21-328a10c2a5c7: (2) ['/api/placeholder/400/300', 'https://via.placeholder.com/800x600?text=Test+Screenshot']
+via.placeholder.com/800x600?text=Test+Screenshot:1  GET https://via.placeholder.com/800x600?text=Test+Screenshot net::ERR_NAME_NOT_RESOLVED
