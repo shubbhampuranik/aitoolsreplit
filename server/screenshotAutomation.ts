@@ -217,21 +217,14 @@ export class MediaAutomationService {
     
     console.log(`📸 Generating screenshot for ${url} (${width}x${height})`);
     
-    // Test ScreenshotAPI first if available
+    // Use ScreenshotAPI directly if available (no need for test since 301 redirects are normal)
     if (this.screenshotApiKey) {
       try {
-        const testUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=400&height=300&output=image`;
-        const response = await fetch(testUrl, { method: 'HEAD' });
-        
-        if (response.ok) {
-          const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&wait_for_event=load&delay=2000`;
-          console.log(`✅ Using ScreenshotAPI.com for ${url}`);
-          return screenshotUrl;
-        } else {
-          console.log(`⚠️ ScreenshotAPI test failed (${response.status}), switching to Microlink`);
-        }
+        const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&wait_for_event=load&delay=2000`;
+        console.log(`✅ Using ScreenshotAPI.net for ${url}`);
+        return screenshotUrl;
       } catch (error) {
-        console.log(`⚠️ ScreenshotAPI test error, switching to Microlink:`, error);
+        console.log(`⚠️ ScreenshotAPI error, falling back:`, error);
       }
     }
     

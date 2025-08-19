@@ -869,54 +869,105 @@ export default function ToolDetailsPage() {
                       <CardTitle>Screenshots & Videos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {tool.gallery?.length ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {tool.gallery.slice(0, 3).map((url, index) => (
-                            <div 
-                              key={index}
-                              className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                              onClick={() => openMediaModal(url, 'image', index)}
-                            >
-                              <div className="aspect-video">
-                                <img 
-                                  src={url} 
-                                  alt={`${tool.name} screenshot ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <div className="w-12 h-12 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center">
-                                    <ExternalLink className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                      <div className="space-y-6">
+                        {/* Screenshots */}
+                        {tool.gallery?.length ? (
+                          <div>
+                            <h4 className="text-lg font-medium mb-3">Screenshots</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {tool.gallery.slice(0, 3).map((url, index) => (
+                                <div 
+                                  key={index}
+                                  className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                                  onClick={() => openMediaModal(url, 'image', index)}
+                                >
+                                  <div className="aspect-video">
+                                    <img 
+                                      src={url} 
+                                      alt={`${tool.name} screenshot ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="w-12 h-12 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center">
+                                        <ExternalLink className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                          ))}
-                          {tool.gallery.length > 3 && (
-                            <div 
-                              className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-100 dark:bg-gray-800"
-                              onClick={() => openMediaModal(tool.gallery[3], 'image', 3)}
-                            >
-                              <div className="aspect-video flex items-center justify-center">
-                                <div className="text-center">
-                                  <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                                    +{tool.gallery.length - 3}
-                                  </div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-500">
-                                    more
+                              ))}
+                              {tool.gallery.length > 3 && (
+                                <div 
+                                  className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-100 dark:bg-gray-800"
+                                  onClick={() => openMediaModal(tool.gallery[3], 'image', 3)}
+                                >
+                                  <div className="aspect-video flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                                        +{tool.gallery.length - 3}
+                                      </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-500">
+                                        more
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12">
-                          <Camera className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                          <p className="text-gray-500 dark:text-gray-400">No screenshots available</p>
-                        </div>
-                      )}
+                          </div>
+                        ) : null}
+
+                        {/* Videos */}
+                        {tool.videos?.length ? (
+                          <div>
+                            <h4 className="text-lg font-medium mb-3">Videos</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {tool.videos.slice(0, 4).map((video, index) => (
+                                <div 
+                                  key={video.id}
+                                  className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                                  onClick={() => openMediaModal(video.url, 'video', index)}
+                                >
+                                  <div className="aspect-video bg-gray-100 dark:bg-gray-800">
+                                    {video.thumbnail ? (
+                                      <img 
+                                        src={video.thumbnail} 
+                                        alt={video.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <Play className="w-12 h-12 text-gray-400" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="w-12 h-12 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center">
+                                        <Play className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="absolute bottom-2 left-2 right-2">
+                                    <p className="text-white text-sm font-medium bg-black/70 px-2 py-1 rounded truncate">
+                                      {video.title}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Empty state */}
+                        {!tool.gallery?.length && !tool.videos?.length && (
+                          <div className="text-center py-12">
+                            <Camera className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                            <p className="text-gray-500 dark:text-gray-400">No screenshots or videos available</p>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </section>
