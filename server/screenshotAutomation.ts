@@ -230,7 +230,10 @@ export class MediaAutomationService {
         });
         if (testResponse.ok || testResponse.status === 301 || testResponse.status === 302) {
           console.log(`✅ ScreenshotAPI screenshot verified for ${url} (status: ${testResponse.status})`);
-          return screenshotUrl;
+          // Return proxied URL to avoid CORS issues in browser
+          const proxiedUrl = `/api/proxy-image?url=${encodeURIComponent(screenshotUrl)}`;
+          console.log(`✅ Returning proxied ScreenshotAPI URL for ${url}`);
+          return proxiedUrl;
         } else {
           console.log(`⚠️ ScreenshotAPI returned invalid response: ${testResponse.status}`);
         }

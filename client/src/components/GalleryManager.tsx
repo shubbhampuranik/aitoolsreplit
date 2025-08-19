@@ -291,10 +291,8 @@ export function GalleryManager({
                           onError={(e) => {
                             const img = e.target as HTMLImageElement;
                             console.log(`Failed to load image: ${imageUrl}`);
-                            // If ScreenshotAPI URL fails, show placeholder
-                            if (imageUrl.includes('screenshotapi.net')) {
-                              img.src = '/api/placeholder/400/300';
-                            }
+                            // Show placeholder for any failed image
+                            img.src = '/api/placeholder/400/300';
                           }}
                           loading="lazy"
                         />
