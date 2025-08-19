@@ -217,12 +217,23 @@ export class MediaAutomationService {
     
     console.log(`📸 Generating screenshot for ${url} (${width}x${height})`);
     
-    // Use ScreenshotAPI directly if available (no need for test since 301 redirects are normal)
+    // Use ScreenshotAPI if available and validate the response
     if (this.screenshotApiKey) {
       try {
         const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?token=${this.screenshotApiKey}&url=${encodedUrl}&width=${width}&height=${height}&output=image&wait_for_event=load&delay=2000`;
         console.log(`✅ Using ScreenshotAPI.net for ${url}`);
-        return screenshotUrl;
+        
+        // Test if the screenshot URL actually works (allow redirects)
+        const testResponse = await fetch(screenshotUrl, { 
+          method: 'HEAD',
+          redirect: 'follow'
+        });
+        if (testResponse.ok || testResponse.status === 301 || testResponse.status === 302) {
+          console.log(`✅ ScreenshotAPI screenshot verified for ${url} (status: ${testResponse.status})`);
+          return screenshotUrl;
+        } else {
+          console.log(`⚠️ ScreenshotAPI returned invalid response: ${testResponse.status}`);
+        }
       } catch (error) {
         console.log(`⚠️ ScreenshotAPI error, falling back:`, error);
       }

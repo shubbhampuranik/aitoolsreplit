@@ -780,6 +780,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const screenshots = await mediaService.captureScreenshots(targetUrl);
       
+      if (screenshots.length === 0) {
+        console.log("⚠️ No screenshots captured, returning error");
+        return res.status(500).json({
+          error: "No screenshots could be captured",
+          details: "The service was unable to capture any screenshots from the provided URL"
+        });
+      }
+      
+      console.log(`✅ Captured ${screenshots.length} screenshots for ${targetUrl}`);
+      
       res.json({
         success: true,
         screenshots: screenshots.map(s => ({
