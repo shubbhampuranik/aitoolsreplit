@@ -1688,36 +1688,38 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         const aiData = JSON.parse(editToolAIData);
         console.log(`📝 Applying stored AI data for tool ${tool.id}:`, aiData.name);
         
-        // Apply the AI data to form
-        updateFormData('name', aiData.name);
-        updateFormData('description', aiData.description);
-        updateFormData('shortDescription', aiData.shortDescription);
-        updateFormData('pricingType', aiData.pricingType);
-        updateFormData('pricingDetails', aiData.pricingDetails || '');
-        
-        if (aiData.features && aiData.features.length > 0) {
-          console.log('📋 Applying features data:', aiData.features);
-          updateFormData('features', aiData.features);
-        } else {
-          console.log('⚠️ No features data to apply');
-        }
+        // Schedule state updates for after render cycle
+        setTimeout(() => {
+          updateFormData('name', aiData.name);
+          updateFormData('description', aiData.description);
+          updateFormData('shortDescription', aiData.shortDescription);
+          updateFormData('pricingType', aiData.pricingType);
+          updateFormData('pricingDetails', aiData.pricingDetails || '');
+          
+          if (aiData.features && aiData.features.length > 0) {
+            console.log('📋 Applying features data:', aiData.features);
+            updateFormData('features', aiData.features);
+          } else {
+            console.log('⚠️ No features data to apply');
+          }
 
-        if (aiData.pros && aiData.cons) {
-          updateFormData('prosAndCons', {
-            pros: aiData.pros,
-            cons: aiData.cons
+          if (aiData.pros && aiData.cons) {
+            updateFormData('prosAndCons', {
+              pros: aiData.pros,
+              cons: aiData.cons
+            });
+          }
+
+          // Clean up stored data for this specific tool
+          sessionStorage.removeItem(editToolAIDataKey);
+          
+          toast({
+            title: "AI Data Applied",
+            description: "AI-generated content has been applied to the form. Review and save when ready."
           });
-        }
-
-        // Clean up stored data for this specific tool
-        sessionStorage.removeItem(editToolAIDataKey);
-        
-        toast({
-          title: "AI Data Applied",
-          description: "AI-generated content has been applied to the form. Review and save when ready."
-        });
-        
-        console.log('✅ AI data applied successfully to form for tool:', tool.id);
+          
+          console.log('✅ AI data applied successfully to form for tool:', tool.id);
+        }, 0); // End of setTimeout
       } catch (error) {
         console.error('Error applying stored AI data:', error);
         sessionStorage.removeItem(editToolAIDataKey);
