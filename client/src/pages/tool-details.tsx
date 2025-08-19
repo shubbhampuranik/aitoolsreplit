@@ -65,6 +65,7 @@ type Tool = {
   views: number;
   createdAt: string;
   gallery?: string[];
+  videos?: Array<{ id: string; url: string; title: string; thumbnail?: string; source: string; }>;
   features?: Array<{ title: string; description: string; }>;
   prosAndCons?: { pros: string[]; cons: string[]; };
   alternatives?: Array<{ name: string; url: string; description: string; }>;
