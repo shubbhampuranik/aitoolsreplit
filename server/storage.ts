@@ -1711,28 +1711,38 @@ export class DatabaseStorage implements IStorage {
     if (!tool) return [];
 
     // Get categories for the current tool
-    const toolCategories = await this.getToolCategories(toolId);
-    if (toolCategories.length === 0) return [];
+    const toolCats = await this.getToolCategories(toolId);
+    if (toolCats.length === 0) return [];
 
     // Get all approved tools in same categories, excluding the current tool
-    const categoryIds = toolCategories.map(c => c.id);
-    const toolsInSameCategories = await db
-      .select({ toolId: toolCategories.toolId })
-      .from(toolCategories)
-      .where(inArray(toolCategories.categoryId, categoryIds))
-      .groupBy(toolCategories.toolId);
+    const categoryIds = toolCats.map(c => c.id);
+    
+    let candidateTools;
+    try {
+      const toolsInSameCategories = await db
+        .select({ toolId: toolCategories.toolId })
+        .from(toolCategories)
+        .where(inArray(toolCategories.categoryId, categoryIds))
+        .groupBy(toolCategories.toolId);
 
-    const candidateTools = await db
-      .select()
-      .from(tools)
-      .where(
-        and(
-          eq(tools.status, "approved"),
-          inArray(tools.id, toolsInSameCategories.map(t => t.toolId)),
-          sql`${tools.id} != ${toolId}`
+      const candidateToolIds = toolsInSameCategories.map(t => t.toolId).filter(id => id !== toolId);
+      
+      if (candidateToolIds.length === 0) return [];
+
+      candidateTools = await db
+        .select()
+        .from(tools)
+        .where(
+          and(
+            eq(tools.status, "approved"),
+            inArray(tools.id, candidateToolIds)
+          )
         )
-      )
-      .limit(20);
+        .limit(20);
+    } catch (error) {
+      console.error('Error fetching candidate tools:', error);
+      return [];
+    }
 
     // Calculate similarity scores and sort
     const scoredAlternatives = await Promise.all(
@@ -1765,48 +1775,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getToolAlternativesWithDetails(toolId: string, userId?: string): Promise<Array<Tool & { upvotes: number; userVoted: boolean }>> {
-    const alternatives = await db
-      .select({
-        tool: tools,
-        alternative: toolAlternatives,
-      })
-      .from(toolAlternatives)
-      .innerJoin(tools, eq(toolAlternatives.alternativeId, tools.id))
-      .where(eq(toolAlternatives.toolId, toolId))
-      .orderBy(desc(toolAlternatives.similarityScore));
+    try {
+      const alternatives = await db
+        .select({
+          tool: tools,
+          alternative: toolAlternatives,
+        })
+        .from(toolAlternatives)
+        .innerJoin(tools, eq(toolAlternatives.alternativeId, tools.id))
+        .where(eq(toolAlternatives.toolId, toolId))
+        .orderBy(desc(toolAlternatives.similarityScore));
 
-    // Add vote counts and user vote status for each alternative
-    const enhancedAlternatives = [];
-    for (const alt of alternatives) {
-      const voteCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(alternativeVotes)
-        .where(and(
-          eq(alternativeVotes.toolId, toolId),
-          eq(alternativeVotes.alternativeId, alt.tool.id)
-        ));
+      if (!alternatives || alternatives.length === 0) {
+        return [];
+      }
 
-      let userVoted = false;
-      if (userId) {
-        const userVote = await db
-          .select()
+      // Add vote counts and user vote status for each alternative
+      const enhancedAlternatives = [];
+      for (const alt of alternatives) {
+        const voteCount = await db
+          .select({ count: sql<number>`count(*)` })
           .from(alternativeVotes)
           .where(and(
             eq(alternativeVotes.toolId, toolId),
-            eq(alternativeVotes.alternativeId, alt.tool.id),
-            eq(alternativeVotes.userId, userId)
+            eq(alternativeVotes.alternativeId, alt.tool.id)
           ));
-        userVoted = userVote.length > 0;
+
+        let userVoted = false;
+        if (userId) {
+          const userVote = await db
+            .select()
+            .from(alternativeVotes)
+            .where(and(
+              eq(alternativeVotes.toolId, toolId),
+              eq(alternativeVotes.alternativeId, alt.tool.id),
+              eq(alternativeVotes.userId, userId)
+            ));
+          userVoted = userVote.length > 0;
+        }
+
+        enhancedAlternatives.push({
+          ...alt.tool,
+          upvotes: voteCount[0]?.count || 0,
+          userVoted
+        });
       }
 
-      enhancedAlternatives.push({
-        ...alt.tool,
-        upvotes: voteCount[0]?.count || 0,
-        userVoted
-      });
+      return enhancedAlternatives;
+    } catch (error) {
+      console.error('Error getting tool alternatives with details:', error);
+      return [];
     }
-
-    return enhancedAlternatives;
   }
 
   // Vote on alternative

@@ -1399,7 +1399,7 @@ export default function ToolDetailsPage() {
 
         {/* Gallery Media Modal */}
         <Dialog open={showGalleryModal} onOpenChange={closeMediaModal}>
-          <DialogContent className="max-w-4xl w-full p-0">
+          <DialogContent className="max-w-4xl w-full p-0" aria-describedby="gallery-modal-description">
             <div className="relative">
               {selectedMedia && (
                 <div className="w-full">
@@ -1409,13 +1409,29 @@ export default function ToolDetailsPage() {
                       alt={`Gallery image ${modalImageIndex + 1}`}
                       className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
                     />
-                  ) : (
-                    <video 
-                      src={selectedMedia.url} 
-                      controls
-                      className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-                    />
-                  )}
+                  ) : selectedMedia.type === 'video' ? (
+                    // Handle YouTube and other video URLs
+                    selectedMedia.url.includes('youtube.com/watch?v=') || selectedMedia.url.includes('youtu.be/') ? (
+                      <div className="w-full aspect-video">
+                        <iframe
+                          src={selectedMedia.url.includes('youtube.com/watch?v=') 
+                            ? selectedMedia.url.replace('watch?v=', 'embed/').split('&')[0]
+                            : selectedMedia.url.replace('youtu.be/', 'youtube.com/embed/')
+                          }
+                          title="Video player"
+                          className="w-full h-full rounded-lg"
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        />
+                      </div>
+                    ) : (
+                      <video 
+                        src={selectedMedia.url} 
+                        controls
+                        className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                      />
+                    )
+                  ) : null}
                 </div>
               )}
               

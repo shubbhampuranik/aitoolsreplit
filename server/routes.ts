@@ -940,20 +940,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get stored alternatives first with enhanced data
-      const storedAlternatives = await storage.getToolAlternativesWithDetails(toolId, userId);
+      let storedAlternatives = [];
+      try {
+        storedAlternatives = await storage.getToolAlternativesWithDetails(toolId, userId);
+      } catch (error) {
+        console.error("Error getting stored alternatives:", error);
+        storedAlternatives = [];
+      }
       
       // If no stored alternatives, get auto-suggested ones and save them
       if (storedAlternatives.length === 0) {
-        const autoSuggested = await storage.getAutoSuggestedAlternatives(toolId);
-        
-        // Save auto-suggested alternatives for future use
-        for (const alternative of autoSuggested) {
-          await storage.addToolAlternative(toolId, alternative.id, true);
+        try {
+          const autoSuggested = await storage.getAutoSuggestedAlternatives(toolId);
+          
+          // Save auto-suggested alternatives for future use
+          for (const alternative of autoSuggested) {
+            try {
+              await storage.addToolAlternative(toolId, alternative.id, true);
+            } catch (error) {
+              console.error("Error adding alternative:", error);
+            }
+          }
+          
+          // Return auto-suggested with enhanced data
+          try {
+            const enhancedAutoSuggested = await storage.getToolAlternativesWithDetails(toolId, userId);
+            return res.json(enhancedAutoSuggested);
+          } catch (error) {
+            console.error("Error getting enhanced alternatives:", error);
+            // Fallback to basic tool data
+            return res.json(autoSuggested.map(tool => ({ ...tool, upvotes: 0, userVoted: false })));
+          }
+        } catch (error) {
+          console.error("Error getting auto-suggested alternatives:", error);
+          return res.json([]);
         }
-        
-        // Return auto-suggested with enhanced data
-        const enhancedAutoSuggested = await storage.getToolAlternativesWithDetails(toolId, userId);
-        return res.json(enhancedAutoSuggested);
       }
 
       res.json(storedAlternatives);
