@@ -255,19 +255,17 @@ export class MediaAutomationService {
         const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"[^>]*>/i);
         const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]*)"[^>]*>/i);
         
-        // Use the website's own promotional image if available, proxied to avoid CORS
+        // Use the website's own promotional image if available, directly (no proxy needed for these)
         if (ogImageMatch && ogImageMatch[1]) {
           const imageUrl = ogImageMatch[1].startsWith('http') ? ogImageMatch[1] : new URL(ogImageMatch[1], url).href;
-          const proxiedUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
-          console.log(`✅ Using website's OG image for ${url}: ${imageUrl} (proxied)`);
-          return proxiedUrl;
+          console.log(`✅ Using website's OG image for ${url}: ${imageUrl}`);
+          return imageUrl;
         }
         
         if (twitterImageMatch && twitterImageMatch[1]) {
           const imageUrl = twitterImageMatch[1].startsWith('http') ? twitterImageMatch[1] : new URL(twitterImageMatch[1], url).href;
-          const proxiedUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
-          console.log(`✅ Using website's Twitter image for ${url}: ${imageUrl} (proxied)`);
-          return proxiedUrl;
+          console.log(`✅ Using website's Twitter image for ${url}: ${imageUrl}`);
+          return imageUrl;
         }
       }
     } catch (error) {

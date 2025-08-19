@@ -288,6 +288,15 @@ export function GalleryManager({
                           alt={`Screenshot ${index + 1}`}
                           className="w-full h-32 object-cover rounded cursor-pointer"
                           onClick={() => setPreviewMedia({ type: 'image', url: imageUrl })}
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            console.log(`Failed to load image: ${imageUrl}`);
+                            // If ScreenshotAPI URL fails, show placeholder
+                            if (imageUrl.includes('screenshotapi.net')) {
+                              img.src = '/api/placeholder/400/300';
+                            }
+                          }}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-2">
                           <Button

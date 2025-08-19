@@ -858,7 +858,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Sec-Fetch-Dest': 'image',
           'Sec-Fetch-Mode': 'no-cors',
           'Sec-Fetch-Site': 'cross-site'
-        }
+        },
+        redirect: 'follow' // Follow redirects for ScreenshotAPI and other services
       });
 
       if (!response.ok) {
