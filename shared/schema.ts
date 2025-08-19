@@ -372,6 +372,21 @@ export const promptPurchases = pgTable("prompt_purchases", {
   purchasedAt: timestamp("purchased_at").defaultNow(),
 });
 
+// Tool usage votes table for tracking "I use this" vs "I use something else"
+export const toolUsageVotes = pgTable("tool_usage_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  toolId: varchar("tool_id").references(() => tools.id, { onDelete: "cascade" }).notNull(),
+  voteType: varchar("vote_type", { length: 20 }).notNull(), // "use_this" or "use_alternative"
+  alternativeToolId: varchar("alternative_tool_id").references(() => tools.id, { onDelete: "cascade" }), // For "use_alternative" votes
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // Ensure one vote per user per tool
+    uniqueUserToolVote: unique("unique_user_tool_vote").on(table.userId, table.toolId),
+  };
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   tools: many(tools),
@@ -386,6 +401,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews),
   promptPurchases: many(promptPurchases),
   alternativeVotes: many(alternativeVotes),
+  toolUsageVotes: many(toolUsageVotes),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -408,6 +424,7 @@ export const toolsRelations = relations(tools, ({ one, many }) => ({
   votes: many(votes),
   reviews: many(reviews),
   toolAlternatives: many(toolAlternatives),
+  toolUsageVotes: many(toolUsageVotes),
   // Many-to-many relationship with categories
   toolCategories: many(toolCategories),
 }));
@@ -446,6 +463,21 @@ export const alternativeVotesRelations = relations(alternativeVotes, ({ one }) =
   }),
   alternative: one(tools, {
     fields: [alternativeVotes.alternativeId],
+    references: [tools.id],
+  }),
+}));
+
+export const toolUsageVotesRelations = relations(toolUsageVotes, ({ one }) => ({
+  user: one(users, {
+    fields: [toolUsageVotes.userId],
+    references: [users.id],
+  }),
+  tool: one(tools, {
+    fields: [toolUsageVotes.toolId],
+    references: [tools.id],
+  }),
+  alternativeTool: one(tools, {
+    fields: [toolUsageVotes.alternativeToolId],
     references: [tools.id],
   }),
 }));
@@ -593,6 +625,8 @@ export type ToolCategory = typeof toolCategories.$inferSelect;
 export type InsertToolCategory = typeof toolCategories.$inferInsert;
 export type PromptPurchase = typeof promptPurchases.$inferSelect;
 export type InsertPromptPurchase = typeof promptPurchases.$inferInsert;
+export type ToolUsageVote = typeof toolUsageVotes.$inferSelect;
+export type InsertToolUsageVote = typeof toolUsageVotes.$inferInsert;
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({

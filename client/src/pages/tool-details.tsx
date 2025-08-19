@@ -263,6 +263,9 @@ export default function ToolDetailsPage() {
   const [selectedReviewId, setSelectedReviewId] = useState<string>("");
   const [reportReason, setReportReason] = useState("");
   const [reviewSortBy, setReviewSortBy] = useState("helpful");
+  const [showAlternativeSearchDialog, setShowAlternativeSearchDialog] = useState(false);
+  const [alternativeSearchQuery, setAlternativeSearchQuery] = useState("");
+  const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>("");
 
   // Fetch tool data
   const { data: tool, isLoading: toolLoading } = useQuery<Tool>({
@@ -320,15 +323,53 @@ export default function ToolDetailsPage() {
     }
   });
 
-  // Fetch usage stats
-  const { data: usageStats = { userCount: 0 } } = useQuery<{ userCount: number }>({
+  // New queries for enhanced features
+  const { data: toolRating } = useQuery({
+    queryKey: [`/api/tools/${toolId}/rating`],
+    enabled: !!toolId,
+  });
+
+  const { data: bookmarkCount = 0 } = useQuery<number>({
+    queryKey: [`/api/items/tool/${toolId}/bookmark-count`],
+    select: (data: any) => data.count,
+    enabled: !!toolId,
+  });
+
+  const { data: usageStats } = useQuery({
     queryKey: [`/api/tools/${toolId}/usage-stats`],
-    enabled: !!toolId
+    enabled: !!toolId,
+  });
+
+  const { data: userUsageVote } = useQuery({
+    queryKey: [`/api/tools/${toolId}/user-usage-vote`],
+    enabled: isAuthenticated && !!toolId,
   });
 
   const userVote = (userInteractions as any)?.vote;
   const isBookmarked = (userInteractions as any)?.bookmarked;
   const isFollowing = (userInteractions as any)?.following;
+
+  // Usage voting mutations
+  const usageVoteMutation = useMutation({
+    mutationFn: async ({ voteType, alternativeToolId }: { voteType: 'use_this' | 'use_alternative'; alternativeToolId?: string }) => {
+      return apiRequest('POST', `/api/tools/${toolId}/usage-vote`, { voteType, alternativeToolId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/tools/${toolId}/usage-stats`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/tools/${toolId}/user-usage-vote`] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        setShowAuthDialog(true);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to vote. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Mutations
   const voteMutation = useMutation({
@@ -359,6 +400,7 @@ export default function ToolDetailsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/user/interactions/${toolId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/bookmarks`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/items/tool/${toolId}/bookmark-count`] });
       
       // Show toast notification based on bookmark state
       const wasBookmarked = isBookmarked;
@@ -380,6 +422,18 @@ export default function ToolDetailsPage() {
         variant: "destructive",
       });
     },
+  });
+
+  // Tool search for autocomplete
+  const { data: searchResults = [] } = useQuery({
+    queryKey: [`/api/tools/search`, alternativeSearchQuery],
+    queryFn: async () => {
+      if (!alternativeSearchQuery.trim()) return [];
+      const response = await fetch(`/api/tools/search?q=${encodeURIComponent(alternativeSearchQuery)}&limit=10`);
+      if (!response.ok) throw new Error('Failed to search tools');
+      return response.json();
+    },
+    enabled: !!alternativeSearchQuery.trim(),
   });
 
   const followMutation = useMutation({
@@ -486,7 +540,7 @@ export default function ToolDetailsPage() {
       setShowAuthDialog(true);
       return;
     }
-    toast({ title: "Thanks for sharing!", description: "Your usage has been recorded." });
+    usageVoteMutation.mutate({ voteType: 'use_this' });
   };
 
   const handleUseSomethingElse = () => {
@@ -494,7 +548,14 @@ export default function ToolDetailsPage() {
       setShowAuthDialog(true);
       return;
     }
-    setShowAlternativeDialog(true);
+    setShowAlternativeSearchDialog(true);
+  };
+
+  const handleAlternativeSelect = (alternativeId: string) => {
+    usageVoteMutation.mutate({ voteType: 'use_alternative', alternativeToolId: alternativeId });
+    setShowAlternativeSearchDialog(false);
+    setAlternativeSearchQuery("");
+    setSelectedAlternativeId("");
   };
 
   const handleFollow = () => {
@@ -763,12 +824,12 @@ export default function ToolDetailsPage() {
                             />
                           ))}
                         </div>
-                        <span className="font-medium text-lg">{tool.rating}</span>
+                        <span className="font-medium text-lg">{toolRating ? toolRating.rating : '0.0'}</span>
                         <span className="text-blue-600 dark:text-blue-400">out of 10</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                      {tool.ratingCount} Reviews and Ratings • {typeof tool.category === 'object' ? tool.category?.name : tool.category}
+                      {toolRating ? toolRating.count : 0} Reviews and Ratings • {typeof tool.category === 'object' ? tool.category?.name : tool.category}
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                       {tool.shortDescription}
@@ -787,22 +848,29 @@ export default function ToolDetailsPage() {
                       variant="outline" 
                       size="sm" 
                       onClick={handleUseThis}
-                      className="flex items-center gap-2 bg-white dark:bg-gray-900"
+                      className={`flex items-center gap-2 bg-white dark:bg-gray-900 ${
+                        userUsageVote?.userVote === 'use_this' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : ''
+                      }`}
                     >
-                      <CheckCircle className="w-4 h-4" />
+                      <CheckCircle className={`w-4 h-4 ${userUsageVote?.userVote === 'use_this' ? 'fill-current' : ''}`} />
                       I use this
                       <Badge variant="secondary" className="ml-1">
-                        {usageStats.userCount}
+                        {usageStats?.useThisCount || 0}
                       </Badge>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={handleUseSomethingElse}
-                      className="flex items-center gap-2 bg-white dark:bg-gray-900"
+                      className={`flex items-center gap-2 bg-white dark:bg-gray-900 ${
+                        userUsageVote?.userVote === 'use_alternative' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' : ''
+                      }`}
                     >
-                      <XCircle className="w-4 h-4" />
+                      <XCircle className={`w-4 h-4 ${userUsageVote?.userVote === 'use_alternative' ? 'fill-current' : ''}`} />
                       I use something else
+                      <Badge variant="secondary" className="ml-1">
+                        {usageStats?.useAlternativeCount || 0}
+                      </Badge>
                     </Button>
                   </div>
                 </div>
@@ -1040,14 +1108,14 @@ export default function ToolDetailsPage() {
                         <div>
                           <div className="text-center mb-6">
                             <div className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
-                              {reviewStats.averageRating.toFixed(1)}
+                              {toolRating ? toolRating.rating.toFixed(1) : '0.0'}
                             </div>
                             <div className="flex items-center justify-center gap-1 mb-2">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
                                   className={`w-5 h-5 ${
-                                    i < Math.round(reviewStats.averageRating)
+                                    i < Math.round(toolRating ? toolRating.rating : 0)
                                       ? "fill-yellow-400 text-yellow-400"
                                       : "text-gray-300 dark:text-gray-600"
                                   }`}
@@ -1055,7 +1123,7 @@ export default function ToolDetailsPage() {
                               ))}
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Based on {reviewStats.totalReviews} reviews
+                              Based on {toolRating ? toolRating.count : 0} reviews
                             </p>
                           </div>
 
@@ -1293,7 +1361,7 @@ export default function ToolDetailsPage() {
                       onClick={() => window.open(tool.url, '_blank')}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Contact Vendor
+                      Visit Website
                     </Button>
                     
                     <Button 
@@ -1302,7 +1370,7 @@ export default function ToolDetailsPage() {
                       onClick={handleBookmark}
                     >
                       <Bookmark className={`w-4 h-4 mr-2 ${isBookmarked ? 'fill-current text-blue-600' : ''}`} />
-                      {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                      {isBookmarked ? 'Bookmarked' : 'Bookmark'} ({bookmarkCount})
                     </Button>
                     
                     <div className="grid grid-cols-2 gap-2">
@@ -1332,6 +1400,58 @@ export default function ToolDetailsPage() {
           open={showAuthDialog} 
           onOpenChange={setShowAuthDialog} 
         />
+
+        {/* Alternative Tool Search Dialog */}
+        <Dialog open={showAlternativeSearchDialog} onOpenChange={setShowAlternativeSearchDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>What do you use instead?</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="alternative-search">Search for the tool you use</Label>
+                <Input
+                  id="alternative-search"
+                  placeholder="Type tool name..."
+                  value={alternativeSearchQuery}
+                  onChange={(e) => setAlternativeSearchQuery(e.target.value)}
+                />
+              </div>
+              {searchResults.length > 0 && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {searchResults.map((searchTool) => (
+                    <button
+                      key={searchTool.id}
+                      onClick={() => handleAlternativeSelect(searchTool.id)}
+                      className="w-full flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        {searchTool.logoUrl ? (
+                          <img 
+                            src={searchTool.logoUrl} 
+                            alt={searchTool.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <h3 className="font-medium text-gray-900 dark:text-white">{searchTool.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{searchTool.shortDescription}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {alternativeSearchQuery.trim() && searchResults.length === 0 && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  No tools found. Try a different search term.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
           <DialogContent>

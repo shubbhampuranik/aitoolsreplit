@@ -1137,6 +1137,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tool usage voting endpoints
+  app.post('/api/tools/:id/usage-vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const toolId = req.params.id;
+      const { voteType, alternativeToolId } = req.body;
+
+      if (!['use_this', 'use_alternative'].includes(voteType)) {
+        return res.status(400).json({ message: "Invalid vote type" });
+      }
+
+      if (voteType === 'use_alternative' && !alternativeToolId) {
+        return res.status(400).json({ message: "alternativeToolId required for use_alternative votes" });
+      }
+
+      const result = await storage.voteToolUsage(userId, toolId, voteType, alternativeToolId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error voting on tool usage:", error);
+      res.status(500).json({ message: "Failed to vote" });
+    }
+  });
+
+  app.get('/api/tools/:id/usage-stats', async (req, res) => {
+    try {
+      const toolId = req.params.id;
+      const stats = await storage.getToolUsageStats(toolId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching tool usage stats:", error);
+      res.status(500).json({ message: "Failed to fetch usage stats" });
+    }
+  });
+
+  app.get('/api/tools/:id/user-usage-vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const toolId = req.params.id;
+      const userVote = await storage.getUserToolUsageVote(userId, toolId);
+      res.json({ userVote });
+    } catch (error) {
+      console.error("Error fetching user tool usage vote:", error);
+      res.status(500).json({ message: "Failed to fetch user vote" });
+    }
+  });
+
+  // Bookmark count endpoint
+  app.get('/api/items/:itemType/:itemId/bookmark-count', async (req, res) => {
+    try {
+      const { itemType, itemId } = req.params;
+      const count = await storage.getBookmarkCount(itemType, itemId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching bookmark count:", error);
+      res.status(500).json({ message: "Failed to fetch bookmark count" });
+    }
+  });
+
+  // Tool rating calculation endpoint
+  app.get('/api/tools/:id/rating', async (req, res) => {
+    try {
+      const toolId = req.params.id;
+      const rating = await storage.calculateToolRating(toolId);
+      res.json(rating);
+    } catch (error) {
+      console.error("Error calculating tool rating:", error);
+      res.status(500).json({ message: "Failed to calculate rating" });
+    }
+  });
+
+  // Tool search for autocomplete
+  app.get('/api/tools/search', async (req, res) => {
+    try {
+      const { q, limit = 10 } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ message: "Query parameter 'q' is required" });
+      }
+
+      const tools = await storage.getTools({
+        search: q as string,
+        status: 'approved',
+        limit: parseInt(limit as string)
+      });
+
+      // Return simplified tool objects for autocomplete
+      const searchResults = tools.map(tool => ({
+        id: tool.id,
+        name: tool.name,
+        logoUrl: tool.logoUrl,
+        shortDescription: tool.shortDescription
+      }));
+
+      res.json(searchResults);
+    } catch (error) {
+      console.error("Error searching tools:", error);
+      res.status(500).json({ message: "Failed to search tools" });
+    }
+  });
+
   // Tool reviews endpoint
   app.get('/api/tools/:id/reviews', async (req, res) => {
     try {

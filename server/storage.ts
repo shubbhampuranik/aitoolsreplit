@@ -20,6 +20,7 @@ import {
   toolAlternatives,
   alternativeVotes,
   toolCategories,
+  toolUsageVotes,
   type User,
   type UpsertUser,
   type Category,
@@ -47,6 +48,8 @@ import {
   type InsertCollection,
   type InsertToolAlternative,
   type ToolAlternative,
+  type ToolUsageVote,
+  type InsertToolUsageVote,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, like, ilike, and, or, sql, count, inArray } from "drizzle-orm";
@@ -174,6 +177,24 @@ export interface IStorage {
     upvotes: number;
     downvotes: number;
   }>;
+  
+  // Tool usage voting
+  voteToolUsage(userId: string, toolId: string, voteType: 'use_this' | 'use_alternative', alternativeToolId?: string): Promise<{
+    useThisCount: number;
+    useAlternativeCount: number;
+    userVote: 'use_this' | 'use_alternative' | null;
+  }>;
+  getToolUsageStats(toolId: string): Promise<{
+    useThisCount: number;
+    useAlternativeCount: number;
+  }>;
+  getUserToolUsageVote(userId: string, toolId: string): Promise<'use_this' | 'use_alternative' | null>;
+  
+  // Bookmark counting
+  getBookmarkCount(itemType: string, itemId: string): Promise<number>;
+  
+  // Rating calculation
+  calculateToolRating(toolId: string): Promise<{ rating: number; count: number }>;
   
   // Search
   searchAll(query: string, limit?: number): Promise<{
@@ -1914,6 +1935,163 @@ export class DatabaseStorage implements IStorage {
     for (const alternative of autoSuggested) {
       await this.addToolAlternative(toolId, alternative.id, true);
     }
+  }
+
+  // Tool usage voting methods
+  async voteToolUsage(userId: string, toolId: string, voteType: 'use_this' | 'use_alternative', alternativeToolId?: string): Promise<{
+    useThisCount: number;
+    useAlternativeCount: number;
+    userVote: 'use_this' | 'use_alternative' | null;
+  }> {
+    // Check existing vote
+    const existing = await db
+      .select()
+      .from(toolUsageVotes)
+      .where(
+        and(
+          eq(toolUsageVotes.userId, userId),
+          eq(toolUsageVotes.toolId, toolId)
+        )
+      );
+
+    if (existing.length > 0) {
+      if (existing[0].voteType === voteType) {
+        // Remove vote if clicking same button
+        await db
+          .delete(toolUsageVotes)
+          .where(
+            and(
+              eq(toolUsageVotes.userId, userId),
+              eq(toolUsageVotes.toolId, toolId)
+            )
+          );
+      } else {
+        // Update vote if clicking different button
+        await db
+          .update(toolUsageVotes)
+          .set({ 
+            voteType, 
+            alternativeToolId: voteType === 'use_alternative' ? alternativeToolId : null 
+          })
+          .where(
+            and(
+              eq(toolUsageVotes.userId, userId),
+              eq(toolUsageVotes.toolId, toolId)
+            )
+          );
+      }
+    } else {
+      // Create new vote
+      await db.insert(toolUsageVotes).values({
+        userId,
+        toolId,
+        voteType,
+        alternativeToolId: voteType === 'use_alternative' ? alternativeToolId : null,
+      });
+    }
+
+    // Get updated vote counts and user's current vote
+    const stats = await this.getToolUsageStats(toolId);
+    const userVote = await this.getUserToolUsageVote(userId, toolId);
+
+    return {
+      ...stats,
+      userVote,
+    };
+  }
+
+  async getToolUsageStats(toolId: string): Promise<{
+    useThisCount: number;
+    useAlternativeCount: number;
+  }> {
+    const useThisCount = await db
+      .select({ count: count() })
+      .from(toolUsageVotes)
+      .where(
+        and(
+          eq(toolUsageVotes.toolId, toolId),
+          eq(toolUsageVotes.voteType, 'use_this')
+        )
+      );
+
+    const useAlternativeCount = await db
+      .select({ count: count() })
+      .from(toolUsageVotes)
+      .where(
+        and(
+          eq(toolUsageVotes.toolId, toolId),
+          eq(toolUsageVotes.voteType, 'use_alternative')
+        )
+      );
+
+    return {
+      useThisCount: useThisCount[0]?.count || 0,
+      useAlternativeCount: useAlternativeCount[0]?.count || 0,
+    };
+  }
+
+  async getUserToolUsageVote(userId: string, toolId: string): Promise<'use_this' | 'use_alternative' | null> {
+    const result = await db
+      .select()
+      .from(toolUsageVotes)
+      .where(
+        and(
+          eq(toolUsageVotes.userId, userId),
+          eq(toolUsageVotes.toolId, toolId)
+        )
+      );
+
+    return result.length > 0 ? result[0].voteType as 'use_this' | 'use_alternative' : null;
+  }
+
+  // Bookmark counting method
+  async getBookmarkCount(itemType: string, itemId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.itemType, itemType as any),
+          eq(bookmarks.itemId, itemId)
+        )
+      );
+
+    return result[0]?.count || 0;
+  }
+
+  // Rating calculation method
+  async calculateToolRating(toolId: string): Promise<{ rating: number; count: number }> {
+    const result = await db
+      .select({
+        avgRating: sql<number>`AVG(${reviews.rating})::numeric`,
+        count: count(),
+      })
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.toolId, toolId),
+          eq(reviews.status, 'approved')
+        )
+      );
+
+    const rating = result[0]?.avgRating ? Number(result[0].avgRating) : 0;
+    const reviewCount = result[0]?.count || 0;
+
+    // Update the tool's rating in the database
+    if (reviewCount > 0) {
+      await db
+        .update(tools)
+        .set({ 
+          rating: rating.toFixed(2),
+          ratingCount: reviewCount
+        })
+        .where(eq(tools.id, toolId));
+    }
+
+    return {
+      rating: Number(rating.toFixed(2)),
+      count: reviewCount,
+    };
   }
 }
 
