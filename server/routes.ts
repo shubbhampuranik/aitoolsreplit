@@ -1207,8 +1207,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tool search for autocomplete
-  app.get('/api/tools/search', async (req, res) => {
+  // Tool search for autocomplete - placed before the /:id route to avoid conflicts
+  app.get('/api/tools-search', async (req, res) => {
     try {
       const { q, limit = 10 } = req.query;
       

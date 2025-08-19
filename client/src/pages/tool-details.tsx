@@ -426,10 +426,10 @@ export default function ToolDetailsPage() {
 
   // Tool search for autocomplete
   const { data: searchResults = [] } = useQuery({
-    queryKey: [`/api/tools/search`, alternativeSearchQuery],
+    queryKey: [`/api/tools-search`, alternativeSearchQuery],
     queryFn: async () => {
       if (!alternativeSearchQuery.trim()) return [];
-      const response = await fetch(`/api/tools/search?q=${encodeURIComponent(alternativeSearchQuery)}&limit=10`);
+      const response = await fetch(`/api/tools-search?q=${encodeURIComponent(alternativeSearchQuery)}&limit=10`);
       if (!response.ok) throw new Error('Failed to search tools');
       return response.json();
     },
@@ -825,7 +825,7 @@ export default function ToolDetailsPage() {
                           ))}
                         </div>
                         <span className="font-medium text-lg">{toolRating ? toolRating.rating : '0.0'}</span>
-                        <span className="text-blue-600 dark:text-blue-400">out of 10</span>
+                        <span className="text-gray-500 dark:text-gray-400">({toolRating ? toolRating.count : 0} reviews)</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
