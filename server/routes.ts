@@ -148,6 +148,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI-powered automation endpoints
+  app.post('/api/ai/discover-logo', isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+      
+      console.log('Discovering logo for:', url);
+      
+      // Import logo service dynamically to avoid import issues
+      const { LogoAutomation } = await import('./logoAutomation');
+      const logoService = new LogoAutomation();
+      
+      const logos = await logoService.discoverLogo(url);
+      const bestLogo = logoService.selectBestLogo(logos);
+      
+      res.json({
+        logos: logos.slice(0, 5), // Return top 5 options
+        bestLogo,
+        totalFound: logos.length
+      });
+    } catch (error) {
+      console.error('Error discovering logo:', error);
+      res.status(500).json({ error: 'Failed to discover logo' });
+    }
+  });
+
+  app.post('/api/ai/discover-media', isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+      
+      console.log('Discovering media for:', url);
+      
+      // Import media service dynamically to avoid import issues
+      const { MediaDiscovery } = await import('./screenshotAutomation');
+      const mediaService = new MediaDiscovery();
+      
+      const mediaResult = await mediaService.discoverMedia(url);
+      const bestMedia = mediaService.selectBestMedia(mediaResult);
+      
+      res.json({
+        ...mediaResult,
+        bestScreenshots: bestMedia.bestScreenshots,
+        bestVideos: bestMedia.bestVideos
+      });
+    } catch (error) {
+      console.error('Error discovering media:', error);
+      res.status(500).json({ error: 'Failed to discover media' });
+    }
+  });
+
   // Content upload and processing routes
   app.post('/api/upload/logo', isAuthenticated, async (req, res) => {
     try {
