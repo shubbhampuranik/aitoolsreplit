@@ -59,6 +59,9 @@ export interface IStorage {
   // User operations (IMPORTANT - mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
+  deleteUser(id: string): Promise<boolean>;
   
   // Categories
   getCategories(): Promise<Category[]>;
@@ -158,10 +161,13 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   
   // Reviews
-  getReviews(toolId: string, status?: string): Promise<Review[]>;
+  getReviews(toolId?: string, status?: string): Promise<Review[]>;
+  getReview(id: string): Promise<Review | undefined>;
   createReview(review: InsertReview): Promise<Review>;
   updateReview(id: string, updates: Partial<Review>): Promise<Review>;
+  deleteReview(id: string): Promise<boolean>;
   getAllReviewsForAdmin(status?: string): Promise<Review[]>;
+  getReportedReviews(): Promise<Review[]>;
   
   // Collections
   getCollections(userId?: string, isPublic?: boolean): Promise<Collection[]>;
@@ -188,7 +194,23 @@ export interface IStorage {
     useThisCount: number;
     useAlternativeCount: number;
   }>;
-  getUserToolUsageVote(userId: string, toolId: string): Promise<'use_this' | 'use_alternative' | null>;
+  getUserToolUsageVote(toolId: string, userId: string): Promise<{ userVote: string | null }>;
+  recordToolUsageVote(toolId: string, userId: string, voteType: string): Promise<{ userVote: string }>;
+
+  // Tool alternatives management
+  getToolAlternatives(toolId: string): Promise<Tool[]>;
+  addToolAlternative(toolId: string, alternativeId: string, autoSuggested?: boolean): Promise<void>;
+  removeToolAlternative(toolId: string, alternativeId: string): Promise<void>;
+  
+  // User interactions
+  getUserInteractions(userId: string, toolId: string, itemType: string): Promise<{
+    bookmarked: boolean;
+    vote: 'up' | 'down' | null;
+    following?: boolean;
+  }>;
+  bookmarkTool(userId: string, toolId: string): Promise<{
+    bookmarked: boolean;
+  }>;
   
   // Bookmark counting
   getBookmarkCount(itemType: string, itemId: string): Promise<number>;
@@ -256,6 +278,24 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   // Categories
@@ -933,8 +973,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Reviews
-  async getReviews(toolId: string, status?: string): Promise<Review[]> {
-    const conditions = [eq(reviews.toolId, toolId)];
+  async getReviews(toolId?: string, status?: string): Promise<Review[]> {
+    const conditions = [];
+    
+    if (toolId) {
+      conditions.push(eq(reviews.toolId, toolId));
+    }
     
     if (status) {
       conditions.push(eq(reviews.status, status as any));
@@ -961,7 +1005,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(reviews)
       .leftJoin(users, eq(reviews.userId, users.id))
-      .where(and(...conditions))
+      .where(conditions.length > 0 ? and(...conditions) : sql`1=1`)
       .orderBy(desc(reviews.createdAt));
 
     return result.map(row => ({
@@ -977,6 +1021,11 @@ export class DatabaseStorage implements IStorage {
     return newReview;
   }
 
+  async getReview(id: string): Promise<Review | undefined> {
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
+    return review;
+  }
+
   async updateReview(id: string, updates: Partial<Review>): Promise<Review> {
     const [updatedReview] = await db
       .update(reviews)
@@ -984,6 +1033,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(reviews.id, id))
       .returning();
     return updatedReview;
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    const result = await db.delete(reviews).where(eq(reviews.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   async getAllReviewsForAdmin(status?: string): Promise<Review[]> {
@@ -1297,6 +1351,39 @@ export class DatabaseStorage implements IStorage {
       vote: userVote,
       following: false // Add following logic if needed
     };
+  }
+
+  async bookmarkTool(userId: string, toolId: string): Promise<{ bookmarked: boolean }> {
+    const existing = await db
+      .select()
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.itemType, 'tool'),
+          eq(bookmarks.itemId, toolId)
+        )
+      );
+
+    if (existing.length > 0) {
+      await db
+        .delete(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.itemType, 'tool'),
+            eq(bookmarks.itemId, toolId)
+          )
+        );
+      return { bookmarked: false };
+    } else {
+      await db.insert(bookmarks).values({
+        userId,
+        itemType: 'tool',
+        itemId: toolId,
+      });
+      return { bookmarked: true };
+    }
   }
 
   async getUserInteractionsBulk(userId: string, itemType: string, itemIds: string[]): Promise<Record<string, {
@@ -1992,11 +2079,11 @@ export class DatabaseStorage implements IStorage {
 
     // Get updated vote counts and user's current vote
     const stats = await this.getToolUsageStats(toolId);
-    const userVote = await this.getUserToolUsageVote(userId, toolId);
+    const userVoteResult = await this.getUserToolUsageVote(toolId, userId);
 
     return {
       ...stats,
-      userVote,
+      userVote: userVoteResult.userVote as 'use_this' | 'use_alternative' | null,
     };
   }
 
@@ -2030,7 +2117,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserToolUsageVote(userId: string, toolId: string): Promise<'use_this' | 'use_alternative' | null> {
+  async getUserToolUsageVote(toolId: string, userId: string): Promise<{ userVote: string | null }> {
     const result = await db
       .select()
       .from(toolUsageVotes)
@@ -2041,7 +2128,28 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    return result.length > 0 ? result[0].voteType as 'use_this' | 'use_alternative' : null;
+    return { userVote: result.length > 0 ? result[0].voteType : null };
+  }
+
+  async recordToolUsageVote(toolId: string, userId: string, voteType: string): Promise<{ userVote: string }> {
+    // Remove existing vote if any
+    await db
+      .delete(toolUsageVotes)
+      .where(
+        and(
+          eq(toolUsageVotes.userId, userId),
+          eq(toolUsageVotes.toolId, toolId)
+        )
+      );
+
+    // Add new vote
+    await db.insert(toolUsageVotes).values({
+      userId,
+      toolId,
+      voteType: voteType as 'use_this' | 'use_alternative'
+    });
+
+    return { userVote: voteType };
   }
 
   // Bookmark counting method
