@@ -81,6 +81,30 @@ export const createAdminRoutes = (storageInstance: any = storage): Router => {
     }
   });
 
+  // Tool CRUD operations
+  router.put('/tools/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const tool = await adminService.updateTool(req.params.id, req.body);
+      res.json(tool);
+    } catch (error) {
+      console.error("Error updating tool:", error);
+      res.status(500).json({ message: "Failed to update tool" });
+    }
+  });
+
+  router.delete('/tools/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const success = await adminService.deleteTool(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Tool not found" });
+      }
+      res.json({ message: "Tool deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting tool:", error);
+      res.status(500).json({ message: "Failed to delete tool" });
+    }
+  });
+
   // Review management endpoints
   router.get('/reviews', isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -212,6 +236,17 @@ export const createAdminRoutes = (storageInstance: any = storage): Router => {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Reported reviews endpoint
+  router.get('/reported-reviews', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const reviews = await adminService.getReportedReviews();
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reported reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reported reviews" });
     }
   });
 

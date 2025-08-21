@@ -43,7 +43,7 @@ export class ReviewService {
     return this.storage.getReportedReviews();
   }
 
-  async handleReportedReview(id: string, action: 'keep' | 'remove'): Promise<Review> {
+  async handleReportedReview(id: string, action: 'keep' | 'remove'): Promise<Review | null> {
     if (action === 'remove') {
       await this.deleteReview(id);
       return null;

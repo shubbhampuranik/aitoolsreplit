@@ -53,6 +53,14 @@ export class AdminService {
     return this.toolService.updateTool(id, { featured });
   }
 
+  async updateTool(id: string, updates: Partial<Tool>): Promise<Tool> {
+    return this.toolService.updateTool(id, updates);
+  }
+
+  async deleteTool(id: string): Promise<boolean> {
+    return this.toolService.deleteTool(id);
+  }
+
   // Review management
   async getPendingReviews(): Promise<Review[]> {
     return this.reviewService.getPendingReviews();

@@ -85,7 +85,7 @@ export class ToolService {
   async getStats(): Promise<ToolStats> {
     const tools = await this.storage.getTools();
     return {
-      toolsCount: tools.filter(t => t.status === 'approved').length,
+      toolsCount: tools.filter((t: any) => t.status === 'approved').length,
       promptsCount: 50, // Mock data - replace with actual prompts count
       coursesCount: 30,
       jobsCount: 100,
