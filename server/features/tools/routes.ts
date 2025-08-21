@@ -195,5 +195,55 @@ export const createToolRoutes = (storageInstance: any = storage): Router => {
     }
   });
 
+  // AI-powered data fetching endpoint
+  router.post('/fetch-data', isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'URL is required' 
+        });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid URL format' 
+        });
+      }
+
+      console.log(`Starting AI analysis for URL: ${url}`);
+      
+      // Import AI analyzer dynamically to avoid import issues
+      const { AIToolAnalyzer } = await import('../../aiToolAnalyzer');
+      const analyzer = new AIToolAnalyzer();
+      
+      const result = await analyzer.analyzeToolFromUrl(url);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: result.error || 'Failed to analyze tool'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: result.data
+      });
+    } catch (error) {
+      console.error('Error fetching tool data:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch tool data'
+      });
+    }
+  });
+
   return router;
 };

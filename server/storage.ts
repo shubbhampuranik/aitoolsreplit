@@ -474,8 +474,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTool(id: string): Promise<boolean> {
-    const result = await db.delete(tools).where(eq(tools.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      // Start a transaction to handle cascading deletes
+      await db.transaction(async (tx) => {
+        // Delete related records first to avoid foreign key constraint violations
+        
+        // Delete reviews
+        await tx.delete(reviews).where(eq(reviews.toolId, id));
+        
+        // Delete bookmarks
+        await tx.delete(bookmarks).where(
+          and(
+            eq(bookmarks.itemType, 'tool'),
+            eq(bookmarks.itemId, id)
+          )
+        );
+        
+        // Delete votes
+        await tx.delete(votes).where(
+          and(
+            eq(votes.itemType, 'tool'),
+            eq(votes.itemId, id)
+          )
+        );
+        
+        // Delete tool usage votes
+        await tx.delete(toolUsageVotes).where(eq(toolUsageVotes.toolId, id));
+        
+        // Delete tool categories
+        await tx.delete(toolCategories).where(eq(toolCategories.toolId, id));
+        
+        // Delete tool alternatives where this tool is involved
+        await tx.delete(toolAlternatives).where(
+          or(
+            eq(toolAlternatives.toolId, id),
+            eq(toolAlternatives.alternativeId, id)
+          )
+        );
+        
+        // Finally delete the tool
+        await tx.delete(tools).where(eq(tools.id, id));
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting tool:", error);
+      return false;
+    }
   }
 
   // Admin specific methods
