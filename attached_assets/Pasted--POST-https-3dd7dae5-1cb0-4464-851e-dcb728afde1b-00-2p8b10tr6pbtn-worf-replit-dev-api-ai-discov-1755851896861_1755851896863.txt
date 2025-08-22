@@ -1,0 +1,50 @@
+ 
+ POST https://3dd7dae5-1cb0-4464-851e-dcb728afde1b-00-2p8b10tr6pbtn.worf.replit.dev/api/ai/discover-logo 500 (Internal Server Error)
+(anonymous)	@	chrome-extension://e…/libs/requests.js:1
+(anonymous)	@	chrome-extension://e…cutors/traffic.js:1
+fetch	@	chrome-extension://e…cutors/traffic.js:1
+apiRequest	@	src/lib/queryClient.ts:9
+discoverLogos	@	src/components/LogoD…coveryButton.tsx:49
+onClick	@	src/components/LogoD…overyButton.tsx:117
+overrideProps.<computed>	@	chunk-LXTJ4TFU.js:115
+callCallback2	@	chunk-WERSD76P.js:3674
+invokeGuardedCallbackDev	@	chunk-WERSD76P.js:3699
+invokeGuardedCallback	@	chunk-WERSD76P.js:3733
+invokeGuardedCallbackAndCatchFirstError	@	chunk-WERSD76P.js:3736
+executeDispatch	@	chunk-WERSD76P.js:7014
+processDispatchQueueItemsInOrder	@	chunk-WERSD76P.js:7034
+processDispatchQueue	@	chunk-WERSD76P.js:7043
+dispatchEventsForPlugins	@	chunk-WERSD76P.js:7051
+(anonymous)	@	chunk-WERSD76P.js:7174
+batchedUpdates$1	@	chunk-WERSD76P.js:18913
+batchedUpdates	@	chunk-WERSD76P.js:3579
+dispatchEventForPluginEventSystem	@	chunk-WERSD76P.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay	@	chunk-WERSD76P.js:5478
+dispatchEvent	@	chunk-WERSD76P.js:5472
+dispatchDiscreteEvent	@	chunk-WERSD76P.js:5449
+ Error discovering logos: Error: 500: {"error":"Failed to discover logo"}
+    at throwIfResNotOk (src/lib/queryClient.ts:5:11)
+    at async apiRequest (src/lib/queryClient.ts:15:3)
+    at async discoverLogos (src/components/LogoD…eryButton.tsx:49:24)
+discoverLogos	@	src/components/LogoD…coveryButton.tsx:70
+await in discoverLogos		
+onClick	@	src/components/LogoD…overyButton.tsx:117
+overrideProps.<computed>	@	chunk-LXTJ4TFU.js:115
+callCallback2	@	chunk-WERSD76P.js:3674
+invokeGuardedCallbackDev	@	chunk-WERSD76P.js:3699
+invokeGuardedCallback	@	chunk-WERSD76P.js:3733
+invokeGuardedCallbackAndCatchFirstError	@	chunk-WERSD76P.js:3736
+executeDispatch	@	chunk-WERSD76P.js:7014
+processDispatchQueueItemsInOrder	@	chunk-WERSD76P.js:7034
+processDispatchQueue	@	chunk-WERSD76P.js:7043
+dispatchEventsForPlugins	@	chunk-WERSD76P.js:7051
+(anonymous)	@	chunk-WERSD76P.js:7174
+batchedUpdates$1	@	chunk-WERSD76P.js:18913
+batchedUpdates	@	chunk-WERSD76P.js:3579
+dispatchEventForPluginEventSystem	@	chunk-WERSD76P.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay	@	chunk-WERSD76P.js:5478
+dispatchEvent	@	chunk-WERSD76P.js:5472
+dispatchDiscreteEvent	@	chunk-WERSD76P.js:5449
+
+﻿
+

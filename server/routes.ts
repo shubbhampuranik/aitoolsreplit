@@ -160,8 +160,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Discovering logo for:', url);
       
       // Import logo service dynamically to avoid import issues
-      const { LogoAutomation } = await import('./logoAutomation');
-      const logoService = new LogoAutomation();
+      const { LogoAutomationService } = await import('./logoAutomation');
+      const logoService = new LogoAutomationService();
       
       const logos = await logoService.discoverLogo(url);
       const bestLogo = logoService.selectBestLogo(logos);
@@ -188,8 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Discovering media for:', url);
       
       // Import media service dynamically to avoid import issues
-      const { MediaDiscovery } = await import('./screenshotAutomation');
-      const mediaService = new MediaDiscovery();
+      const { MediaAutomationService } = await import('./screenshotAutomation');
+      const mediaService = new MediaAutomationService();
       
       const mediaResult = await mediaService.discoverMedia(url);
       const bestMedia = mediaService.selectBestMedia(mediaResult);
