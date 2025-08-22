@@ -408,7 +408,8 @@
       }
       
       .feed-items {
-        padding: 0;
+        padding: 20px;
+        background: #f9fafb;
       }
       
       .loading-state {
@@ -417,21 +418,27 @@
         color: #666;
       }
       
-      /* Feed Item Cards */
+      /* Feed Item Cards - Dev.to Style */
       .feed-item {
-        padding: 16px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.2s;
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
         display: flex;
-        gap: 12px;
+        gap: 16px;
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
       
       .feed-item:hover {
-        background: #fafafa;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
       }
       
       .feed-item:last-child {
-        border-bottom: none;
+        margin-bottom: 0;
       }
       
       .vote-section {
@@ -490,31 +497,32 @@
         text-transform: uppercase;
       }
       
-      .item-type-badge.tools { background: #e3f2fd; color: #1976d2; }
-      .item-type-badge.courses { background: #e8f5e8; color: #388e3c; }
-      .item-type-badge.jobs { background: #fff3e0; color: #f57c00; }
-      .item-type-badge.prompts { background: #f3e5f5; color: #7b1fa2; }
-      .item-type-badge.deals { background: #ffebee; color: #d32f2f; }
-      .item-type-badge.news { background: #f1f8e9; color: #689f38; }
+      .item-type-badge.tools { background: #f1f5f9; color: #3b82f6; }
+      .item-type-badge.courses { background: #f0fdf4; color: #10b981; }
+      .item-type-badge.jobs { background: #fef3c7; color: #f59e0b; }
+      .item-type-badge.prompts { background: #faf5ff; color: #8b5cf6; }
+      .item-type-badge.deals { background: #fef2f2; color: #ef4444; }
+      .item-type-badge.news { background: #f0fdf4; color: #10b981; }
       
       .item-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #333;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2937;
         text-decoration: none;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         display: block;
+        line-height: 1.4;
       }
       
       .item-title:hover {
-        color: #ff6154;
+        color: #3b82f6;
       }
       
       .item-description {
-        color: #666;
-        font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 8px;
+        color: #6b7280;
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 10px;
       }
       
       .item-meta {
@@ -602,20 +610,26 @@
       }
       
       .trending-item {
-        padding: 8px 12px;
-        background: #f8f9fa;
+        padding: 10px 12px;
+        background: white;
         border-radius: 6px;
         font-size: 14px;
-        color: #666;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
       
       .recommendation-item {
-        padding: 8px 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        padding: 10px 12px;
+        background: white;
+        color: #374151;
         border-radius: 6px;
         font-size: 13px;
         margin-bottom: 8px;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #3b82f6;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
       
       .widget-header {
@@ -639,10 +653,12 @@
       /* Sidebar Jobs */
       .sidebar-job-item {
         padding: 12px;
-        background: #f8f9fa;
+        background: white;
         border-radius: 6px;
         margin-bottom: 8px;
-        border-left: 3px solid #f57c00;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #f59e0b;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
       
       .job-title {
@@ -658,7 +674,7 @@
       }
       
       .job-salary {
-        color: #f57c00;
+        color: #f59e0b;
         font-size: 12px;
         font-weight: 600;
       }
@@ -666,11 +682,13 @@
       /* Sidebar Deals */
       .sidebar-deal-item {
         padding: 12px;
-        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        background: white;
         border-radius: 6px;
         margin-bottom: 8px;
-        border-left: 3px solid #d32f2f;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #ef4444;
         position: relative;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
       
       .deal-title {
@@ -680,19 +698,19 @@
       }
       
       .deal-discount {
-        background: #d32f2f;
+        background: #ef4444;
         color: white;
         padding: 2px 6px;
-        border-radius: 3px;
+        border-radius: 4px;
         font-size: 10px;
         font-weight: 600;
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 8px;
+        right: 8px;
       }
       
       .deal-price {
-        color: #d32f2f;
+        color: #ef4444;
         font-size: 14px;
         font-weight: 600;
         margin-top: 4px;
@@ -708,10 +726,11 @@
       /* Course Carousel */
       .course-carousel {
         background: white;
-        border-radius: 12px;
-        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
         margin: 20px 0;
-        padding: 20px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
       
       .carousel-header {
@@ -769,10 +788,12 @@
       
       .course-card {
         flex: 0 0 280px;
-        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-        border-radius: 8px;
-        padding: 16px;
-        border-left: 4px solid #388e3c;
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #10b981;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
       
       .course-card-title {
@@ -796,33 +817,37 @@
       }
       
       .course-price {
-        color: #388e3c;
-        font-weight: 600;
+        color: #10b981;
+        font-weight: 700;
         font-size: 16px;
       }
       
       .course-level {
-        background: #388e3c;
-        color: white;
-        padding: 4px 8px;
+        background: #f0fdf4;
+        color: #10b981;
+        padding: 4px 10px;
         border-radius: 12px;
         font-size: 12px;
+        border: 1px solid #d1fae5;
       }
       
-      /* Enhanced Feed Item Cards */
+      /* Enhanced Feed Item Cards - Dev.to Style */
       .feed-item.tool-card {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-left: 4px solid #1976d2;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #3b82f6;
       }
       
       .feed-item.prompt-card {
-        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-        border-left: 4px solid #7b1fa2;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #8b5cf6;
       }
       
       .feed-item.news-card {
-        background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
-        border-left: 4px solid #689f38;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid #10b981;
       }
       
       .tool-logo {
@@ -840,20 +865,22 @@
       }
       
       .user-count {
-        background: #1976d2;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 10px;
-        font-size: 11px;
+        background: #f3f4f6;
+        color: #374151;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        border: 1px solid #e5e7eb;
       }
       
       .price-tag {
-        background: #7b1fa2;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
+        background: #f9fafb;
+        color: #8b5cf6;
+        padding: 6px 12px;
+        border-radius: 6px;
         font-weight: 600;
         font-size: 14px;
+        border: 1px solid #e5e7eb;
       }
       
       .news-thumbnail {
@@ -880,11 +907,12 @@
       }
       
       .reading-time {
-        background: #689f38;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 8px;
-        font-size: 10px;
+        background: #f3f4f6;
+        color: #6b7280;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        border: 1px solid #e5e7eb;
       }
       
       /* Responsive */
