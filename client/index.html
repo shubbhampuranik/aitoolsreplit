@@ -324,9 +324,10 @@
         background: white;
         border-radius: 8px;
         border: 1px solid #e1e5e9;
-        height: fit-content;
+        height: calc(100vh - 104px);
         position: sticky;
         top: 84px;
+        overflow-y: auto;
       }
       
       .sidebar-section {
@@ -567,7 +568,8 @@
       .right-sidebar {
         position: sticky;
         top: 84px;
-        height: fit-content;
+        height: calc(100vh - 104px);
+        overflow-y: auto;
       }
       
       .sidebar-widget {
@@ -863,8 +865,8 @@
       }
       
       .tool-logo {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border-radius: 8px;
         object-fit: cover;
         background: white;
@@ -1046,14 +1048,19 @@
         
         if (type === 'tools') {
           cardClass = 'tool-card';
-          const logoUrl = item.logoUrl || `https://via.placeholder.com/40x40/1976d2/white?text=${encodeURIComponent(item.name?.charAt(0) || 'T')}`;
+          // Only show tools that have actual logo URLs (not placeholder/default)
+          if (!item.logoUrl || item.logoUrl.includes('placeholder') || item.logoUrl.includes('via.placeholder')) {
+            return ''; // Skip tools without real logos
+          }
+          
+          const logoUrl = item.logoUrl;
           const rating = item.rating || (4.0 + Math.random() * 1.0).toFixed(1);
           const userCount = Math.floor(Math.random() * 5000) + 500;
           const categories = item.categories || ['AI Tool'];
           
           content = `
             <div style="display: flex; align-items: flex-start; gap: 12px;">
-              <img src="${logoUrl}" alt="${escapeHtml(item.name)}" class="tool-logo" onerror="this.src='https://via.placeholder.com/40x40/1976d2/white?text=T'">
+              <img src="${logoUrl}" alt="${escapeHtml(item.name)}" class="tool-logo" onerror="this.style.display='none'">
               <div style="flex: 1;">
                 <a href="#" class="item-title">${escapeHtml(item.name)}</a>
                 <div class="item-description">${escapeHtml((item.description || 'Innovative AI tool for enhanced productivity').substring(0, 120))}...</div>
@@ -1126,7 +1133,7 @@
             <div class="item-actions">
               ${hasBookmarking ? `
                 <button class="bookmark-btn" onclick="handleBookmark('${item.id}', '${type}')" title="Bookmark this item">
-                  📌
+                  <img src="https://cdn-icons-png.flaticon.com/512/494/494568.png" alt="Bookmark" style="width: 16px; height: 16px;">
                 </button>
               ` : ''}
             </div>
@@ -1140,15 +1147,15 @@
         return `
           <div class="course-carousel">
             <div class="carousel-header">
-              <h2 class="carousel-title">📚 Featured Courses</h2>
+              <h2 class="carousel-title">📚 Courses for You</h2>
               <div class="carousel-nav">
-                <button class="carousel-btn" onclick="scrollCarousel('prev')" id="prev-btn">‹</button>
-                <button class="carousel-btn" onclick="scrollCarousel('next')" id="next-btn">›</button>
+                <button class="carousel-btn" onclick="scrollCarousel('prev', 'course')" id="course-prev-btn">‹</button>
+                <button class="carousel-btn" onclick="scrollCarousel('next', 'course')" id="course-next-btn">›</button>
                 <a href="/courses" class="view-all-link" style="margin-left: 12px;">View All</a>
               </div>
             </div>
             <div class="carousel-container">
-              <div class="carousel-track" id="carousel-track">
+              <div class="carousel-track" id="course-carousel-track">
                 ${courses.map(course => `
                   <div class="course-card">
                     <div class="course-card-title">${escapeHtml(course.name)}</div>
@@ -1165,25 +1172,75 @@
         `;
       }
       
-      let carouselPosition = 0;
+      function renderDealsCarousel() {
+        const deals = generateSampleContent('deals');
+        
+        return `
+          <div class="course-carousel">
+            <div class="carousel-header">
+              <h2 class="carousel-title">🔥 Hot Deals for You</h2>
+              <div class="carousel-nav">
+                <button class="carousel-btn" onclick="scrollCarousel('prev', 'deals')" id="deals-prev-btn">‹</button>
+                <button class="carousel-btn" onclick="scrollCarousel('next', 'deals')" id="deals-next-btn">›</button>
+                <a href="/deals" class="view-all-link" style="margin-left: 12px;">View All</a>
+              </div>
+            </div>
+            <div class="carousel-container">
+              <div class="carousel-track" id="deals-carousel-track">
+                ${deals.map(deal => `
+                  <div class="course-card" style="border-left: 3px solid #ef4444;">
+                    <div class="course-card-title">${escapeHtml(deal.title)}</div>
+                    <div class="course-card-description">${escapeHtml(deal.description)}</div>
+                    <div class="course-card-footer">
+                      <span class="course-price" style="color: #ef4444;">$${deal.newPrice} <small style="text-decoration: line-through; color: #999;">$${deal.originalPrice}</small></span>
+                      <span class="course-level" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;">${deal.discount}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      let courseCarouselPosition = 0;
+      let dealsCarouselPosition = 0;
       const cardWidth = 296; // 280px + 16px gap
       
-      function scrollCarousel(direction) {
-        const track = document.getElementById('carousel-track');
+      function scrollCarousel(direction, type = 'course') {
+        const trackId = type === 'course' ? 'course-carousel-track' : 'deals-carousel-track';
+        const prevBtnId = type === 'course' ? 'course-prev-btn' : 'deals-prev-btn';
+        const nextBtnId = type === 'course' ? 'course-next-btn' : 'deals-next-btn';
+        
+        const track = document.getElementById(trackId);
+        if (!track) return;
+        
         const container = track.parentElement;
         const maxScroll = (track.children.length * cardWidth) - container.offsetWidth;
         
+        let currentPosition = type === 'course' ? courseCarouselPosition : dealsCarouselPosition;
+        
         if (direction === 'next') {
-          carouselPosition = Math.min(carouselPosition + cardWidth * 2, maxScroll);
+          currentPosition = Math.min(currentPosition + cardWidth * 2, maxScroll);
         } else {
-          carouselPosition = Math.max(carouselPosition - cardWidth * 2, 0);
+          currentPosition = Math.max(currentPosition - cardWidth * 2, 0);
         }
         
-        track.style.transform = `translateX(-${carouselPosition}px)`;
+        if (type === 'course') {
+          courseCarouselPosition = currentPosition;
+        } else {
+          dealsCarouselPosition = currentPosition;
+        }
+        
+        track.style.transform = `translateX(-${currentPosition}px)`;
         
         // Update button states
-        document.getElementById('prev-btn').disabled = carouselPosition === 0;
-        document.getElementById('next-btn').disabled = carouselPosition >= maxScroll;
+        const prevBtn = document.getElementById(prevBtnId);
+        const nextBtn = document.getElementById(nextBtnId);
+        if (prevBtn && nextBtn) {
+          prevBtn.disabled = currentPosition === 0;
+          nextBtn.disabled = currentPosition >= maxScroll;
+        }
       }
       
       function renderFeed(items) {
@@ -1196,12 +1253,21 @@
         }
         
         let feedHtml = '';
+        let visibleItemCount = 0;
         items.forEach((item, index) => {
-          feedHtml += renderFeedItem(item.data, item.type);
-          
-          // Insert course carousel after every 5 items
-          if ((index + 1) % 5 === 0 && currentFilter === 'all') {
-            feedHtml += renderCourseCarousel();
+          const itemHtml = renderFeedItem(item.data, item.type);
+          if (itemHtml) { // Only count items that actually render
+            feedHtml += itemHtml;
+            visibleItemCount++;
+            
+            // Insert carousels after every 4 visible items
+            if (currentFilter === 'all') {
+              if (visibleItemCount % 4 === 0) {
+                feedHtml += renderCourseCarousel();
+              } else if (visibleItemCount % 7 === 0) {
+                feedHtml += renderDealsCarousel();
+              }
+            }
           }
         });
         
@@ -1209,10 +1275,16 @@
         
         // Initialize carousel buttons
         setTimeout(() => {
-          const prevBtn = document.getElementById('prev-btn');
-          const nextBtn = document.getElementById('next-btn');
-          if (prevBtn && nextBtn) {
-            prevBtn.disabled = true; // Start at beginning
+          const coursePrevBtn = document.getElementById('course-prev-btn');
+          const courseNextBtn = document.getElementById('course-next-btn');
+          const dealsPrevBtn = document.getElementById('deals-prev-btn');
+          const dealsNextBtn = document.getElementById('deals-next-btn');
+          
+          if (coursePrevBtn && courseNextBtn) {
+            coursePrevBtn.disabled = true; // Start at beginning
+          }
+          if (dealsPrevBtn && dealsNextBtn) {
+            dealsPrevBtn.disabled = true; // Start at beginning
           }
         }, 100);
       }
