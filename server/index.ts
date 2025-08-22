@@ -49,50 +49,40 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Set up Vite dev server properly
-  const isDev = process.env.NODE_ENV === 'development';
+  // Set proper MIME types for TypeScript and JavaScript modules
+  express.static.mime.define({
+    'text/javascript': ['tsx', 'ts', 'jsx', 'js'],
+    'application/javascript': ['tsx', 'ts', 'jsx', 'js']
+  });
+
+  // Serve client files
+  app.use(express.static(path.resolve(process.cwd(), 'client')));
   
-  if (isDev) {
-    try {
-      const viteModule = await import('vite');
-      const vite = await viteModule.createServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-        root: path.resolve(process.cwd(), 'client'),
-        resolve: {
-          alias: {
-            '@': path.resolve(process.cwd(), 'client/src'),
-            '@shared': path.resolve(process.cwd(), 'shared'),
-          }
-        },
-        define: {
-          'process.env': {},
-          'process.env.NODE_ENV': JSON.stringify('development')
-        }
-      });
-      app.use(vite.ssrFixStacktrace);
-      app.use(vite.middlewares);
-    } catch (error) {
-      console.error('Vite server failed, using fallback:', error);
-      // Fallback: serve static files
-      app.use(express.static(path.resolve(process.cwd(), 'client')));
-      app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api')) {
-          return res.status(404).json({ message: 'API endpoint not found' });
-        }
-        res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
-      });
+  // Special handling for TypeScript files
+  app.get('/src/*.tsx', (req, res) => {
+    const filePath = path.join(process.cwd(), 'client', req.path);
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  });
+  
+  app.get('/src/*.ts', (req, res) => {
+    const filePath = path.join(process.cwd(), 'client', req.path);
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  });
+  
+  app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
+  app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
+  
+  // Handle all other routes - serve the React app
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
     }
-  } else {
-    app.use(express.static(path.resolve(process.cwd(), 'dist/public')));
-    app.get('*', (req, res) => {
-      if (req.path.startsWith('/api')) {
-        return res.status(404).json({ message: 'API endpoint not found' });
-      }
-      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
-    });
-  }
+    
+    const htmlPath = path.resolve(process.cwd(), 'client/index.html');
+    res.sendFile(htmlPath);
+  });
 
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
