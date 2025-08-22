@@ -46,7 +46,7 @@
         <a href="/" class="logo">AI Community Portal</a>
         
         <div class="search-bar">
-          <input type="text" class="search-input" placeholder="Search AI tools..." id="search-input">
+          <input type="text" class="search-input" placeholder="Search anything..." id="search-input">
           <span class="search-icon">🔍</span>
         </div>
         
@@ -64,60 +64,96 @@
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="container">
-        <h1>Discover the Best AI Tools</h1>
-        <p>Find, review, and share the most innovative AI tools and resources. Join our community of AI enthusiasts and builders.</p>
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Left Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <h3>Community Feed</h3>
+          <div class="feed-filters">
+            <a href="#" class="feed-filter active" data-filter="all" onclick="filterFeed('all')">🏠 All</a>
+            <a href="#" class="feed-filter" data-filter="tools" onclick="filterFeed('tools')">🔧 Tools</a>
+            <a href="#" class="feed-filter" data-filter="courses" onclick="filterFeed('courses')">📚 Courses</a>
+            <a href="#" class="feed-filter" data-filter="prompts" onclick="filterFeed('prompts')">✨ Prompts</a>
+            <a href="#" class="feed-filter" data-filter="jobs" onclick="filterFeed('jobs')">💼 Jobs</a>
+            <a href="#" class="feed-filter" data-filter="deals" onclick="filterFeed('deals')">💰 Deals</a>
+            <a href="#" class="feed-filter" data-filter="news" onclick="filterFeed('news')">📰 News</a>
+          </div>
+        </div>
         
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-number" id="tools-count">50</span>
-            <span class="stat-label">AI Tools</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" id="users-count">1000</span>
-            <span class="stat-label">Community Members</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" id="makers-count">50</span>
-            <span class="stat-label">Makers</span>
+        <div class="sidebar-section">
+          <h3>Categories</h3>
+          <div class="category-filters">
+            <a href="#" class="category-filter" data-category="productivity">⚡ Productivity</a>
+            <a href="#" class="category-filter" data-category="writing">✍️ Writing</a>
+            <a href="#" class="category-filter" data-category="design">🎨 Design</a>
+            <a href="#" class="category-filter" data-category="development">👩‍💻 Development</a>
+            <a href="#" class="category-filter" data-category="business">💼 Business</a>
+            <a href="#" class="category-filter" data-category="marketing">📈 Marketing</a>
           </div>
         </div>
-      </div>
-    </section>
+      </aside>
 
-    <!-- Filters -->
-    <section class="filters">
-      <div class="container">
-        <div class="filter-tabs">
-          <a href="#" class="filter-tab active" data-filter="all" onclick="filterTools('all'); return false;">🔥 Popular</a>
-          <a href="#" class="filter-tab" data-filter="productivity" onclick="filterTools('productivity'); return false;">⚡ Productivity</a>
-          <a href="#" class="filter-tab" data-filter="writing" onclick="filterTools('writing'); return false;">✍️ Writing</a>
-          <a href="#" class="filter-tab" data-filter="design" onclick="filterTools('design'); return false;">🎨 Design</a>
-          <a href="#" class="filter-tab" data-filter="development" onclick="filterTools('development'); return false;">👩‍💻 Development</a>
-          <a href="#" class="filter-tab" data-filter="business" onclick="filterTools('business'); return false;">💼 Business</a>
+      <!-- Main Feed -->
+      <main class="feed-content">
+        <div class="feed-header">
+          <div class="sort-tabs">
+            <button class="sort-tab active" data-sort="hot" onclick="setSortOrder('hot')">🔥 Hot</button>
+            <button class="sort-tab" data-sort="new" onclick="setSortOrder('new')">🆕 New</button>
+            <button class="sort-tab" data-sort="top" onclick="setSortOrder('top')">⭐ Top</button>
+          </div>
         </div>
-      </div>
-    </section>
+        
+        <div class="feed-items" id="feed-items">
+          <div class="loading-state">Loading community content...</div>
+        </div>
+      </main>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="container">
-        <div class="tools-grid" id="tools-grid">
-          <div style="text-align: center; padding: 40px; color: #666;">Loading amazing AI tools...</div>
+      <!-- Right Sidebar -->
+      <aside class="right-sidebar">
+        <div class="sidebar-widget">
+          <h3>Community Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-value" id="tools-count">50</span>
+              <span class="stat-label">AI Tools</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="courses-count">50</span>
+              <span class="stat-label">Courses</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="jobs-count">50</span>
+              <span class="stat-label">Jobs</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="prompts-count">50</span>
+              <span class="stat-label">Prompts</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+        
+        <div class="sidebar-widget">
+          <h3>Trending Today</h3>
+          <div class="trending-items" id="trending-items">
+            <div class="trending-item">🔥 GPT-4 Vision capabilities</div>
+            <div class="trending-item">⚡ New Claude 3 features</div>
+            <div class="trending-item">🎨 Midjourney v6 released</div>
+          </div>
+        </div>
+      </aside>
+    </div>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       
       body { 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #fafafa;
+        background: #f7f8fa;
         line-height: 1.6;
+        color: #333;
       }
       
+      /* Header Styles */
       .header {
         background: white;
         border-bottom: 1px solid #e1e5e9;
@@ -128,7 +164,7 @@
       }
       
       .header-content {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
         padding: 0 20px;
         display: flex;
@@ -219,195 +255,328 @@
         background: #f8f9fa;
       }
       
-      .container {
-        max-width: 1200px;
+      /* Main Layout - Reddit Style */
+      .main-layout {
+        max-width: 1400px;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 240px 1fr 280px;
+        gap: 20px;
       }
       
-      .hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 60px 0;
-        text-align: center;
-      }
-      
-      .hero h1 {
-        font-size: 48px;
-        font-weight: 700;
-        margin-bottom: 16px;
-      }
-      
-      .hero p {
-        font-size: 20px;
-        opacity: 0.9;
-        max-width: 600px;
-        margin: 0 auto 40px;
-      }
-      
-      .stats {
-        display: flex;
-        justify-content: center;
-        gap: 40px;
-        margin-top: 40px;
-      }
-      
-      .stat {
-        text-align: center;
-      }
-      
-      .stat-number {
-        font-size: 36px;
-        font-weight: 700;
-        display: block;
-      }
-      
-      .stat-label {
-        font-size: 14px;
-        opacity: 0.8;
-      }
-      
-      .filters {
+      /* Left Sidebar */
+      .sidebar {
         background: white;
-        padding: 20px 0;
-        border-bottom: 1px solid #e1e5e9;
+        border-radius: 8px;
+        border: 1px solid #e1e5e9;
+        height: fit-content;
+        position: sticky;
+        top: 84px;
       }
       
-      .filter-tabs {
+      .sidebar-section {
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      
+      .sidebar-section:last-child {
+        border-bottom: none;
+      }
+      
+      .sidebar-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .feed-filters, .category-filters {
         display: flex;
-        gap: 24px;
-        align-items: center;
+        flex-direction: column;
+        gap: 4px;
       }
       
-      .filter-tab {
-        padding: 8px 16px;
+      .feed-filter, .category-filter {
+        padding: 8px 12px;
         color: #666;
         text-decoration: none;
-        border-radius: 20px;
-        font-weight: 500;
+        border-radius: 4px;
+        font-size: 14px;
         transition: all 0.2s;
       }
       
-      .filter-tab.active {
+      .feed-filter:hover, .category-filter:hover {
+        background: #f8f9fa;
+        color: #333;
+      }
+      
+      .feed-filter.active {
         background: #ff6154;
         color: white;
       }
       
-      .filter-tab:hover:not(.active) {
-        background: #f8f9fa;
-      }
-      
-      .main-content {
-        padding: 40px 0;
-      }
-      
-      .tools-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-        gap: 20px;
-      }
-      
-      .tool-card {
+      /* Feed Content */
+      .feed-content {
         background: white;
-        border-radius: 12px;
-        padding: 24px;
-        border: 1px solid #e1e5e9;
-        transition: all 0.2s;
-        position: relative;
-      }
-      
-      .tool-card:hover {
-        border-color: #ff6154;
-        box-shadow: 0 4px 20px rgba(255,97,84,0.1);
-        transform: translateY(-2px);
-      }
-      
-      .tool-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-      
-      .tool-icon {
-        width: 48px;
-        height: 48px;
         border-radius: 8px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-      }
-      
-      .tool-info h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 4px;
-      }
-      
-      .tool-tagline {
-        color: #666;
-        font-size: 14px;
-      }
-      
-      .tool-description {
-        color: #666;
-        margin-bottom: 16px;
-        line-height: 1.5;
-      }
-      
-      .tool-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      
-      .tool-tags {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      
-      .tag {
-        background: #f0f0f0;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        color: #666;
-      }
-      
-      .vote-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
         border: 1px solid #e1e5e9;
-        border-radius: 6px;
-        background: white;
+      }
+      
+      .feed-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fafafa;
+        border-radius: 8px 8px 0 0;
+      }
+      
+      .sort-tabs {
+        display: flex;
+        gap: 12px;
+      }
+      
+      .sort-tab {
+        padding: 8px 16px;
+        background: none;
+        border: none;
         color: #666;
         font-size: 14px;
         font-weight: 500;
+        border-radius: 20px;
         cursor: pointer;
         transition: all 0.2s;
       }
       
+      .sort-tab:hover {
+        background: #f0f0f0;
+      }
+      
+      .sort-tab.active {
+        background: #ff6154;
+        color: white;
+      }
+      
+      .feed-items {
+        padding: 0;
+      }
+      
+      .loading-state {
+        padding: 40px;
+        text-align: center;
+        color: #666;
+      }
+      
+      /* Feed Item Cards */
+      .feed-item {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+        display: flex;
+        gap: 12px;
+      }
+      
+      .feed-item:hover {
+        background: #fafafa;
+      }
+      
+      .feed-item:last-child {
+        border-bottom: none;
+      }
+      
+      .vote-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 32px;
+      }
+      
+      .vote-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        color: #999;
+      }
+      
       .vote-btn:hover {
-        border-color: #ff6154;
+        background: #f0f0f0;
+        color: #666;
+      }
+      
+      .vote-arrow-up {
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-bottom: 8px solid currentColor;
+      }
+      
+      .vote-count {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+      }
+      
+      .item-content {
+        flex: 1;
+      }
+      
+      .item-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      
+      .item-type-badge {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      
+      .item-type-badge.tools { background: #e3f2fd; color: #1976d2; }
+      .item-type-badge.courses { background: #e8f5e8; color: #388e3c; }
+      .item-type-badge.jobs { background: #fff3e0; color: #f57c00; }
+      .item-type-badge.prompts { background: #f3e5f5; color: #7b1fa2; }
+      .item-type-badge.deals { background: #ffebee; color: #d32f2f; }
+      .item-type-badge.news { background: #f1f8e9; color: #689f38; }
+      
+      .item-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        text-decoration: none;
+        margin-bottom: 4px;
+        display: block;
+      }
+      
+      .item-title:hover {
         color: #ff6154;
       }
       
-      .vote-arrow {
-        width: 0;
-        height: 0;
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-bottom: 6px solid currentColor;
+      .item-description {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 8px;
+      }
+      
+      .item-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: #999;
+      }
+      
+      .item-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      
+      .bookmark-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        color: #999;
+        font-size: 12px;
+      }
+      
+      .bookmark-btn:hover {
+        background: #f0f0f0;
+        color: #666;
+      }
+      
+      /* Right Sidebar */
+      .right-sidebar {
+        position: sticky;
+        top: 84px;
+        height: fit-content;
+      }
+      
+      .sidebar-widget {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e1e5e9;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+      
+      .sidebar-widget h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #333;
+      }
+      
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      
+      .stat-item {
+        text-align: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+      
+      .stat-value {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: #ff6154;
+      }
+      
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+      
+      .trending-items {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .trending-item {
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #666;
+      }
+      
+      /* Responsive */
+      @media (max-width: 1200px) {
+        .main-layout {
+          grid-template-columns: 200px 1fr 250px;
+        }
       }
       
       @media (max-width: 768px) {
+        .main-layout {
+          grid-template-columns: 1fr;
+          padding: 10px;
+        }
+        
+        .sidebar, .right-sidebar {
+          position: static;
+        }
+        
         .header-content {
           flex-direction: column;
           height: auto;
@@ -418,138 +587,252 @@
           margin: 12px 0;
           max-width: none;
         }
-        
-        .hero h1 {
-          font-size: 36px;
-        }
-        
-        .hero p {
-          font-size: 18px;
-        }
-        
-        .stats {
-          gap: 20px;
-        }
-        
-        .tools-grid {
-          grid-template-columns: 1fr;
-        }
-        
-        .filter-tabs {
-          flex-wrap: wrap;
-        }
       }
     </style>
     
     <script>
-      let allTools = [];
+      let allFeedItems = [];
+      let currentFilter = 'all';
+      let currentSort = 'hot';
       let currentUser = null;
       
       function escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text || '';
         return div.innerHTML;
       }
       
-      function getToolIcon(name) {
-        return name ? name.charAt(0).toUpperCase() : 'AI';
+      // Sample data for content types that don't have API endpoints yet
+      function generateSampleContent(type, count = 5) {
+        const samples = {
+          courses: [
+            { name: 'Master ChatGPT Prompting', description: 'Learn advanced prompt engineering techniques', price: 49, level: 'Intermediate' },
+            { name: 'AI Art with Midjourney', description: 'Create stunning AI-generated artwork', price: 79, level: 'Beginner' },
+            { name: 'Python for AI Development', description: 'Build AI applications with Python', price: 99, level: 'Advanced' }
+          ],
+          jobs: [
+            { title: 'AI Engineer', company: 'OpenAI', location: 'San Francisco', salary: '$150k-200k', type: 'Full-time' },
+            { title: 'ML Research Scientist', company: 'Google DeepMind', location: 'London', salary: '£80k-120k', type: 'Full-time' },
+            { title: 'Prompt Engineer', company: 'Anthropic', location: 'Remote', salary: '$120k-180k', type: 'Contract' }
+          ],
+          prompts: [
+            { name: 'Blog Writer Pro', description: 'Generate engaging blog posts in any niche', price: 9.99, category: 'Writing' },
+            { name: 'Code Reviewer', description: 'Comprehensive code review and optimization', price: 14.99, category: 'Development' },
+            { name: 'Marketing Copy Generator', description: 'Create compelling marketing copy', price: 12.99, category: 'Marketing' }
+          ],
+          deals: [
+            { title: 'Claude Pro 50% Off', description: 'Limited time offer on Claude Pro subscription', discount: '50%', originalPrice: 20, newPrice: 10 },
+            { title: 'ChatGPT Plus 3 Months Free', description: 'Get 3 months free with annual plan', discount: '3 months free', originalPrice: 240, newPrice: 180 },
+            { title: 'Midjourney 30% Student Discount', description: 'Special pricing for students and educators', discount: '30%', originalPrice: 30, newPrice: 21 }
+          ],
+          news: [
+            { title: 'GPT-5 Training Reportedly Complete', description: 'OpenAI reportedly completed training for next-generation model', author: 'AI News Team', category: 'AI Models' },
+            { title: 'Google Announces Gemini Ultra 1.5', description: 'Enhanced reasoning capabilities and longer context windows', author: 'Tech Reporter', category: 'Technology' },
+            { title: 'New AI Safety Regulations Proposed', description: 'European Union proposes comprehensive AI governance framework', author: 'Policy News', category: 'Regulation' }
+          ]
+        };
+        
+        return samples[type] || [];
       }
       
-      function renderTool(tool) {
-        const tags = tool.categories ? tool.categories.slice(0, 3) : ['AI Tool'];
-        const votes = tool.votes || Math.floor(Math.random() * 100) + 1;
+      function renderFeedItem(item, type) {
+        const votes = item.votes || Math.floor(Math.random() * 50) + 5;
+        const hasVoting = ['tools', 'courses', 'prompts', 'news'].includes(type);
+        const hasBookmarking = true; // All items can be bookmarked
+        
+        let content = '';
+        
+        if (type === 'tools') {
+          content = `
+            <a href="#" class="item-title">${escapeHtml(item.name)}</a>
+            <div class="item-description">${escapeHtml((item.description || '').substring(0, 150))}...</div>
+            <div class="item-meta">
+              <span>🔧 Tool</span>
+              <span>⭐ ${item.rating || '4.5'}</span>
+              <span>👥 ${Math.floor(Math.random() * 1000) + 100} users</span>
+            </div>
+          `;
+        } else if (type === 'courses') {
+          const course = generateSampleContent('courses')[Math.floor(Math.random() * 3)];
+          content = `
+            <a href="#" class="item-title">${escapeHtml(course.name)}</a>
+            <div class="item-description">${escapeHtml(course.description)}</div>
+            <div class="item-meta">
+              <span>📚 Course</span>
+              <span>💰 $${course.price}</span>
+              <span>📊 ${course.level}</span>
+            </div>
+          `;
+        } else if (type === 'jobs') {
+          const job = generateSampleContent('jobs')[Math.floor(Math.random() * 3)];
+          content = `
+            <a href="#" class="item-title">${escapeHtml(job.title)} at ${escapeHtml(job.company)}</a>
+            <div class="item-description">Join our team as ${job.title.toLowerCase()}. Remote-friendly company building the future of AI.</div>
+            <div class="item-meta">
+              <span>💼 Job</span>
+              <span>📍 ${job.location}</span>
+              <span>💰 ${job.salary}</span>
+              <span>⏰ ${job.type}</span>
+            </div>
+          `;
+        } else if (type === 'prompts') {
+          const prompt = generateSampleContent('prompts')[Math.floor(Math.random() * 3)];
+          content = `
+            <a href="#" class="item-title">${escapeHtml(prompt.name)}</a>
+            <div class="item-description">${escapeHtml(prompt.description)}</div>
+            <div class="item-meta">
+              <span>✨ Prompt</span>
+              <span>💰 $${prompt.price}</span>
+              <span>📂 ${prompt.category}</span>
+            </div>
+          `;
+        } else if (type === 'deals') {
+          const deal = generateSampleContent('deals')[Math.floor(Math.random() * 3)];
+          content = `
+            <a href="#" class="item-title">${escapeHtml(deal.title)}</a>
+            <div class="item-description">${escapeHtml(deal.description)}</div>
+            <div class="item-meta">
+              <span>💰 Deal</span>
+              <span>🔥 ${deal.discount}</span>
+              <span>💸 $${deal.newPrice} (was $${deal.originalPrice})</span>
+            </div>
+          `;
+        } else if (type === 'news') {
+          const news = generateSampleContent('news')[Math.floor(Math.random() * 3)];
+          content = `
+            <a href="#" class="item-title">${escapeHtml(news.title)}</a>
+            <div class="item-description">${escapeHtml(news.description)}</div>
+            <div class="item-meta">
+              <span>📰 News</span>
+              <span>👤 ${news.author}</span>
+              <span>📂 ${news.category}</span>
+              <span>⏰ 2h ago</span>
+            </div>
+          `;
+        }
         
         return `
-          <div class="tool-card" data-id="${tool.id}">
-            <div class="tool-header">
-              <div class="tool-icon">${getToolIcon(tool.name)}</div>
-              <div class="tool-info">
-                <h3>${escapeHtml(tool.name || 'AI Tool')}</h3>
-                <div class="tool-tagline">${escapeHtml(tool.shortDescription || tool.tagline || 'AI-powered tool')}</div>
+          <div class="feed-item" data-id="${item.id}" data-type="${type}">
+            ${hasVoting ? `
+              <div class="vote-section">
+                <button class="vote-btn" onclick="handleVote('${item.id}', '${type}')">
+                  <div class="vote-arrow-up"></div>
+                </button>
+                <span class="vote-count">${votes}</span>
               </div>
-            </div>
-            <div class="tool-description">
-              ${escapeHtml((tool.description || 'Discover the power of AI with this innovative tool.').substring(0, 120))}...
-            </div>
-            <div class="tool-footer">
-              <div class="tool-tags">
-                ${tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+            ` : ''}
+            <div class="item-content">
+              <div class="item-header">
+                <span class="item-type-badge ${type}">${type.toUpperCase()}</span>
               </div>
-              <button class="vote-btn" onclick="handleVote('${tool.id}')">
-                <span class="vote-arrow"></span>
-                ${votes}
-              </button>
+              ${content}
+            </div>
+            <div class="item-actions">
+              ${hasBookmarking ? `
+                <button class="bookmark-btn" onclick="handleBookmark('${item.id}', '${type}')">
+                  📌 Save
+                </button>
+              ` : ''}
             </div>
           </div>
         `;
       }
       
-      function renderTools(tools) {
-        const grid = document.getElementById('tools-grid');
-        if (!grid) return;
+      function renderFeed(items) {
+        const feedContainer = document.getElementById('feed-items');
+        if (!feedContainer) return;
         
-        if (tools.length === 0) {
-          grid.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No tools found. Try adjusting your filters.</div>';
+        if (items.length === 0) {
+          feedContainer.innerHTML = '<div class="loading-state">No content found. Try adjusting your filters.</div>';
           return;
         }
         
-        grid.innerHTML = tools.map(renderTool).join('');
+        feedContainer.innerHTML = items.map(item => renderFeedItem(item.data, item.type)).join('');
       }
       
-      function filterTools(category = 'all') {
-        let filtered = allTools;
+      function filterFeed(filter) {
+        currentFilter = filter;
         
-        if (category !== 'all') {
-          filtered = allTools.filter(tool => 
-            tool.categories && tool.categories.some(cat => 
-              cat.toLowerCase().includes(category.toLowerCase())
-            )
-          );
+        let filtered = allFeedItems;
+        if (filter !== 'all') {
+          filtered = allFeedItems.filter(item => item.type === filter);
         }
         
-        renderTools(filtered);
+        renderFeed(filtered);
         
-        // Update active tab
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-          tab.classList.remove('active');
-        });
-        document.querySelector(`[data-filter="${category}"]`)?.classList.add('active');
+        // Update active filter
+        document.querySelectorAll('.feed-filter').forEach(f => f.classList.remove('active'));
+        document.querySelector(`[data-filter="${filter}"]`)?.classList.add('active');
       }
       
-      function handleVote(toolId) {
-        // Placeholder for voting functionality
-        console.log('Voting for tool:', toolId);
+      function setSortOrder(sort) {
+        currentSort = sort;
+        
+        // Update active sort tab
+        document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`[data-sort="${sort}"]`)?.classList.add('active');
+        
+        // Apply current filter with new sort
+        filterFeed(currentFilter);
       }
       
-      function handleSearch(query) {
-        const filtered = allTools.filter(tool => 
-          tool.name.toLowerCase().includes(query.toLowerCase()) ||
-          (tool.description && tool.description.toLowerCase().includes(query.toLowerCase()))
-        );
-        renderTools(filtered);
+      function handleVote(itemId, type) {
+        console.log(`Voting for ${type}:`, itemId);
+        // TODO: Implement actual voting API call
       }
       
-      async function loadData() {
+      function handleBookmark(itemId, type) {
+        console.log(`Bookmarking ${type}:`, itemId);
+        // TODO: Implement actual bookmarking API call
+      }
+      
+      async function loadFeedData() {
         try {
-          const [statsRes, toolsRes] = await Promise.all([
-            fetch('/api/stats'),
-            fetch('/api/tools')
-          ]);
-          
-          const stats = await statsRes.json();
+          // Load tools (working endpoint)
+          const toolsRes = await fetch('/api/tools');
           const tools = await toolsRes.json();
           
-          // Update stats
-          if (stats.toolsCount) document.getElementById('tools-count').textContent = stats.toolsCount;
-          if (stats.usersCount) document.getElementById('users-count').textContent = stats.usersCount;
-          if (stats.promptsCount) document.getElementById('makers-count').textContent = stats.promptsCount;
+          // Load stats
+          const statsRes = await fetch('/api/stats');
+          const stats = await statsRes.json();
           
-          // Store and render tools
-          allTools = tools || [];
-          renderTools(allTools);
+          // Update stats display
+          if (stats.toolsCount) document.getElementById('tools-count').textContent = stats.toolsCount;
+          if (stats.coursesCount) document.getElementById('courses-count').textContent = stats.coursesCount;
+          if (stats.jobsCount) document.getElementById('jobs-count').textContent = stats.jobsCount;
+          if (stats.promptsCount) document.getElementById('prompts-count').textContent = stats.promptsCount;
+          
+          // Create mixed feed from all content types
+          allFeedItems = [];
+          
+          // Add tools (real data)
+          if (tools && tools.length > 0) {
+            tools.slice(0, 10).forEach(tool => {
+              allFeedItems.push({ type: 'tools', data: tool });
+            });
+          }
+          
+          // Add sample content for other types (until APIs are ready)
+          const contentTypes = ['courses', 'jobs', 'prompts', 'deals', 'news'];
+          contentTypes.forEach(type => {
+            const samples = generateSampleContent(type);
+            samples.forEach((sample, index) => {
+              allFeedItems.push({ 
+                type, 
+                data: { ...sample, id: `${type}-${index}` }
+              });
+            });
+          });
+          
+          // Shuffle feed for mixed content experience
+          allFeedItems = allFeedItems.sort(() => Math.random() - 0.5);
+          
+          renderFeed(allFeedItems);
           
         } catch (error) {
-          console.error('Failed to load data:', error);
+          console.error('Failed to load feed data:', error);
+          document.getElementById('feed-items').innerHTML = 
+            '<div class="loading-state">Failed to load content. Please refresh the page.</div>';
         }
       }
       
@@ -558,13 +841,25 @@
         const searchInput = document.getElementById('search-input');
         if (searchInput) {
           searchInput.addEventListener('input', (e) => {
-            handleSearch(e.target.value);
+            const query = e.target.value.toLowerCase();
+            const filtered = allFeedItems.filter(item => 
+              (item.data.name && item.data.name.toLowerCase().includes(query)) ||
+              (item.data.title && item.data.title.toLowerCase().includes(query)) ||
+              (item.data.description && item.data.description.toLowerCase().includes(query))
+            );
+            renderFeed(filtered);
           });
         }
         
         // Load initial data
-        loadData();
+        loadFeedData();
       });
+      
+      // Global functions for onclick handlers
+      window.filterFeed = filterFeed;
+      window.setSortOrder = setSortOrder;
+      window.handleVote = handleVote;
+      window.handleBookmark = handleBookmark;
     </script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
