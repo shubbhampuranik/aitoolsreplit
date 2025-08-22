@@ -200,6 +200,7 @@
         background: #f7f8fa;
         line-height: 1.6;
         color: #333;
+        overflow-x: hidden;
       }
       
       /* Header Styles */
@@ -312,6 +313,8 @@
         display: grid;
         grid-template-columns: 240px 1fr 280px;
         gap: 20px;
+        width: 100%;
+        overflow-x: hidden;
       }
       
       /* Left Sidebar */
@@ -731,6 +734,8 @@
         margin: 20px 0;
         padding: 24px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        overflow: hidden;
       }
       
       .carousel-header {
@@ -778,6 +783,7 @@
       .carousel-container {
         position: relative;
         overflow: hidden;
+        width: 100%;
       }
       
       .carousel-track {
@@ -788,6 +794,8 @@
       
       .course-card {
         flex: 0 0 280px;
+        min-width: 280px;
+        max-width: 280px;
         background: white;
         border-radius: 6px;
         padding: 20px;
@@ -919,6 +927,8 @@
       @media (max-width: 1200px) {
         .main-layout {
           grid-template-columns: 200px 1fr 250px;
+          max-width: 100%;
+          padding: 16px;
         }
       }
       
@@ -926,6 +936,7 @@
         .main-layout {
           grid-template-columns: 1fr;
           padding: 10px;
+          max-width: 100%;
         }
         
         .sidebar, .right-sidebar {
@@ -941,6 +952,28 @@
         .search-bar {
           margin: 12px 0;
           max-width: none;
+        }
+        
+        .course-card {
+          flex: 0 0 250px;
+          min-width: 250px;
+          max-width: 250px;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .main-layout {
+          padding: 8px;
+        }
+        
+        .course-card {
+          flex: 0 0 200px;
+          min-width: 200px;
+          max-width: 200px;
+        }
+        
+        .header-content {
+          padding: 8px 12px;
         }
       }
     </style>
