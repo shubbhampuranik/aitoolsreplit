@@ -71,12 +71,9 @@
         <div class="sidebar-section">
           <h3>Community Feed</h3>
           <div class="feed-filters">
-            <a href="#" class="feed-filter active" data-filter="all" onclick="filterFeed('all')">🏠 All</a>
+            <a href="#" class="feed-filter active" data-filter="all" onclick="filterFeed('all')">🏠 For You</a>
             <a href="#" class="feed-filter" data-filter="tools" onclick="filterFeed('tools')">🔧 Tools</a>
-            <a href="#" class="feed-filter" data-filter="courses" onclick="filterFeed('courses')">📚 Courses</a>
             <a href="#" class="feed-filter" data-filter="prompts" onclick="filterFeed('prompts')">✨ Prompts</a>
-            <a href="#" class="feed-filter" data-filter="jobs" onclick="filterFeed('jobs')">💼 Jobs</a>
-            <a href="#" class="feed-filter" data-filter="deals" onclick="filterFeed('deals')">💰 Deals</a>
             <a href="#" class="feed-filter" data-filter="news" onclick="filterFeed('news')">📰 News</a>
           </div>
         </div>
@@ -90,6 +87,15 @@
             <a href="#" class="category-filter" data-category="development">👩‍💻 Development</a>
             <a href="#" class="category-filter" data-category="business">💼 Business</a>
             <a href="#" class="category-filter" data-category="marketing">📈 Marketing</a>
+          </div>
+        </div>
+        
+        <div class="sidebar-section">
+          <h3>AI Recommendations</h3>
+          <div class="ai-recommendations" id="ai-recommendations">
+            <div class="recommendation-item">🎯 Based on your interests</div>
+            <div class="recommendation-item">🔍 Trending in your categories</div>
+            <div class="recommendation-item">⭐ Top rated this week</div>
           </div>
         </div>
       </aside>
@@ -119,6 +125,10 @@
               <span class="stat-label">AI Tools</span>
             </div>
             <div class="stat-item">
+              <span class="stat-value" id="prompts-count">50</span>
+              <span class="stat-label">Prompts</span>
+            </div>
+            <div class="stat-item">
               <span class="stat-value" id="courses-count">50</span>
               <span class="stat-label">Courses</span>
             </div>
@@ -126,15 +136,54 @@
               <span class="stat-value" id="jobs-count">50</span>
               <span class="stat-label">Jobs</span>
             </div>
-            <div class="stat-item">
-              <span class="stat-value" id="prompts-count">50</span>
-              <span class="stat-label">Prompts</span>
+          </div>
+        </div>
+        
+        <div class="sidebar-widget">
+          <div class="widget-header">
+            <h3>💼 Latest Jobs</h3>
+            <a href="/jobs" class="view-all-link">View All</a>
+          </div>
+          <div class="sidebar-jobs" id="sidebar-jobs">
+            <div class="sidebar-job-item">
+              <div class="job-title">AI Engineer</div>
+              <div class="job-company">OpenAI • San Francisco</div>
+              <div class="job-salary">$150k-200k</div>
+            </div>
+            <div class="sidebar-job-item">
+              <div class="job-title">ML Research Scientist</div>
+              <div class="job-company">Google DeepMind • London</div>
+              <div class="job-salary">£80k-120k</div>
+            </div>
+            <div class="sidebar-job-item">
+              <div class="job-title">Prompt Engineer</div>
+              <div class="job-company">Anthropic • Remote</div>
+              <div class="job-salary">$120k-180k</div>
             </div>
           </div>
         </div>
         
         <div class="sidebar-widget">
-          <h3>Trending Today</h3>
+          <div class="widget-header">
+            <h3>🔥 Hot Deals</h3>
+            <a href="/deals" class="view-all-link">View All</a>
+          </div>
+          <div class="sidebar-deals" id="sidebar-deals">
+            <div class="sidebar-deal-item">
+              <div class="deal-title">Claude Pro 50% Off</div>
+              <div class="deal-discount">50% OFF</div>
+              <div class="deal-price">$10 <span class="original-price">$20</span></div>
+            </div>
+            <div class="sidebar-deal-item">
+              <div class="deal-title">ChatGPT Plus 3 Months Free</div>
+              <div class="deal-discount">3 MONTHS FREE</div>
+              <div class="deal-price">$180 <span class="original-price">$240</span></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-widget">
+          <h3>🔥 Trending Today</h3>
           <div class="trending-items" id="trending-items">
             <div class="trending-item">🔥 GPT-4 Vision capabilities</div>
             <div class="trending-item">⚡ New Claude 3 features</div>
@@ -560,6 +609,284 @@
         color: #666;
       }
       
+      .recommendation-item {
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 6px;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      
+      .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      
+      .view-all-link {
+        color: #ff6154;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      .view-all-link:hover {
+        text-decoration: underline;
+      }
+      
+      /* Sidebar Jobs */
+      .sidebar-job-item {
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border-left: 3px solid #f57c00;
+      }
+      
+      .job-title {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+      }
+      
+      .job-company {
+        color: #666;
+        font-size: 12px;
+        margin: 2px 0;
+      }
+      
+      .job-salary {
+        color: #f57c00;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      
+      /* Sidebar Deals */
+      .sidebar-deal-item {
+        padding: 12px;
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border-left: 3px solid #d32f2f;
+        position: relative;
+      }
+      
+      .deal-title {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+      }
+      
+      .deal-discount {
+        background: #d32f2f;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        position: absolute;
+        top: 6px;
+        right: 6px;
+      }
+      
+      .deal-price {
+        color: #d32f2f;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      
+      .original-price {
+        text-decoration: line-through;
+        color: #999;
+        font-size: 12px;
+        margin-left: 4px;
+      }
+      
+      /* Course Carousel */
+      .course-carousel {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e1e5e9;
+        margin: 20px 0;
+        padding: 20px;
+      }
+      
+      .carousel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      
+      .carousel-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      
+      .carousel-nav {
+        display: flex;
+        gap: 8px;
+      }
+      
+      .carousel-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #e1e5e9;
+        background: white;
+        color: #666;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      
+      .carousel-btn:hover {
+        border-color: #ff6154;
+        color: #ff6154;
+      }
+      
+      .carousel-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .carousel-container {
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .carousel-track {
+        display: flex;
+        gap: 16px;
+        transition: transform 0.3s ease;
+      }
+      
+      .course-card {
+        flex: 0 0 280px;
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        border-radius: 8px;
+        padding: 16px;
+        border-left: 4px solid #388e3c;
+      }
+      
+      .course-card-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+      
+      .course-card-description {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 12px;
+        line-height: 1.4;
+      }
+      
+      .course-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .course-price {
+        color: #388e3c;
+        font-weight: 600;
+        font-size: 16px;
+      }
+      
+      .course-level {
+        background: #388e3c;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+      }
+      
+      /* Enhanced Feed Item Cards */
+      .feed-item.tool-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #1976d2;
+      }
+      
+      .feed-item.prompt-card {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        border-left: 4px solid #7b1fa2;
+      }
+      
+      .feed-item.news-card {
+        background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+        border-left: 4px solid #689f38;
+      }
+      
+      .tool-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: white;
+        border: 1px solid #e1e5e9;
+      }
+      
+      .rating-stars {
+        color: #ffa726;
+        font-size: 14px;
+      }
+      
+      .user-count {
+        background: #1976d2;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+      }
+      
+      .price-tag {
+        background: #7b1fa2;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      
+      .news-thumbnail {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #f0f0f0;
+        margin-left: 12px;
+      }
+      
+      .news-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      
+      .author-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff6154, #ff8a65);
+      }
+      
+      .reading-time {
+        background: #689f38;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 10px;
+      }
+      
       /* Responsive */
       @media (max-width: 1200px) {
         .main-layout {
@@ -637,82 +964,77 @@
       
       function renderFeedItem(item, type) {
         const votes = item.votes || Math.floor(Math.random() * 50) + 5;
-        const hasVoting = ['tools', 'courses', 'prompts', 'news'].includes(type);
-        const hasBookmarking = true; // All items can be bookmarked
+        const hasVoting = ['tools', 'prompts', 'news'].includes(type);
+        const hasBookmarking = true;
         
         let content = '';
+        let cardClass = '';
         
         if (type === 'tools') {
+          cardClass = 'tool-card';
+          const logoUrl = item.logoUrl || `https://via.placeholder.com/40x40/1976d2/white?text=${encodeURIComponent(item.name?.charAt(0) || 'T')}`;
+          const rating = item.rating || (4.0 + Math.random() * 1.0).toFixed(1);
+          const userCount = Math.floor(Math.random() * 5000) + 500;
+          const categories = item.categories || ['AI Tool'];
+          
           content = `
-            <a href="#" class="item-title">${escapeHtml(item.name)}</a>
-            <div class="item-description">${escapeHtml((item.description || '').substring(0, 150))}...</div>
-            <div class="item-meta">
-              <span>🔧 Tool</span>
-              <span>⭐ ${item.rating || '4.5'}</span>
-              <span>👥 ${Math.floor(Math.random() * 1000) + 100} users</span>
-            </div>
-          `;
-        } else if (type === 'courses') {
-          const course = generateSampleContent('courses')[Math.floor(Math.random() * 3)];
-          content = `
-            <a href="#" class="item-title">${escapeHtml(course.name)}</a>
-            <div class="item-description">${escapeHtml(course.description)}</div>
-            <div class="item-meta">
-              <span>📚 Course</span>
-              <span>💰 $${course.price}</span>
-              <span>📊 ${course.level}</span>
-            </div>
-          `;
-        } else if (type === 'jobs') {
-          const job = generateSampleContent('jobs')[Math.floor(Math.random() * 3)];
-          content = `
-            <a href="#" class="item-title">${escapeHtml(job.title)} at ${escapeHtml(job.company)}</a>
-            <div class="item-description">Join our team as ${job.title.toLowerCase()}. Remote-friendly company building the future of AI.</div>
-            <div class="item-meta">
-              <span>💼 Job</span>
-              <span>📍 ${job.location}</span>
-              <span>💰 ${job.salary}</span>
-              <span>⏰ ${job.type}</span>
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <img src="${logoUrl}" alt="${escapeHtml(item.name)}" class="tool-logo" onerror="this.src='https://via.placeholder.com/40x40/1976d2/white?text=T'">
+              <div style="flex: 1;">
+                <a href="#" class="item-title">${escapeHtml(item.name)}</a>
+                <div class="item-description">${escapeHtml((item.description || 'Innovative AI tool for enhanced productivity').substring(0, 120))}...</div>
+                <div class="item-meta">
+                  <span class="rating-stars">⭐ ${rating}</span>
+                  <span class="user-count">${userCount.toLocaleString()} users</span>
+                  ${categories.slice(0, 2).map(cat => `<span class="tag">${escapeHtml(cat)}</span>`).join('')}
+                </div>
+              </div>
             </div>
           `;
         } else if (type === 'prompts') {
+          cardClass = 'prompt-card';
           const prompt = generateSampleContent('prompts')[Math.floor(Math.random() * 3)];
+          const popularity = Math.floor(Math.random() * 100) + 1;
+          
           content = `
-            <a href="#" class="item-title">${escapeHtml(prompt.name)}</a>
-            <div class="item-description">${escapeHtml(prompt.description)}</div>
-            <div class="item-meta">
-              <span>✨ Prompt</span>
-              <span>💰 $${prompt.price}</span>
-              <span>📂 ${prompt.category}</span>
-            </div>
-          `;
-        } else if (type === 'deals') {
-          const deal = generateSampleContent('deals')[Math.floor(Math.random() * 3)];
-          content = `
-            <a href="#" class="item-title">${escapeHtml(deal.title)}</a>
-            <div class="item-description">${escapeHtml(deal.description)}</div>
-            <div class="item-meta">
-              <span>💰 Deal</span>
-              <span>🔥 ${deal.discount}</span>
-              <span>💸 $${deal.newPrice} (was $${deal.originalPrice})</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="flex: 1;">
+                <a href="#" class="item-title">${escapeHtml(prompt.name)}</a>
+                <div class="item-description">${escapeHtml(prompt.description)}</div>
+                <div class="item-meta">
+                  <span>✨ Prompt</span>
+                  <span>📂 ${prompt.category}</span>
+                  <span>📈 ${popularity}% popularity</span>
+                </div>
+              </div>
+              <div class="price-tag">$${prompt.price}</div>
             </div>
           `;
         } else if (type === 'news') {
+          cardClass = 'news-card';
           const news = generateSampleContent('news')[Math.floor(Math.random() * 3)];
+          const readTime = Math.floor(Math.random() * 8) + 2;
+          
           content = `
-            <a href="#" class="item-title">${escapeHtml(news.title)}</a>
-            <div class="item-description">${escapeHtml(news.description)}</div>
-            <div class="item-meta">
-              <span>📰 News</span>
-              <span>👤 ${news.author}</span>
-              <span>📂 ${news.category}</span>
-              <span>⏰ 2h ago</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="flex: 1;">
+                <a href="#" class="item-title">${escapeHtml(news.title)}</a>
+                <div class="item-description">${escapeHtml(news.description)}</div>
+                <div class="news-meta">
+                  <div class="author-avatar"></div>
+                  <span style="font-size: 12px; color: #999;">${news.author}</span>
+                  <span style="color: #999;">•</span>
+                  <span style="font-size: 12px; color: #999;">2h ago</span>
+                  <span class="reading-time">${readTime} min read</span>
+                </div>
+              </div>
+              <div class="news-thumbnail"></div>
             </div>
           `;
         }
         
         return `
-          <div class="feed-item" data-id="${item.id}" data-type="${type}">
+          <div class="feed-item ${cardClass}" data-id="${item.id}" data-type="${type}">
             ${hasVoting ? `
               <div class="vote-section">
                 <button class="vote-btn" onclick="handleVote('${item.id}', '${type}')">
@@ -729,13 +1051,65 @@
             </div>
             <div class="item-actions">
               ${hasBookmarking ? `
-                <button class="bookmark-btn" onclick="handleBookmark('${item.id}', '${type}')">
-                  📌 Save
+                <button class="bookmark-btn" onclick="handleBookmark('${item.id}', '${type}')" title="Bookmark this item">
+                  📌
                 </button>
               ` : ''}
             </div>
           </div>
         `;
+      }
+      
+      function renderCourseCarousel() {
+        const courses = generateSampleContent('courses');
+        
+        return `
+          <div class="course-carousel">
+            <div class="carousel-header">
+              <h2 class="carousel-title">📚 Featured Courses</h2>
+              <div class="carousel-nav">
+                <button class="carousel-btn" onclick="scrollCarousel('prev')" id="prev-btn">‹</button>
+                <button class="carousel-btn" onclick="scrollCarousel('next')" id="next-btn">›</button>
+                <a href="/courses" class="view-all-link" style="margin-left: 12px;">View All</a>
+              </div>
+            </div>
+            <div class="carousel-container">
+              <div class="carousel-track" id="carousel-track">
+                ${courses.map(course => `
+                  <div class="course-card">
+                    <div class="course-card-title">${escapeHtml(course.name)}</div>
+                    <div class="course-card-description">${escapeHtml(course.description)}</div>
+                    <div class="course-card-footer">
+                      <span class="course-price">$${course.price}</span>
+                      <span class="course-level">${course.level}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      let carouselPosition = 0;
+      const cardWidth = 296; // 280px + 16px gap
+      
+      function scrollCarousel(direction) {
+        const track = document.getElementById('carousel-track');
+        const container = track.parentElement;
+        const maxScroll = (track.children.length * cardWidth) - container.offsetWidth;
+        
+        if (direction === 'next') {
+          carouselPosition = Math.min(carouselPosition + cardWidth * 2, maxScroll);
+        } else {
+          carouselPosition = Math.max(carouselPosition - cardWidth * 2, 0);
+        }
+        
+        track.style.transform = `translateX(-${carouselPosition}px)`;
+        
+        // Update button states
+        document.getElementById('prev-btn').disabled = carouselPosition === 0;
+        document.getElementById('next-btn').disabled = carouselPosition >= maxScroll;
       }
       
       function renderFeed(items) {
@@ -747,7 +1121,26 @@
           return;
         }
         
-        feedContainer.innerHTML = items.map(item => renderFeedItem(item.data, item.type)).join('');
+        let feedHtml = '';
+        items.forEach((item, index) => {
+          feedHtml += renderFeedItem(item.data, item.type);
+          
+          // Insert course carousel after every 5 items
+          if ((index + 1) % 5 === 0 && currentFilter === 'all') {
+            feedHtml += renderCourseCarousel();
+          }
+        });
+        
+        feedContainer.innerHTML = feedHtml;
+        
+        // Initialize carousel buttons
+        setTimeout(() => {
+          const prevBtn = document.getElementById('prev-btn');
+          const nextBtn = document.getElementById('next-btn');
+          if (prevBtn && nextBtn) {
+            prevBtn.disabled = true; // Start at beginning
+          }
+        }, 100);
       }
       
       function filterFeed(filter) {
@@ -756,6 +1149,9 @@
         let filtered = allFeedItems;
         if (filter !== 'all') {
           filtered = allFeedItems.filter(item => item.type === filter);
+        } else {
+          // For "For You" tab, apply AI personalization
+          filtered = personalizeContent(allFeedItems);
         }
         
         renderFeed(filtered);
@@ -763,6 +1159,54 @@
         // Update active filter
         document.querySelectorAll('.feed-filter').forEach(f => f.classList.remove('active'));
         document.querySelector(`[data-filter="${filter}"]`)?.classList.add('active');
+      }
+      
+      function personalizeContent(items) {
+        // AI-powered personalization based on user behavior
+        // For now, we'll simulate this with intelligent sorting
+        const userInterests = getUserInterests();
+        
+        return items.sort((a, b) => {
+          const scoreA = calculatePersonalizationScore(a, userInterests);
+          const scoreB = calculatePersonalizationScore(b, userInterests);
+          return scoreB - scoreA;
+        });
+      }
+      
+      function getUserInterests() {
+        // Simulate user interest tracking
+        // In real implementation, this would come from user behavior, clicks, bookmarks
+        return {
+          categories: ['productivity', 'writing', 'development'],
+          contentTypes: ['tools', 'prompts'],
+          recentActivity: ['ai-tools', 'prompt-engineering']
+        };
+      }
+      
+      function calculatePersonalizationScore(item, interests) {
+        let score = Math.random() * 10; // Base random score
+        
+        // Boost score based on user's preferred content types
+        if (interests.contentTypes.includes(item.type)) {
+          score += 20;
+        }
+        
+        // Boost score for user's interested categories
+        if (item.data.categories) {
+          const matchingCategories = item.data.categories.filter(cat => 
+            interests.categories.some(userCat => 
+              cat.toLowerCase().includes(userCat.toLowerCase())
+            )
+          );
+          score += matchingCategories.length * 15;
+        }
+        
+        // Boost newer content
+        if (item.type === 'tools' || item.type === 'news') {
+          score += 5;
+        }
+        
+        return score;
       }
       
       function setSortOrder(sort) {
@@ -812,8 +1256,8 @@
             });
           }
           
-          // Add sample content for other types (until APIs are ready)
-          const contentTypes = ['courses', 'jobs', 'prompts', 'deals', 'news'];
+          // Add sample content for feed types (excluding jobs/deals - they're in sidebar)
+          const contentTypes = ['prompts', 'news'];
           contentTypes.forEach(type => {
             const samples = generateSampleContent(type);
             samples.forEach((sample, index) => {
@@ -860,6 +1304,7 @@
       window.setSortOrder = setSortOrder;
       window.handleVote = handleVote;
       window.handleBookmark = handleBookmark;
+      window.scrollCarousel = scrollCarousel;
     </script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
