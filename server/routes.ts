@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sitemap += `
   <url>
     <loc>/tools/${tool.id}</loc>
-    <lastmod>${new Date(tool.updatedAt || tool.createdAt).toISOString().split('T')[0]}</lastmod>
+    <lastmod>${new Date(tool.updatedAt || tool.createdAt || Date.now()).toISOString().split('T')[0]}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`;

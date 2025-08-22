@@ -1,4 +1,4 @@
-import { ObjectStorageService } from './objectStorage.js';
+import { ObjectStorageService } from './objectStorage.ts';
 import { randomUUID } from 'crypto';
 
 interface DownloadResult {
