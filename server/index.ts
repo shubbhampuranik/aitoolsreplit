@@ -55,11 +55,20 @@ app.use((req, res, next) => {
   if (isDev) {
     try {
       const { createServer } = await import('vite');
+      const { loadConfigFromFile } = await import('vite');
+      
+      // Load the vite config to get the path aliases
+      const configResult = await loadConfigFromFile({
+        command: 'serve',
+        mode: 'development'
+      }, path.resolve(process.cwd(), 'vite.config.ts'));
+      
       const vite = await createServer({
+        ...configResult?.config,
         server: { middlewareMode: true },
-        appType: 'spa',
-        root: path.resolve(process.cwd(), 'client'),
+        appType: 'spa'
       });
+      
       app.use(vite.ssrFixStacktrace);
       app.use(vite.middlewares);
     } catch (error) {
