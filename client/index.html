@@ -324,10 +324,9 @@
         background: white;
         border-radius: 8px;
         border: 1px solid #e1e5e9;
-        height: calc(100vh - 104px);
+        height: fit-content;
         position: sticky;
         top: 84px;
-        overflow-y: auto;
       }
       
       .sidebar-section {
@@ -378,6 +377,7 @@
         background: white;
         border-radius: 8px;
         border: 1px solid #e1e5e9;
+        min-height: calc(100vh - 104px);
       }
       
       .feed-header {
@@ -568,8 +568,7 @@
       .right-sidebar {
         position: sticky;
         top: 84px;
-        height: calc(100vh - 104px);
-        overflow-y: auto;
+        height: fit-content;
       }
       
       .sidebar-widget {
