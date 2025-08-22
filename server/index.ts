@@ -49,16 +49,50 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Serve static files directly
-  app.use(express.static(path.resolve(process.cwd(), 'client')));
+  // Set up Vite dev server properly
+  const isDev = process.env.NODE_ENV === 'development';
   
-  // Serve all routes with the index.html file
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
+  if (isDev) {
+    try {
+      const viteModule = await import('vite');
+      const vite = await viteModule.createServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+        root: path.resolve(process.cwd(), 'client'),
+        resolve: {
+          alias: {
+            '@': path.resolve(process.cwd(), 'client/src'),
+            '@shared': path.resolve(process.cwd(), 'shared'),
+          }
+        },
+        define: {
+          'process.env': {},
+          'process.env.NODE_ENV': JSON.stringify('development')
+        }
+      });
+      app.use(vite.ssrFixStacktrace);
+      app.use(vite.middlewares);
+    } catch (error) {
+      console.error('Vite server failed, using fallback:', error);
+      // Fallback: serve static files
+      app.use(express.static(path.resolve(process.cwd(), 'client')));
+      app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
+      app.get('*', (req, res) => {
+        if (req.path.startsWith('/api')) {
+          return res.status(404).json({ message: 'API endpoint not found' });
+        }
+        res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
+      });
     }
-    res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
-  });
+  } else {
+    app.use(express.static(path.resolve(process.cwd(), 'dist/public')));
+    app.get('*', (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).json({ message: 'API endpoint not found' });
+      }
+      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
+    });
+  }
 
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
