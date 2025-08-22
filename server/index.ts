@@ -49,20 +49,16 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Set up Vite dev server middleware
-  try {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-      root: path.resolve(process.cwd(), 'client')
-    });
-    app.use(vite.ssrFixStacktrace);
-    app.use(vite.middlewares);
-  } catch (error) {
-    console.error('Failed to start Vite dev server:', error);
-    process.exit(1);
-  }
+  // Serve static files directly
+  app.use(express.static(path.resolve(process.cwd(), 'client')));
+  
+  // Serve all routes with the index.html file
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
+  });
 
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
