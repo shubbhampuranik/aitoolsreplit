@@ -49,54 +49,24 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Set up Vite dev server for the client in development
-  const isDev = process.env.NODE_ENV === 'development';
+  // Serve static files and the main HTML
+  app.use(express.static(path.resolve(process.cwd(), 'client')));
+  app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
+  app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
   
-  if (isDev) {
-    try {
-      const { createServer } = await import('vite');
-      const { loadConfigFromFile } = await import('vite');
-      
-      // Load the vite config to get the path aliases
-      const configResult = await loadConfigFromFile({
-        command: 'serve',
-        mode: 'development'
-      }, path.resolve(process.cwd(), 'vite.config.ts'));
-      
-      const vite = await createServer({
-        ...configResult?.config,
-        server: { middlewareMode: true },
-        appType: 'spa'
-      });
-      
-      app.use(vite.ssrFixStacktrace);
-      app.use(vite.middlewares);
-    } catch (error) {
-      console.error('Vite dev server setup failed, falling back to static files', error);
-      
-      // Fallback: serve static files
-      app.use(express.static(path.resolve(process.cwd(), 'client')));
-      app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
-      app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
-      
-      // Serve the main HTML file for all routes
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api')) {
-          return res.status(404).json({ message: 'API endpoint not found' });
-        }
-        res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
-      });
+  // Handle all non-API routes by serving the main HTML file
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
     }
-  } else {
-    // Production: serve static files
-    app.use(express.static(path.resolve(process.cwd(), 'dist/public')));
-    app.get('*', (req, res) => {
-      if (req.path.startsWith('/api')) {
-        return res.status(404).json({ message: 'API endpoint not found' });
-      }
-      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
-    });
-  }
+    
+    const htmlPath = path.resolve(process.cwd(), 'client/index.html');
+    if (fs.existsSync(htmlPath)) {
+      res.sendFile(htmlPath);
+    } else {
+      res.status(404).send('Frontend not found');
+    }
+  });
 
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
