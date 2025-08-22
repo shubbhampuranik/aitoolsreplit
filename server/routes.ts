@@ -244,6 +244,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send(svg);
   });
 
+  // SEO routes will be added manually due to import constraints
+
+  // XML Sitemap generation
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const tools = await storage.getTools({ status: 'approved', limit: 1000, offset: 0 });
+      const categories = await storage.getCategories();
+      
+      let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/tools</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>/prompts</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/courses</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/jobs</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>/news</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+
+      // Add tool pages
+      tools.forEach(tool => {
+        sitemap += `
+  <url>
+    <loc>/tools/${tool.id}</loc>
+    <lastmod>${new Date(tool.updatedAt || tool.createdAt).toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+      });
+
+      // Add category pages
+      categories.forEach(category => {
+        sitemap += `
+  <url>
+    <loc>/tools/category/${category.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+      });
+
+      sitemap += '\n</urlset>';
+      
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  // Robots.txt
+  app.get('/robots.txt', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(`User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: /sitemap.xml`);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

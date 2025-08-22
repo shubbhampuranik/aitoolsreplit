@@ -1,0 +1,8 @@
+{
+  "name": "ai-community-server",
+  "private": true,
+  "scripts": {
+    "build": "tsx build",
+    "sitemap:generate": "node -e \"console.log('Sitemap available at /sitemap.xml')\""
+  }
+}

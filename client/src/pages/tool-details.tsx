@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import AuthDialog from "@/components/AuthDialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Star,
   Eye,
