@@ -221,6 +221,8 @@
         align-items: center;
         justify-content: space-between;
         height: 64px;
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .logo {
@@ -247,8 +249,8 @@
       
       .search-bar {
         flex: 1;
-        max-width: 400px;
-        margin: 0 40px;
+        max-width: 350px;
+        margin: 0 20px;
         position: relative;
       }
       
@@ -311,8 +313,8 @@
         margin: 0 auto;
         padding: 20px;
         display: grid;
-        grid-template-columns: 240px 1fr 280px;
-        gap: 20px;
+        grid-template-columns: 220px minmax(600px, 1fr) 260px;
+        gap: 16px;
         width: 100%;
         overflow-x: hidden;
       }
@@ -411,7 +413,7 @@
       }
       
       .feed-items {
-        padding: 20px;
+        padding: 16px;
         background: #f9fafb;
       }
       
@@ -425,14 +427,16 @@
       .feed-item {
         background: white;
         border-radius: 6px;
-        padding: 20px;
-        margin-bottom: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
         border: 1px solid #e5e7eb;
         transition: all 0.2s;
         display: flex;
-        gap: 16px;
+        gap: 12px;
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .feed-item:hover {
@@ -926,9 +930,18 @@
       /* Responsive */
       @media (max-width: 1200px) {
         .main-layout {
-          grid-template-columns: 200px 1fr 250px;
+          grid-template-columns: 180px minmax(500px, 1fr) 220px;
           max-width: 100%;
           padding: 16px;
+          gap: 12px;
+        }
+      }
+      
+      @media (max-width: 1000px) {
+        .main-layout {
+          grid-template-columns: 160px 1fr 200px;
+          padding: 12px;
+          gap: 10px;
         }
       }
       
