@@ -33,7 +33,6 @@ function Router() {
     NProgress.configure({ 
       showSpinner: false,
       minimum: 0.1,
-      trickleRate: 0.02,
       trickleSpeed: 800
     });
   }, []);
