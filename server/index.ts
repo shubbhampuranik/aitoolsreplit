@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
@@ -47,18 +49,33 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Serve a basic HTML page for testing
-  app.get("*", (_req, res) => {
-    res.send(`
-      <html>
-        <head><title>AI Community Portal - Server Running</title></head>
-        <body>
-          <h1>AI Community Portal Server</h1>
-          <p>Backend is running successfully!</p>
-          <p>API endpoints are available at <code>/api/*</code></p>
-        </body>
-      </html>
-    `);
+  // Serve static assets from client directory
+  app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
+  app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
+  
+  // Serve the React app for all non-API routes
+  app.get("*", (req, res) => {
+    // Don't serve React app for API routes
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    
+    const clientIndexPath = path.resolve(process.cwd(), 'client/index.html');
+    
+    if (fs.existsSync(clientIndexPath)) {
+      res.sendFile(clientIndexPath);
+    } else {
+      res.send(`
+        <html>
+          <head><title>AI Community Portal</title></head>
+          <body>
+            <h1>AI Community Portal</h1>
+            <p>Frontend files not found. Please check the client directory.</p>
+            <p>Backend API is running at <code>/api/*</code></p>
+          </body>
+        </html>
+      `);
+    }
   });
 
   const port = parseInt(process.env.PORT || '5000', 10);
