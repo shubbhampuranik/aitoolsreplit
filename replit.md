@@ -8,6 +8,13 @@ The application provides both public browsing for non-authenticated users and fu
 
 ## Recent Changes (January 2025)
 
+### Next.js Migration Planning (January 2025)
+- **SEO Analysis Complete**: Current React SPA architecture provides poor SEO (40-60/100 PageSpeed) vs Next.js SSR potential (85-95/100)
+- **Migration Plan Created**: Comprehensive 4-phase migration strategy from React SPA to Next.js with SSR/SSG
+- **Setup Scripts Prepared**: Automated Next.js setup with proper dependencies and project structure
+- **Priority Identified**: Next.js migration is critical for production SEO optimization and organic traffic growth
+- **Server Issue**: Current Vite config constraints preventing server testing (vite.config.ts top-level await issue)
+
 ### Production-Scale Architecture Refactoring (January 2025)
 - **Modular Feature-Based Structure**: Refactored monolithic files into focused, maintainable modules
 - **Backend Modularization**: Split 1,683-line routes.ts and 2,098-line storage.ts into feature-specific services
@@ -75,6 +82,7 @@ The application provides both public browsing for non-authenticated users and fu
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Migration Priority: Next.js migration for optimal SEO performance is the top priority for production deployment.
 
 ## System Architecture
 
