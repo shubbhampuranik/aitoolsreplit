@@ -336,7 +336,6 @@
           const data = item.data;
           
           if (item.type === 'tools') {
-            const logoUrl = data.logoUrl || '/api/placeholder/48/48';
             const votes = data.votes || Math.floor(Math.random() * 300);
             const rating = data.rating || (Math.random() * 2 + 3).toFixed(1);
             const reviewCount = Math.floor(Math.random() * 500 + 50);
@@ -347,35 +346,30 @@
             const pricingTypes = ['Free', 'Freemium', 'Subscription', 'Paid'];
             const pricingType = pricingTypes[Math.floor(Math.random() * pricingTypes.length)];
             
-            // Generate category tags
-            const allCategories = ['Developer Tools', 'Productivity', 'Design', 'Video', 'Content Creation', 'Marketing', 'Writing', 'Business'];
-            const categoryTags = [data.category, allCategories[Math.floor(Math.random() * allCategories.length)]].filter((v, i, a) => a.indexOf(v) === i);
+            // Generate category tags (max 2 for clean layout)
+            const allCategories = ['Prompt Engineering', 'Collaboration', 'Developer Tools', 'Productivity', 'Design', 'Content Creation'];
+            const categoryTags = [allCategories[Math.floor(Math.random() * allCategories.length)], allCategories[Math.floor(Math.random() * allCategories.length)]].filter((v, i, a) => a.indexOf(v) === i).slice(0, 2);
+            
+            // Generate star display
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            const starsHtml = '★'.repeat(fullStars) + (hasHalfStar ? '☆' : '') + '☆'.repeat(emptyStars);
             
             return `
               <div class="tool-card" data-testid="tool-card-${data.id}">
-                <div class="tool-card-header">
-                  <div class="tool-info">
-                    <img src="${logoUrl}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
-                    <div class="tool-details">
-                      <h3 class="tool-title">${escapeHtml(data.name)}</h3>
-                      <div class="tool-metadata">
-                        <span class="tool-icon">🌐</span>
-                        <span class="tool-icon">📱</span>
-                        <span class="tool-time">${timeAgo}</span>
-                      </div>
+                <div class="tool-header">
+                  <div class="tool-title-section">
+                    <h3 class="tool-title">${escapeHtml(data.name)}</h3>
+                    <div class="tool-meta">
+                      <span class="tool-icon">🌐</span>
+                      <span class="tool-time">${timeAgo}</span>
                     </div>
                   </div>
-                  <div class="tool-actions">
-                    <div class="vote-section">
-                      <button onclick="handleVote('${data.id}', 'up')" class="vote-button" data-testid="vote-up-${data.id}">
-                        <span class="vote-arrow">▲</span>
-                        <span class="vote-count">${votes}</span>
-                      </button>
-                    </div>
-                    <div class="comment-section">
-                      <span class="comment-icon">💬</span>
-                      <span class="comment-count">${commentCount}</span>
-                    </div>
+                  <div class="tool-vote">
+                    <button onclick="handleVote('${data.id}', 'up')" class="vote-btn" data-testid="vote-up-${data.id}">
+                      ▲ ${votes}
+                    </button>
                   </div>
                 </div>
                 
@@ -384,17 +378,19 @@
                 </div>
                 
                 <div class="tool-tags">
-                  ${categoryTags.map(tag => `<span class="category-tag">${escapeHtml(tag)}</span>`).join('')}
+                  ${categoryTags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
                 </div>
                 
-                <div class="tool-footer">
+                <div class="tool-bottom">
                   <div class="tool-pricing ${pricingType.toLowerCase()}">
                     ${pricingType}
                   </div>
                   <div class="tool-rating">
-                    <span class="stars">★★★★${rating >= 4.5 ? '★' : '☆'}</span>
-                    <span class="rating-score">${rating}</span>
-                    <span class="rating-count">(${reviewCount})</span>
+                    <span class="stars">${starsHtml}</span>
+                    <span class="rating-text">${rating} (${reviewCount})</span>
+                  </div>
+                  <div class="tool-comments">
+                    💬 ${commentCount}
                   </div>
                 </div>
               </div>
