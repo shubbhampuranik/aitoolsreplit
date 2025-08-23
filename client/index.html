@@ -359,6 +359,7 @@
             return `
               <div class="tool-card" data-testid="tool-card-${data.id}">
                 <div class="tool-header">
+                  <img src="${data.logoUrl || '/api/placeholder/48/48'}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
                   <div class="tool-title-section">
                     <h3 class="tool-title">${escapeHtml(data.name)}</h3>
                     <div class="tool-meta">
