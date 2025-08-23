@@ -1642,27 +1642,90 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
     console.log('📂 Tool categories in props:', tool.categories);
     console.log('📂 Tool categoryId (legacy):', tool.categoryId);
     
-    setFormData({
-      name: tool.name || "",
-      shortDescription: tool.shortDescription || "",
-      description: tool.description || "",
-      url: tool.url || "",
-      logoUrl: tool.logoUrl || "",
-      pricingType: tool.pricingType || "freemium",
-      pricingDetails: tool.pricingDetails || "",
-      categoryId: tool.categoryId || "",
-      categories: Array.isArray(tool.categories) ? tool.categories : [],
-      status: tool.status || "pending",
-      featured: tool.featured || false,
-      features: tool.features || [],
-      gallery: tool.gallery || [],
-      videos: (tool as any).videos || [],
-      prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
-      alternatives: tool.alternatives || [],
-      faqs: tool.faqs || [],
-    });
-    
-    console.log('✅ Form data set with categories:', Array.isArray(tool.categories) ? tool.categories : []);
+    // If categories are missing, fetch them from the API
+    if (!tool.categories || tool.categories.length === 0) {
+      console.log('⚠️ Categories missing - fetching from API');
+      const fetchCategories = async () => {
+        try {
+          const response = await apiRequest("GET", `/api/admin/tools/${tool.id}`);
+          if (response.ok) {
+            const fullToolData = await response.json();
+            console.log('✅ Fetched categories:', fullToolData.categories);
+            
+            setFormData({
+              name: tool.name || "",
+              shortDescription: tool.shortDescription || "",
+              description: tool.description || "",
+              url: tool.url || "",
+              logoUrl: tool.logoUrl || "",
+              pricingType: tool.pricingType || "freemium",
+              pricingDetails: tool.pricingDetails || "",
+              categoryId: tool.categoryId || "",
+              categories: Array.isArray(fullToolData.categories) ? fullToolData.categories : [],
+              status: tool.status || "pending",
+              featured: tool.featured || false,
+              features: tool.features || [],
+              gallery: tool.gallery || [],
+              videos: (tool as any).videos || [],
+              prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
+              alternatives: tool.alternatives || [],
+              faqs: tool.faqs || [],
+            });
+            
+            console.log('✅ Form data set with fetched categories:', fullToolData.categories);
+            return;
+          }
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+        }
+        
+        // Fallback - set form data without categories
+        setFormData({
+          name: tool.name || "",
+          shortDescription: tool.shortDescription || "",
+          description: tool.description || "",
+          url: tool.url || "",
+          logoUrl: tool.logoUrl || "",
+          pricingType: tool.pricingType || "freemium",
+          pricingDetails: tool.pricingDetails || "",
+          categoryId: tool.categoryId || "",
+          categories: [],
+          status: tool.status || "pending",
+          featured: tool.featured || false,
+          features: tool.features || [],
+          gallery: tool.gallery || [],
+          videos: (tool as any).videos || [],
+          prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
+          alternatives: tool.alternatives || [],
+          faqs: tool.faqs || [],
+        });
+      };
+      
+      fetchCategories();
+    } else {
+      // Categories are present, use them directly
+      setFormData({
+        name: tool.name || "",
+        shortDescription: tool.shortDescription || "",
+        description: tool.description || "",
+        url: tool.url || "",
+        logoUrl: tool.logoUrl || "",
+        pricingType: tool.pricingType || "freemium",
+        pricingDetails: tool.pricingDetails || "",
+        categoryId: tool.categoryId || "",
+        categories: Array.isArray(tool.categories) ? tool.categories : [],
+        status: tool.status || "pending",
+        featured: tool.featured || false,
+        features: tool.features || [],
+        gallery: tool.gallery || [],
+        videos: (tool as any).videos || [],
+        prosAndCons: tool.prosAndCons || { pros: [], cons: [] },
+        alternatives: tool.alternatives || [],
+        faqs: tool.faqs || [],
+      });
+      
+      console.log('✅ Form data set with existing categories:', tool.categories);
+    }
     
     // Clear any stale AI data for other tools when switching tools
     const currentToolKey = `editToolAIData_${tool.id}`;
