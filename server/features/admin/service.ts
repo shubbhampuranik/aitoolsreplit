@@ -61,6 +61,16 @@ export class AdminService {
     return this.toolService.deleteTool(id);
   }
 
+  async getToolById(id: string): Promise<Tool | undefined> {
+    const tool = await this.toolService.getTool(id);
+    if (!tool) return undefined;
+    
+    // Get tool categories for admin interface
+    const categories = await this.storage.getToolCategories(id);
+    
+    return { ...tool, categories };
+  }
+
   // Review management
   async getPendingReviews(): Promise<Review[]> {
     return this.reviewService.getPendingReviews();

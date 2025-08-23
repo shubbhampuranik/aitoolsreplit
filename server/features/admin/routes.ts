@@ -82,6 +82,20 @@ export const createAdminRoutes = (storageInstance: any = storage): Router => {
   });
 
   // Tool CRUD operations
+  router.get('/tools/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const tool = await adminService.getToolById(req.params.id);
+      if (!tool) {
+        return res.status(404).json({ message: "Tool not found" });
+      }
+      
+      res.json(tool);
+    } catch (error) {
+      console.error("Error fetching tool:", error);
+      res.status(500).json({ message: "Failed to fetch tool" });
+    }
+  });
+
   router.put('/tools/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
       const tool = await adminService.updateTool(req.params.id, req.body);
