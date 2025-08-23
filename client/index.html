@@ -14,18 +14,26 @@
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ai-community-portal.replit.app/" />
     <meta property="og:title" content="AI Community Portal - Discover the Best AI Tools, Prompts & Resources" />
     <meta property="og:description" content="Discover and review the best AI tools, prompts, courses, and models. Join our community of AI enthusiasts and professionals." />
+    <meta property="og:image" content="https://ai-community-portal.replit.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="AI Community Portal" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://ai-community-portal.replit.app/" />
     <meta property="twitter:title" content="AI Community Portal - Discover the Best AI Tools, Prompts & Resources" />
     <meta property="twitter:description" content="Discover and review the best AI tools, prompts, courses, and models. Join our community of AI enthusiasts and professionals." />
+    <meta property="twitter:image" content="https://ai-community-portal.replit.app/og-image.png" />
     
     <!-- Additional SEO -->
-    <link rel="canonical" href="/" />
+    <link rel="canonical" href="https://ai-community-portal.replit.app/" />
     <meta name="theme-color" content="#2563eb" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="robots" href="/robots.txt" />
     <link rel="stylesheet" href="styles.css" />
     
     <!-- Structured Data for Organization -->
@@ -35,8 +43,37 @@
       "@type": "Organization",
       "name": "AI Community Portal",
       "description": "A comprehensive platform for discovering and reviewing AI tools, prompts, courses, and models",
-      "url": "/",
+      "url": "https://ai-community-portal.replit.app/",
+      "logo": "https://ai-community-portal.replit.app/logo.png",
       "sameAs": []
+    }
+    </script>
+    
+    <!-- Structured Data for Website -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "AI Community Portal",
+      "url": "https://ai-community-portal.replit.app/",
+      "description": "Discover and review the best AI tools, prompts, courses, and models",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://ai-community-portal.replit.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data for ItemList (Tools) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "AI Tools Directory",
+      "description": "Comprehensive directory of AI tools and software",
+      "url": "https://ai-community-portal.replit.app/tools",
+      "numberOfItems": 50
     }
     </script>
   </head>
@@ -46,7 +83,7 @@
       <div class="header-content">
         <a href="/" class="logo">AI Community Portal</a>
         
-        <nav class="nav-links">
+        <nav class="nav-links" role="navigation" aria-label="Main navigation">
           <a href="/tools">Tools</a>
           <a href="/prompts">Prompts</a>
           <a href="/courses">Courses</a>
@@ -68,7 +105,7 @@
     <!-- Main Content -->
     <div class="main-layout">
       <!-- Left Sidebar -->
-      <aside class="sidebar">
+      <aside class="sidebar" role="complementary" aria-label="Navigation sidebar">
         <div class="sidebar-section">
           <h3>Community Feed</h3>
           <div class="feed-filters">
@@ -100,9 +137,9 @@
       </aside>
 
       <!-- Main Feed -->
-      <main class="feed-content">
+      <main class="feed-content" role="main" aria-label="Main content feed">
         <div class="feed-header">
-          <div class="sort-tabs">
+          <div class="sort-tabs" role="tablist" aria-label="Sort options">
             <button class="sort-tab active" onclick="setSortOrder('hot')">🔥 Hot</button>
             <button class="sort-tab" onclick="setSortOrder('new')">📅 New</button>
             <button class="sort-tab" onclick="setSortOrder('top')">🏆 Top</button>
@@ -115,7 +152,7 @@
       </main>
 
       <!-- Right Sidebar -->
-      <aside class="right-sidebar">
+      <aside class="right-sidebar" role="complementary" aria-label="Community information">
         <div class="sidebar-widget">
           <h3>Community Stats</h3>
           <div class="stats-grid" id="community-stats">
