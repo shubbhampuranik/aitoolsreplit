@@ -322,8 +322,9 @@ export class DatabaseStorage implements IStorage {
     return updatedCategory;
   }
 
-  async deleteCategory(id: string): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount > 0;
   }
 
   // Tool Categories methods

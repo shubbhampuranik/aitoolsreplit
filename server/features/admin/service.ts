@@ -178,6 +178,9 @@ export class AdminService {
   }
 
   async deleteCategory(id: string): Promise<boolean> {
-    return this.storage.deleteCategory(id);
+    console.log(`🗑️ Admin: Deleting category ${id}`);
+    const success = await this.storage.deleteCategory(id);
+    console.log(`🗑️ Admin: Category deletion ${success ? 'successful' : 'failed'}`);
+    return success;
   }
 }
