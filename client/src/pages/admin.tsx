@@ -135,9 +135,33 @@ export default function AdminPage() {
     setExpandedMenus(newExpanded);
   };
 
-  const handleToolEdit = (tool: Tool) => {
-    setSelectedTool(tool);
-    setCurrentView('tool-edit');
+  const handleToolEdit = async (tool: Tool) => {
+    try {
+      console.log(`🔄 Fetching complete tool data for editing: ${tool.id}`);
+      
+      // Fetch the complete tool data with categories from the admin API
+      const response = await apiRequest("GET", `/api/admin/tools/${tool.id}`);
+      if (response.ok) {
+        const fullToolData = await response.json();
+        console.log(`✅ Received full tool data with categories:`, fullToolData.categories);
+        setSelectedTool(fullToolData);
+        setCurrentView('tool-edit');
+      } else {
+        console.error('Failed to fetch full tool data');
+        toast({
+          title: "Error",
+          description: "Failed to load tool data for editing",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching tool for edit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tool data for editing",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleToolDelete = async (tool: Tool) => {
