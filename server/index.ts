@@ -55,10 +55,6 @@ app.use((req, res, next) => {
     'application/javascript': ['tsx', 'ts', 'jsx', 'js']
   });
 
-  // Admin route
-  app.get('/admin', (req, res) => {
-    res.sendFile(path.resolve(process.cwd(), 'client', 'admin.html'));
-  });
 
   // Serve client files
   app.use(express.static(path.resolve(process.cwd(), 'client')));
