@@ -40,6 +40,7 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -49,30 +50,8 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Set proper MIME types for TypeScript and JavaScript modules
-  express.static.mime.define({
-    'text/javascript': ['tsx', 'ts', 'jsx', 'js'],
-    'application/javascript': ['tsx', 'ts', 'jsx', 'js']
-  });
-
-  // Serve client files
-  app.use(express.static(path.resolve(process.cwd(), 'client')));
-  
-  // Special handling for TypeScript files
-  app.get('/src/*.tsx', (req, res) => {
-    const filePath = path.join(process.cwd(), 'client', req.path);
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  });
-  
-  app.get('/src/*.ts', (req, res) => {
-    const filePath = path.join(process.cwd(), 'client', req.path);
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  });
-  
-  app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
-  app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
+  // Serve built React app from dist/public
+  app.use(express.static(path.resolve(process.cwd(), 'dist/public')));
   
   // Handle all other routes - serve the React app
   app.get('*', (req, res) => {
@@ -80,7 +59,7 @@ app.use((req, res, next) => {
       return res.status(404).json({ message: 'API endpoint not found' });
     }
     
-    const htmlPath = path.resolve(process.cwd(), 'client/index.html');
+    const htmlPath = path.resolve(process.cwd(), 'dist/public/index.html');
     res.sendFile(htmlPath);
   });
 
