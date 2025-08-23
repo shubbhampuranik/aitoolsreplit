@@ -136,6 +136,8 @@ export default function AdminPage() {
   };
 
   const handleToolEdit = async (tool: Tool) => {
+    console.log(`🚀 EDIT BUTTON CLICKED for tool: ${tool.id} - ${tool.name}`);
+    
     try {
       console.log(`🔄 Fetching complete tool data for editing: ${tool.id}`);
       
@@ -1447,7 +1449,7 @@ function AddNewTool() {
 }
 
 // Tools List Component (previously AIToolsManagement)
-function ToolsList({ onEditTool, onDeleteTool, onAddNewTool }: { onEditTool: (tool: Tool) => void; onDeleteTool: (tool: Tool) => void; onAddNewTool: () => void }) {
+function ToolsList({ onEditTool, onDeleteTool, onAddNewTool }: { onEditTool: (tool: Tool) => Promise<void>; onDeleteTool: (tool: Tool) => void; onAddNewTool: () => void }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
