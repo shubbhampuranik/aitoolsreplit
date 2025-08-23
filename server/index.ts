@@ -49,47 +49,39 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Set proper MIME types for TypeScript and JavaScript modules
-  express.static.mime.define({
-    'text/javascript': ['tsx', 'ts', 'jsx', 'js'],
-    'application/javascript': ['tsx', 'ts', 'jsx', 'js']
-  });
-
-  // Serve client files
+  // Serve static files from client directory
   app.use(express.static(path.resolve(process.cwd(), 'client')));
   
-  // Special handling for TypeScript files
-  app.get('/src/*.tsx', (req, res) => {
-    const filePath = path.join(process.cwd(), 'client', req.path);
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  });
-  
-  app.get('/src/*.ts', (req, res) => {
-    const filePath = path.join(process.cwd(), 'client', req.path);
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  });
-  
-  app.use('/src', express.static(path.resolve(process.cwd(), 'client/src')));
+  // Serve node_modules for React app dependencies
   app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
   
-  // Handle all other routes - serve the React app
+  // Handle TypeScript module imports
+  app.get('/src/*', (req, res, next) => {
+    const filePath = path.join(process.cwd(), 'client', req.path);
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'application/javascript');
+      res.sendFile(filePath);
+    } else {
+      next();
+    }
+  });
+  
+  // Handle all other routes - serve index.html for React app
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
+      return res.status(404).json({ message: 'API route not found' });
     }
     
-    const htmlPath = path.resolve(process.cwd(), 'client/index.html');
-    res.sendFile(htmlPath);
+    const htmlPath = path.resolve(process.cwd(), 'client', 'index.html');
+    if (fs.existsSync(htmlPath)) {
+      res.sendFile(htmlPath);
+    } else {
+      res.status(404).send('React app not found');
+    }
   });
 
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
+  server.listen(port, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${port}`);
     console.log(`📡 API available at http://localhost:${port}/api/`);
   });
