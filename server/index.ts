@@ -55,7 +55,6 @@ app.use((req, res, next) => {
     'application/javascript': ['tsx', 'ts', 'jsx', 'js']
   });
 
-
   // Serve client files
   app.use(express.static(path.resolve(process.cwd(), 'client')));
   
