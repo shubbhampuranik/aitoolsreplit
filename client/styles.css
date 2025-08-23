@@ -498,7 +498,6 @@ body {
 
 .tool-header {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -511,16 +510,33 @@ body {
   flex-shrink: 0;
 }
 
-.tool-title-section {
+.tool-content {
   flex: 1;
+}
+
+.tool-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
 }
 
 .tool-title {
   font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 4px 0;
+  margin: 0;
   line-height: 1.3;
+}
+
+.tool-vote {
+  flex-shrink: 0;
+}
+
+.tool-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .tool-meta {
@@ -537,10 +553,6 @@ body {
 .tool-time {
   font-size: 13px;
   color: #666;
-}
-
-.tool-vote {
-  margin-left: 12px;
 }
 
 .vote-btn {
@@ -643,7 +655,6 @@ body {
   color: #6c757d;
   font-size: 13px;
   font-weight: 500;
-  margin-left: auto;
 }
 
 .bookmark-icon {

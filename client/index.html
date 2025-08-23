@@ -360,17 +360,25 @@
               <div class="tool-card" data-testid="tool-card-${data.id}">
                 <div class="tool-header">
                   <img src="${data.logoUrl || '/api/placeholder/48/48'}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
-                  <div class="tool-title-section">
-                    <h3 class="tool-title">${escapeHtml(data.name)}</h3>
-                    <div class="tool-meta">
-                      <span class="tool-icon">🌐</span>
-                      <span class="tool-time">${timeAgo}</span>
+                  <div class="tool-content">
+                    <div class="tool-top-row">
+                      <h3 class="tool-title">${escapeHtml(data.name)}</h3>
+                      <div class="tool-vote">
+                        <button onclick="handleVote('${data.id}', 'up')" class="vote-btn" data-testid="vote-up-${data.id}">
+                          ▲ ${votes}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div class="tool-vote">
-                    <button onclick="handleVote('${data.id}', 'up')" class="vote-btn" data-testid="vote-up-${data.id}">
-                      ▲ ${votes}
-                    </button>
+                    <div class="tool-meta-row">
+                      <div class="tool-meta">
+                        <span class="tool-icon">🌐</span>
+                        <span class="tool-icon">📱</span>
+                        <span class="tool-time">${timeAgo}</span>
+                      </div>
+                      <div class="tool-comments">
+                        💬 ${commentCount}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -389,9 +397,6 @@
                   <div class="tool-rating">
                     <span class="stars">${starsHtml}</span>
                     <span class="rating-text">${rating} (${reviewCount})</span>
-                  </div>
-                  <div class="tool-comments">
-                    💬 ${commentCount}
                   </div>
                 </div>
               </div>
