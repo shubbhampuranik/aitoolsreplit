@@ -66,9 +66,13 @@ export class AdminService {
     if (!tool) return undefined;
     
     // Get tool categories for admin interface
+    console.log(`📋 Getting categories for tool ${id}`);
     const categories = await this.storage.getToolCategories(id);
+    console.log(`📋 Found ${categories.length} categories:`, categories.map(c => c.name));
     
-    return { ...tool, categories };
+    const result = { ...tool, categories };
+    console.log(`📋 Returning tool with categories:`, result.categories);
+    return result;
   }
 
   // Review management
