@@ -337,27 +337,64 @@
           
           if (item.type === 'tools') {
             const logoUrl = data.logoUrl || '/api/placeholder/48/48';
-            const votes = data.votes || Math.floor(Math.random() * 100);
+            const votes = data.votes || Math.floor(Math.random() * 300);
             const rating = data.rating || (Math.random() * 2 + 3).toFixed(1);
+            const reviewCount = Math.floor(Math.random() * 500 + 50);
+            const timeAgo = ['5h ago', '2d ago', '37m ago', '1d ago', '6h ago'][Math.floor(Math.random() * 5)];
+            const commentCount = Math.floor(Math.random() * 50 + 5);
+            
+            // Generate pricing type
+            const pricingTypes = ['Free', 'Freemium', 'Subscription', 'Paid'];
+            const pricingType = pricingTypes[Math.floor(Math.random() * pricingTypes.length)];
+            
+            // Generate category tags
+            const allCategories = ['Developer Tools', 'Productivity', 'Design', 'Video', 'Content Creation', 'Marketing', 'Writing', 'Business'];
+            const categoryTags = [data.category, allCategories[Math.floor(Math.random() * allCategories.length)]].filter((v, i, a) => a.indexOf(v) === i);
             
             return `
               <div class="tool-card" data-testid="tool-card-${data.id}">
-                <div style="display: flex; align-items: flex-start; gap: 12px;">
-                  <img src="${logoUrl}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
-                  <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-                      <h3 style="font-size: 16px; font-weight: 600; color: #333; margin: 0;">${escapeHtml(data.name)}</h3>
-                      <div class="tool-votes">
-                        <button onclick="handleVote('${data.id}', 'up')" class="vote-button" data-testid="vote-up-${data.id}">▲</button>
-                        <span>${votes}</span>
-                        <img src="https://cdn-icons-png.flaticon.com/512/102/102279.png" class="bookmark-icon" onclick="handleBookmark('${data.id}')" data-testid="bookmark-${data.id}">
+                <div class="tool-card-header">
+                  <div class="tool-info">
+                    <img src="${logoUrl}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
+                    <div class="tool-details">
+                      <h3 class="tool-title">${escapeHtml(data.name)}</h3>
+                      <div class="tool-metadata">
+                        <span class="tool-icon">🌐</span>
+                        <span class="tool-icon">📱</span>
+                        <span class="tool-time">${timeAgo}</span>
                       </div>
                     </div>
-                    <p style="font-size: 14px; color: #666; line-height: 1.4; margin: 0 0 8px 0;">${escapeHtml(data.description)}</p>
-                    <div class="tool-meta">
-                      <div class="tool-rating">⭐ ${rating}</div>
-                      <span>${escapeHtml(data.category)}</span>
+                  </div>
+                  <div class="tool-actions">
+                    <div class="vote-section">
+                      <button onclick="handleVote('${data.id}', 'up')" class="vote-button" data-testid="vote-up-${data.id}">
+                        <span class="vote-arrow">▲</span>
+                        <span class="vote-count">${votes}</span>
+                      </button>
                     </div>
+                    <div class="comment-section">
+                      <span class="comment-icon">💬</span>
+                      <span class="comment-count">${commentCount}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="tool-description">
+                  ${escapeHtml(data.description)}
+                </div>
+                
+                <div class="tool-tags">
+                  ${categoryTags.map(tag => `<span class="category-tag">${escapeHtml(tag)}</span>`).join('')}
+                </div>
+                
+                <div class="tool-footer">
+                  <div class="tool-pricing ${pricingType.toLowerCase()}">
+                    ${pricingType}
+                  </div>
+                  <div class="tool-rating">
+                    <span class="stars">★★★★${rating >= 4.5 ? '★' : '☆'}</span>
+                    <span class="rating-score">${rating}</span>
+                    <span class="rating-count">(${reviewCount})</span>
                   </div>
                 </div>
               </div>
