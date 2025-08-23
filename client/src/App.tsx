@@ -63,12 +63,14 @@ function Router() {
       <Route path="/jobs" component={Jobs} />
       <Route path="/news" component={News} />
       
+      {/* Admin routes - accessible to all, but component handles auth */}
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin/prompt-marketplace" component={PromptMarketplace} />
+      
       {/* Authenticated-only routes */}
       {isAuthenticated && (
         <>
           <Route path="/profile" component={Profile} />
-          <Route path="/admin" component={AdminPanel} />
-          <Route path="/admin/prompt-marketplace" component={PromptMarketplace} />
         </>
       )}
       

@@ -93,10 +93,31 @@ export default function AdminPage() {
   if (!user) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <Card className="w-96">
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-600">Please log in to access the admin panel</p>
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+          <Card className="w-96 shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-gray-900">Admin Access Required</CardTitle>
+              <CardDescription>
+                Please sign in to access the admin panel
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <Settings className="w-8 h-8 text-blue-600" />
+              </div>
+              <p className="text-gray-600 mb-6">
+                You need to be logged in to access administrative features.
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/api/login'}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                size="lg"
+              >
+                Sign In to Continue
+              </Button>
+              <p className="text-sm text-gray-500 mt-4">
+                Only authorized users can access the admin panel
+              </p>
             </CardContent>
           </Card>
         </div>
