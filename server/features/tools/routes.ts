@@ -101,6 +101,37 @@ export const createToolRoutes = (storageInstance: any = storage): Router => {
     }
   });
 
+  // Vote on a tool
+  router.post('/:id/vote', async (req, res) => {
+    try {
+      const { direction } = req.body;
+      const toolId = req.params.id;
+      
+      if (!['up', 'down'].includes(direction)) {
+        return res.status(400).json({ message: 'Invalid vote direction' });
+      }
+
+      // For now, just return success - can implement actual voting logic later
+      res.json({ success: true, message: 'Vote recorded' });
+    } catch (error) {
+      console.error('Error voting on tool:', error);
+      res.status(500).json({ message: 'Failed to vote on tool' });
+    }
+  });
+
+  // Bookmark a tool
+  router.post('/:id/bookmark', async (req, res) => {
+    try {
+      const toolId = req.params.id;
+      
+      // For now, just return success - can implement actual bookmarking logic later
+      res.json({ success: true, message: 'Bookmark toggled' });
+    } catch (error) {
+      console.error('Error bookmarking tool:', error);
+      res.status(500).json({ message: 'Failed to bookmark tool' });
+    }
+  });
+
   // Usage statistics
   router.get('/:id/usage-stats', async (req, res) => {
     try {

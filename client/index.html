@@ -306,14 +306,43 @@
         renderFeed(currentFilter === 'all' ? sortedItems : sortedItems.filter(item => item.type === currentFilter));
       }
       
-      function handleVote(itemId, voteType) {
+      async function handleVote(itemId, voteType) {
         console.log(`Vote ${voteType} for item ${itemId}`);
-        // Handle voting logic here
+        try {
+          const response = await fetch(`/api/tools/${itemId}/vote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ direction: voteType })
+          });
+          if (response.ok) {
+            // Update vote count in UI
+            const voteBtn = document.querySelector(`[data-testid="vote-up-${itemId}"]`);
+            if (voteBtn) {
+              const currentCount = parseInt(voteBtn.textContent.match(/\d+/)[0]);
+              voteBtn.innerHTML = `▲ ${currentCount + 1}`;
+            }
+          }
+        } catch (error) {
+          console.error('Vote error:', error);
+        }
       }
       
-      function handleBookmark(itemId) {
+      async function handleBookmark(itemId) {
         console.log(`Bookmark item ${itemId}`);
-        // Handle bookmarking logic here
+        try {
+          const response = await fetch(`/api/tools/${itemId}/bookmark`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (response.ok) {
+            const bookmarkBtn = document.querySelector(`[data-testid="bookmark-${itemId}"]`);
+            if (bookmarkBtn) {
+              bookmarkBtn.innerHTML = bookmarkBtn.innerHTML === '🔖' ? '📌' : '🔖';
+            }
+          }
+        } catch (error) {
+          console.error('Bookmark error:', error);
+        }
       }
       
       function scrollCarousel(direction) {
@@ -375,8 +404,10 @@
                         <span class="tool-icon">📱</span>
                         <span class="tool-time">${timeAgo}</span>
                       </div>
-                      <div class="tool-comments">
-                        💬 ${commentCount}
+                      <div class="tool-vote-actions">
+                        <div class="tool-comments">
+                          💬 ${commentCount}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -397,6 +428,9 @@
                   <div class="tool-rating">
                     <span class="stars">${starsHtml}</span>
                     <span class="rating-text">${rating} (${reviewCount})</span>
+                    <button onclick="handleBookmark('${data.id}')" class="bookmark-btn" data-testid="bookmark-${data.id}">
+                      🔖
+                    </button>
                   </div>
                 </div>
               </div>

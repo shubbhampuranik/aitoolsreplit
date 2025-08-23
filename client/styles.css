@@ -503,11 +503,14 @@ body {
 }
 
 .tool-logo {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 8px;
+  border: 1px solid #e1e5e9;
+  padding: 4px;
   object-fit: cover;
   flex-shrink: 0;
+  background: white;
 }
 
 .tool-content {
@@ -531,11 +534,21 @@ body {
 
 .tool-vote {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .tool-meta-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.tool-vote-actions {
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
@@ -587,8 +600,9 @@ body {
 }
 
 .tag {
-  background: #007bff;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
   font-size: 12px;
   font-weight: 500;
   padding: 4px 12px;
@@ -636,6 +650,20 @@ body {
   align-items: center;
   gap: 6px;
   flex: 1;
+}
+
+.bookmark-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  margin-left: 8px;
+}
+
+.bookmark-btn:hover {
+  opacity: 1;
 }
 
 .stars {
