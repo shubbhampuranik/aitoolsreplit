@@ -1553,7 +1553,22 @@ function ToolsList({ onEditTool, onDeleteTool, onAddNewTool }: { onEditTool: (to
                         </div>
                       </td>
                       <td className="p-4">
-                        <Badge variant="outline">{tool.category?.name || "Uncategorized"}</Badge>
+                        {tool.categories && tool.categories.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {tool.categories.slice(0, 2).map((category: any, index: number) => (
+                              <Badge key={category.id} variant="outline" className="text-xs">
+                                {category.name}
+                              </Badge>
+                            ))}
+                            {tool.categories.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{tool.categories.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge variant="outline">Uncategorized</Badge>
+                        )}
                       </td>
                       <td className="p-4">
                         <Badge 

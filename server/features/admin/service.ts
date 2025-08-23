@@ -51,8 +51,12 @@ export class AdminService {
   }
 
   async getApprovedTools(): Promise<Tool[]> {
+    console.log('🔍 Admin: Getting approved tools...');
     const tools = await this.toolService.getTools({ status: 'approved' });
-    return this.addCategoriesToTools(tools);
+    console.log(`🔍 Admin: Found ${tools.length} approved tools, adding categories...`);
+    const toolsWithCategories = await this.addCategoriesToTools(tools);
+    console.log(`🔍 Admin: Categories added, first tool categories:`, toolsWithCategories[0]?.categories);
+    return toolsWithCategories;
   }
 
   async getRejectedTools(): Promise<Tool[]> {
