@@ -28,17 +28,36 @@ export class AdminService {
     };
   }
 
+  // Helper method to add categories to tools
+  private async addCategoriesToTools(tools: Tool[]): Promise<Tool[]> {
+    const toolsWithCategories = await Promise.all(
+      tools.map(async (tool) => {
+        try {
+          const categories = await this.storage.getToolCategories(tool.id);
+          return { ...tool, categories };
+        } catch (error) {
+          console.error(`Error fetching categories for tool ${tool.id}:`, error);
+          return { ...tool, categories: [] };
+        }
+      })
+    );
+    return toolsWithCategories;
+  }
+
   // Tool management
   async getPendingTools(): Promise<Tool[]> {
-    return this.toolService.getTools({ status: 'pending' });
+    const tools = await this.toolService.getTools({ status: 'pending' });
+    return this.addCategoriesToTools(tools);
   }
 
   async getApprovedTools(): Promise<Tool[]> {
-    return this.toolService.getTools({ status: 'approved' });
+    const tools = await this.toolService.getTools({ status: 'approved' });
+    return this.addCategoriesToTools(tools);
   }
 
   async getRejectedTools(): Promise<Tool[]> {
-    return this.toolService.getTools({ status: 'rejected' });
+    const tools = await this.toolService.getTools({ status: 'rejected' });
+    return this.addCategoriesToTools(tools);
   }
 
   async approveTool(id: string): Promise<Tool> {
@@ -120,11 +139,12 @@ export class AdminService {
   // Search functionality
   async searchTools(query: string): Promise<Tool[]> {
     const tools = await this.toolService.getTools();
-    return tools.filter(tool =>
+    const filteredTools = tools.filter(tool =>
       tool.name.toLowerCase().includes(query.toLowerCase()) ||
       tool.shortDescription.toLowerCase().includes(query.toLowerCase()) ||
       tool.description.toLowerCase().includes(query.toLowerCase())
     );
+    return this.addCategoriesToTools(filteredTools);
   }
 
   async searchReviews(query: string): Promise<Review[]> {
