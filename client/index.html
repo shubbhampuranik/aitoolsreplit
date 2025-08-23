@@ -26,6 +26,7 @@
     <!-- Additional SEO -->
     <link rel="canonical" href="/" />
     <meta name="theme-color" content="#2563eb" />
+    <link rel="stylesheet" href="styles.css" />
     
     <!-- Structured Data for Organization -->
     <script type="application/ld+json">
@@ -45,11 +46,6 @@
       <div class="header-content">
         <a href="/" class="logo">AI Community Portal</a>
         
-        <div class="search-bar">
-          <input type="text" class="search-input" placeholder="Search anything..." id="search-input">
-          <span class="search-icon">🔍</span>
-        </div>
-        
         <nav class="nav-links">
           <a href="/tools">Tools</a>
           <a href="/prompts">Prompts</a>
@@ -57,45 +53,48 @@
           <a href="/jobs">Jobs</a>
         </nav>
         
+        <div class="search-bar">
+          <input type="text" class="search-input" id="search-input" placeholder="Search anything...">
+          <span class="search-icon">🔍</span>
+        </div>
+        
         <div class="auth-buttons">
-          <a href="/login" class="btn btn-ghost">Sign In</a>
-          <a href="/signup" class="btn btn-primary">Sign Up</a>
+          <a href="/auth" class="btn btn-ghost">Sign In</a>
+          <a href="/auth" class="btn btn-primary">Sign Up</a>
         </div>
       </div>
     </header>
 
-    <!-- Main Layout -->
+    <!-- Main Content -->
     <div class="main-layout">
       <!-- Left Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-section">
           <h3>Community Feed</h3>
           <div class="feed-filters">
-            <a href="#" class="feed-filter active" data-filter="all" onclick="filterFeed('all')">🏠 For You</a>
-            <a href="#" class="feed-filter" data-filter="tools" onclick="filterFeed('tools')">🔧 Tools</a>
-            <a href="#" class="feed-filter" data-filter="prompts" onclick="filterFeed('prompts')">✨ Prompts</a>
-            <a href="#" class="feed-filter" data-filter="news" onclick="filterFeed('news')">📰 News</a>
+            <a href="#" class="feed-filter active" onclick="filterFeed('all')">🔥 For You</a>
+            <a href="#" class="feed-filter" onclick="filterFeed('tools')">🛠️ Tools</a>
+            <a href="#" class="feed-filter" onclick="filterFeed('prompts')">💭 Prompts</a>
+            <a href="#" class="feed-filter" onclick="filterFeed('news')">📰 News</a>
           </div>
         </div>
         
         <div class="sidebar-section">
           <h3>Categories</h3>
           <div class="category-filters">
-            <a href="#" class="category-filter" data-category="productivity">⚡ Productivity</a>
-            <a href="#" class="category-filter" data-category="writing">✍️ Writing</a>
-            <a href="#" class="category-filter" data-category="design">🎨 Design</a>
-            <a href="#" class="category-filter" data-category="development">👩‍💻 Development</a>
-            <a href="#" class="category-filter" data-category="business">💼 Business</a>
-            <a href="#" class="category-filter" data-category="marketing">📈 Marketing</a>
+            <a href="#" class="category-filter">🔧 Productivity</a>
+            <a href="#" class="category-filter">✍️ Writing</a>
+            <a href="#" class="category-filter">🎨 Design</a>
+            <a href="#" class="category-filter">👨‍💻 Development</a>
+            <a href="#" class="category-filter">💼 Business</a>
+            <a href="#" class="category-filter">📈 Marketing</a>
           </div>
         </div>
         
         <div class="sidebar-section">
           <h3>AI Recommendations</h3>
-          <div class="ai-recommendations" id="ai-recommendations">
-            <div class="recommendation-item">🎯 Based on your interests</div>
-            <div class="recommendation-item">🔍 Trending in your categories</div>
-            <div class="recommendation-item">⭐ Top rated this week</div>
+          <div class="category-filters">
+            <a href="#" class="category-filter">🧠 Based on your interests</a>
           </div>
         </div>
       </aside>
@@ -104,14 +103,14 @@
       <main class="feed-content">
         <div class="feed-header">
           <div class="sort-tabs">
-            <button class="sort-tab active" data-sort="hot" onclick="setSortOrder('hot')">🔥 Hot</button>
-            <button class="sort-tab" data-sort="new" onclick="setSortOrder('new')">🆕 New</button>
-            <button class="sort-tab" data-sort="top" onclick="setSortOrder('top')">⭐ Top</button>
+            <button class="sort-tab active" onclick="setSortOrder('hot')">🔥 Hot</button>
+            <button class="sort-tab" onclick="setSortOrder('new')">📅 New</button>
+            <button class="sort-tab" onclick="setSortOrder('top')">🏆 Top</button>
           </div>
         </div>
         
         <div class="feed-items" id="feed-items">
-          <div class="loading-state">Loading community content...</div>
+          <div class="loading-state">Loading amazing AI tools...</div>
         </div>
       </main>
 
@@ -119,21 +118,21 @@
       <aside class="right-sidebar">
         <div class="sidebar-widget">
           <h3>Community Stats</h3>
-          <div class="stats-grid">
+          <div class="stats-grid" id="community-stats">
             <div class="stat-item">
-              <span class="stat-value" id="tools-count">50</span>
+              <span class="stat-number">50</span>
               <span class="stat-label">AI Tools</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" id="prompts-count">50</span>
+              <span class="stat-number">50</span>
               <span class="stat-label">Prompts</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" id="courses-count">50</span>
+              <span class="stat-number">30</span>
               <span class="stat-label">Courses</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" id="jobs-count">50</span>
+              <span class="stat-number">100</span>
               <span class="stat-label">Jobs</span>
             </div>
           </div>
@@ -141,21 +140,21 @@
         
         <div class="sidebar-widget">
           <div class="widget-header">
-            <h3>💼 Latest Jobs</h3>
+            <h3>📋 Latest Jobs</h3>
             <a href="/jobs" class="view-all-link">View All</a>
           </div>
-          <div class="sidebar-jobs" id="sidebar-jobs">
-            <div class="sidebar-job-item">
+          <div class="jobs-list" id="jobs-list">
+            <div class="job-item">
               <div class="job-title">AI Engineer</div>
               <div class="job-company">OpenAI • San Francisco</div>
               <div class="job-salary">$150k-200k</div>
             </div>
-            <div class="sidebar-job-item">
+            <div class="job-item">
               <div class="job-title">ML Research Scientist</div>
               <div class="job-company">Google DeepMind • London</div>
               <div class="job-salary">£80k-120k</div>
             </div>
-            <div class="sidebar-job-item">
+            <div class="job-item">
               <div class="job-title">Prompt Engineer</div>
               <div class="job-company">Anthropic • Remote</div>
               <div class="job-salary">$120k-180k</div>
@@ -192,815 +191,6 @@
         </div>
       </aside>
     </div>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      
-      body { 
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #f7f8fa;
-        line-height: 1.6;
-        color: #333;
-        overflow-x: hidden;
-      }
-      
-      /* Header Styles */
-      .header {
-        background: white;
-        border-bottom: 1px solid #e1e5e9;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      }
-      
-      .header-content {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 64px;
-        width: 100%;
-        box-sizing: border-box;
-      }
-      
-      .logo {
-        font-size: 24px;
-        font-weight: bold;
-        color: #ff6154;
-        text-decoration: none;
-      }
-      
-      .nav-links {
-        display: flex;
-        gap: 24px;
-        align-items: center;
-      }
-      
-      .nav-links a {
-        color: #666;
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s;
-      }
-      
-      .nav-links a:hover { color: #333; }
-      
-      .search-bar {
-        flex: 1;
-        max-width: 350px;
-        margin: 0 20px;
-        position: relative;
-      }
-      
-      .search-input {
-        width: 100%;
-        padding: 10px 40px 10px 16px;
-        border: 1px solid #e1e5e9;
-        border-radius: 6px;
-        font-size: 14px;
-        background: #f8f9fa;
-      }
-      
-      .search-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #999;
-      }
-      
-      .auth-buttons {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-      }
-      
-      .btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-      }
-      
-      .btn-primary {
-        background: #ff6154;
-        color: white;
-      }
-      
-      .btn-primary:hover {
-        background: #e55347;
-      }
-      
-      .btn-ghost {
-        background: transparent;
-        color: #666;
-        border: 1px solid #e1e5e9;
-      }
-      
-      .btn-ghost:hover {
-        background: #f8f9fa;
-      }
-      
-      /* Main Layout - Reddit Style */
-      .main-layout {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-        display: grid;
-        grid-template-columns: 220px minmax(600px, 1fr) 260px;
-        gap: 16px;
-        width: 100%;
-        overflow-x: hidden;
-      }
-      
-      /* Left Sidebar */
-      .sidebar {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e1e5e9;
-        height: fit-content;
-        position: sticky;
-        top: 0px;
-        margin-top: 0;
-      }
-      
-      .sidebar-section {
-        padding: 16px;
-        border-bottom: 1px solid #f0f0f0;
-      }
-      
-      .sidebar-section:first-child {
-        padding-top: 16px;
-      }
-      
-      .sidebar-section:last-child {
-        border-bottom: none;
-      }
-      
-      .sidebar-section h3 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      
-      .feed-filters, .category-filters {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      
-      .feed-filter, .category-filter {
-        padding: 8px 12px;
-        color: #666;
-        text-decoration: none;
-        border-radius: 4px;
-        font-size: 14px;
-        transition: all 0.2s;
-      }
-      
-      .feed-filter:hover, .category-filter:hover {
-        background: #f8f9fa;
-        color: #333;
-      }
-      
-      .feed-filter.active {
-        background: #ff6154;
-        color: white;
-      }
-      
-      /* Feed Content */
-      .feed-content {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e1e5e9;
-        min-height: calc(100vh - 104px);
-      }
-      
-      .feed-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        background: #fafafa;
-        border-radius: 8px 8px 0 0;
-      }
-      
-      .sort-tabs {
-        display: flex;
-        gap: 12px;
-      }
-      
-      .sort-tab {
-        padding: 8px 16px;
-        background: none;
-        border: none;
-        color: #666;
-        font-size: 14px;
-        font-weight: 500;
-        border-radius: 20px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      
-      .sort-tab:hover {
-        background: #f0f0f0;
-      }
-      
-      .sort-tab.active {
-        background: #ff6154;
-        color: white;
-      }
-      
-      .feed-items {
-        padding: 16px;
-        background: #f9fafb;
-      }
-      
-      .loading-state {
-        padding: 40px;
-        text-align: center;
-        color: #666;
-      }
-      
-      /* Feed Item Cards - Dev.to Style */
-      .feed-item {
-        background: white;
-        border-radius: 6px;
-        padding: 16px;
-        margin-bottom: 12px;
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s;
-        display: flex;
-        gap: 12px;
-        position: relative;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        box-sizing: border-box;
-      }
-      
-      .feed-item:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transform: translateY(-1px);
-      }
-      
-      .feed-item:last-child {
-        margin-bottom: 0;
-      }
-      
-      .vote-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        min-width: 32px;
-      }
-      
-      .vote-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s;
-        color: #999;
-      }
-      
-      .vote-btn:hover {
-        background: #f0f0f0;
-        color: #666;
-      }
-      
-      .vote-arrow-up {
-        width: 0;
-        height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-bottom: 8px solid currentColor;
-      }
-      
-      .vote-count {
-        font-size: 12px;
-        font-weight: 600;
-        color: #666;
-      }
-      
-      .item-content {
-        flex: 1;
-      }
-      
-      .item-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-      
-      .item-type-badge {
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-      
-      .item-type-badge.tools { background: #f1f5f9; color: #3b82f6; }
-      .item-type-badge.courses { background: #f0fdf4; color: #10b981; }
-      .item-type-badge.jobs { background: #fef3c7; color: #f59e0b; }
-      .item-type-badge.prompts { background: #faf5ff; color: #8b5cf6; }
-      .item-type-badge.deals { background: #fef2f2; color: #ef4444; }
-      .item-type-badge.news { background: #f0fdf4; color: #10b981; }
-      
-      .item-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1f2937;
-        text-decoration: none;
-        margin-bottom: 6px;
-        display: block;
-        line-height: 1.4;
-      }
-      
-      .item-title:hover {
-        color: #3b82f6;
-      }
-      
-      .item-description {
-        color: #6b7280;
-        font-size: 15px;
-        line-height: 1.6;
-        margin-bottom: 10px;
-      }
-      
-      .item-meta {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 12px;
-        color: #999;
-      }
-      
-      .item-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-left: auto;
-      }
-      
-      .bookmark-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: all 0.2s;
-        color: #999;
-        font-size: 12px;
-      }
-      
-      .bookmark-btn:hover {
-        background: #f0f0f0;
-        color: #666;
-      }
-      
-      /* Right Sidebar */
-      .right-sidebar {
-        position: sticky;
-        top: 0px;
-        height: fit-content;
-        padding-top: 0;
-      }
-      
-      .sidebar-widget {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e1e5e9;
-        padding: 16px;
-        margin-bottom: 20px;
-      }
-      
-      .sidebar-widget:first-child {
-        margin-top: 0;
-      }
-      
-      .sidebar-widget h3 {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: #333;
-      }
-      
-      .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-      
-      .stat-item {
-        text-align: center;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 6px;
-      }
-      
-      .stat-value {
-        display: block;
-        font-size: 24px;
-        font-weight: 700;
-        color: #ff6154;
-      }
-      
-      .stat-label {
-        font-size: 12px;
-        color: #666;
-      }
-      
-      .trending-items {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      
-      .trending-item {
-        padding: 10px 12px;
-        background: white;
-        border-radius: 6px;
-        font-size: 14px;
-        color: #374151;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      
-      .recommendation-item {
-        padding: 10px 12px;
-        background: white;
-        color: #374151;
-        border-radius: 6px;
-        font-size: 13px;
-        margin-bottom: 8px;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #3b82f6;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      
-      .widget-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-      
-      .view-all-link {
-        color: #ff6154;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 500;
-      }
-      
-      .view-all-link:hover {
-        text-decoration: underline;
-      }
-      
-      /* Sidebar Jobs */
-      .sidebar-job-item {
-        padding: 12px;
-        background: white;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #f59e0b;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      
-      .job-title {
-        font-weight: 600;
-        color: #333;
-        font-size: 14px;
-      }
-      
-      .job-company {
-        color: #666;
-        font-size: 12px;
-        margin: 2px 0;
-      }
-      
-      .job-salary {
-        color: #f59e0b;
-        font-size: 12px;
-        font-weight: 600;
-      }
-      
-      /* Sidebar Deals */
-      .sidebar-deal-item {
-        padding: 12px;
-        background: white;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #ef4444;
-        position: relative;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      
-      .deal-title {
-        font-weight: 600;
-        color: #333;
-        font-size: 14px;
-      }
-      
-      .deal-discount {
-        background: #ef4444;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 600;
-        position: absolute;
-        top: 8px;
-        right: 8px;
-      }
-      
-      .deal-price {
-        color: #ef4444;
-        font-size: 14px;
-        font-weight: 600;
-        margin-top: 4px;
-      }
-      
-      .original-price {
-        text-decoration: line-through;
-        color: #999;
-        font-size: 12px;
-        margin-left: 4px;
-      }
-      
-      /* Course Carousel */
-      .course-carousel {
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        margin: 20px 0;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        overflow: hidden;
-      }
-      
-      .carousel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-      }
-      
-      .carousel-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-      
-      .carousel-nav {
-        display: flex;
-        gap: 8px;
-      }
-      
-      .carousel-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 1px solid #e1e5e9;
-        background: white;
-        color: #666;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-      }
-      
-      .carousel-btn:hover {
-        border-color: #ff6154;
-        color: #ff6154;
-      }
-      
-      .carousel-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      
-      .carousel-container {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-      }
-      
-      .carousel-track {
-        display: flex;
-        gap: 16px;
-        transition: transform 0.3s ease;
-      }
-      
-      .course-card {
-        flex: 0 0 280px;
-        min-width: 280px;
-        max-width: 280px;
-        background: white;
-        border-radius: 6px;
-        padding: 20px;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #10b981;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      
-      .course-card-title {
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 8px;
-        font-size: 16px;
-      }
-      
-      .course-card-description {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 12px;
-        line-height: 1.4;
-      }
-      
-      .course-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      
-      .course-price {
-        color: #10b981;
-        font-weight: 700;
-        font-size: 16px;
-      }
-      
-      .course-level {
-        background: #f0fdf4;
-        color: #10b981;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        border: 1px solid #d1fae5;
-      }
-      
-      /* Enhanced Feed Item Cards - Dev.to Style */
-      .feed-item.tool-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #3b82f6;
-      }
-      
-      .feed-item.prompt-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #8b5cf6;
-      }
-      
-      .feed-item.news-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid #10b981;
-      }
-      
-      .tool-logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        object-fit: cover;
-        background: white;
-        border: 1px solid #e1e5e9;
-      }
-      
-      .rating-stars {
-        color: #ffa726;
-        font-size: 14px;
-      }
-      
-      .user-count {
-        background: #f3f4f6;
-        color: #374151;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        border: 1px solid #e5e7eb;
-      }
-      
-      .price-tag {
-        background: #f9fafb;
-        color: #8b5cf6;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 14px;
-        border: 1px solid #e5e7eb;
-      }
-      
-      .news-thumbnail {
-        width: 60px;
-        height: 60px;
-        border-radius: 6px;
-        object-fit: cover;
-        background: #f0f0f0;
-        margin-left: 12px;
-      }
-      
-      .news-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-      }
-      
-      .author-avatar {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #ff6154, #ff8a65);
-      }
-      
-      .reading-time {
-        background: #f3f4f6;
-        color: #6b7280;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 11px;
-        border: 1px solid #e5e7eb;
-      }
-      
-      /* Responsive */
-      @media (max-width: 1200px) {
-        .main-layout {
-          grid-template-columns: 180px minmax(500px, 1fr) 220px;
-          max-width: 100%;
-          padding: 16px;
-          gap: 12px;
-        }
-      }
-      
-      @media (max-width: 1000px) {
-        .main-layout {
-          grid-template-columns: 160px 1fr 200px;
-          padding: 12px;
-          gap: 10px;
-        }
-      }
-      
-      @media (max-width: 768px) {
-        .main-layout {
-          grid-template-columns: 1fr;
-          padding: 10px;
-          max-width: 100%;
-        }
-        
-        .sidebar, .right-sidebar {
-          position: static;
-        }
-        
-        .header-content {
-          flex-direction: column;
-          height: auto;
-          padding: 12px 20px;
-        }
-        
-        .search-bar {
-          margin: 12px 0;
-          max-width: none;
-        }
-        
-        .course-card {
-          flex: 0 0 250px;
-          min-width: 250px;
-          max-width: 250px;
-        }
-      }
-      
-      @media (max-width: 480px) {
-        .main-layout {
-          padding: 8px;
-        }
-        
-        .course-card {
-          flex: 0 0 200px;
-          min-width: 200px;
-          max-width: 200px;
-        }
-        
-        .header-content {
-          padding: 8px 12px;
-        }
-      }
-    </style>
     
     <script>
       let allFeedItems = [];
@@ -1040,386 +230,195 @@
           news: [
             { title: 'GPT-5 Training Reportedly Complete', description: 'OpenAI reportedly completed training for next-generation model', author: 'AI News Team', category: 'AI Models' },
             { title: 'Google Announces Gemini Ultra 1.5', description: 'Enhanced reasoning capabilities and longer context windows', author: 'Tech Reporter', category: 'Technology' },
-            { title: 'New AI Safety Regulations Proposed', description: 'European Union proposes comprehensive AI governance framework', author: 'Policy News', category: 'Regulation' }
           ]
         };
         
-        return samples[type] || [];
-      }
-      
-      function renderFeedItem(item, type) {
-        const votes = item.votes || Math.floor(Math.random() * 50) + 5;
-        const hasVoting = ['tools', 'prompts', 'news'].includes(type);
-        const hasBookmarking = true;
-        
-        let content = '';
-        let cardClass = '';
-        
-        if (type === 'tools') {
-          cardClass = 'tool-card';
-          // Only show tools that have actual logo URLs (not placeholder/default)
-          if (!item.logoUrl || item.logoUrl.includes('placeholder') || item.logoUrl.includes('via.placeholder')) {
-            return ''; // Skip tools without real logos
-          }
-          
-          const logoUrl = item.logoUrl;
-          const rating = item.rating || (4.0 + Math.random() * 1.0).toFixed(1);
-          const userCount = Math.floor(Math.random() * 5000) + 500;
-          const categories = item.categories || ['AI Tool'];
-          
-          content = `
-            <div style="display: flex; align-items: flex-start; gap: 12px;">
-              <img src="${logoUrl}" alt="${escapeHtml(item.name)}" class="tool-logo" onerror="this.style.display='none'">
-              <div style="flex: 1;">
-                <a href="#" class="item-title">${escapeHtml(item.name)}</a>
-                <div class="item-description">${escapeHtml((item.description || 'Innovative AI tool for enhanced productivity').substring(0, 120))}...</div>
-                <div class="item-meta">
-                  <span class="rating-stars">⭐ ${rating}</span>
-                  <span class="user-count">${userCount.toLocaleString()} users</span>
-                  ${categories.slice(0, 2).map(cat => `<span class="tag">${escapeHtml(cat)}</span>`).join('')}
-                </div>
-              </div>
-            </div>
-          `;
-        } else if (type === 'prompts') {
-          cardClass = 'prompt-card';
-          const prompt = generateSampleContent('prompts')[Math.floor(Math.random() * 3)];
-          const popularity = Math.floor(Math.random() * 100) + 1;
-          
-          content = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div style="flex: 1;">
-                <a href="#" class="item-title">${escapeHtml(prompt.name)}</a>
-                <div class="item-description">${escapeHtml(prompt.description)}</div>
-                <div class="item-meta">
-                  <span>✨ Prompt</span>
-                  <span>📂 ${prompt.category}</span>
-                  <span>📈 ${popularity}% popularity</span>
-                </div>
-              </div>
-              <div class="price-tag">$${prompt.price}</div>
-            </div>
-          `;
-        } else if (type === 'news') {
-          cardClass = 'news-card';
-          const news = generateSampleContent('news')[Math.floor(Math.random() * 3)];
-          const readTime = Math.floor(Math.random() * 8) + 2;
-          
-          content = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div style="flex: 1;">
-                <a href="#" class="item-title">${escapeHtml(news.title)}</a>
-                <div class="item-description">${escapeHtml(news.description)}</div>
-                <div class="news-meta">
-                  <div class="author-avatar"></div>
-                  <span style="font-size: 12px; color: #999;">${news.author}</span>
-                  <span style="color: #999;">•</span>
-                  <span style="font-size: 12px; color: #999;">2h ago</span>
-                  <span class="reading-time">${readTime} min read</span>
-                </div>
-              </div>
-              <div class="news-thumbnail"></div>
-            </div>
-          `;
-        }
-        
-        return `
-          <div class="feed-item ${cardClass}" data-id="${item.id}" data-type="${type}">
-            ${hasVoting ? `
-              <div class="vote-section">
-                <button class="vote-btn" onclick="handleVote('${item.id}', '${type}')">
-                  <div class="vote-arrow-up"></div>
-                </button>
-                <span class="vote-count">${votes}</span>
-              </div>
-            ` : ''}
-            <div class="item-content">
-              <div class="item-header">
-                <span class="item-type-badge ${type}">${type.toUpperCase()}</span>
-              </div>
-              ${content}
-            </div>
-            <div class="item-actions">
-              ${hasBookmarking ? `
-                <button class="bookmark-btn" onclick="handleBookmark('${item.id}', '${type}')" title="Bookmark this item">
-                  <img src="https://cdn-icons-png.flaticon.com/512/494/494568.png" alt="Bookmark" style="width: 16px; height: 16px;">
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }
-      
-      function renderCourseCarousel() {
-        const courses = generateSampleContent('courses');
-        
-        return `
-          <div class="course-carousel">
-            <div class="carousel-header">
-              <h2 class="carousel-title">📚 Courses for You</h2>
-              <div class="carousel-nav">
-                <button class="carousel-btn" onclick="scrollCarousel('prev', 'course')" id="course-prev-btn">‹</button>
-                <button class="carousel-btn" onclick="scrollCarousel('next', 'course')" id="course-next-btn">›</button>
-                <a href="/courses" class="view-all-link" style="margin-left: 12px;">View All</a>
-              </div>
-            </div>
-            <div class="carousel-container">
-              <div class="carousel-track" id="course-carousel-track">
-                ${courses.map(course => `
-                  <div class="course-card">
-                    <div class="course-card-title">${escapeHtml(course.name)}</div>
-                    <div class="course-card-description">${escapeHtml(course.description)}</div>
-                    <div class="course-card-footer">
-                      <span class="course-price">$${course.price}</span>
-                      <span class="course-level">${course.level}</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      
-      function renderDealsCarousel() {
-        const deals = generateSampleContent('deals');
-        
-        return `
-          <div class="course-carousel">
-            <div class="carousel-header">
-              <h2 class="carousel-title">🔥 Hot Deals for You</h2>
-              <div class="carousel-nav">
-                <button class="carousel-btn" onclick="scrollCarousel('prev', 'deals')" id="deals-prev-btn">‹</button>
-                <button class="carousel-btn" onclick="scrollCarousel('next', 'deals')" id="deals-next-btn">›</button>
-                <a href="/deals" class="view-all-link" style="margin-left: 12px;">View All</a>
-              </div>
-            </div>
-            <div class="carousel-container">
-              <div class="carousel-track" id="deals-carousel-track">
-                ${deals.map(deal => `
-                  <div class="course-card" style="border-left: 3px solid #ef4444;">
-                    <div class="course-card-title">${escapeHtml(deal.title)}</div>
-                    <div class="course-card-description">${escapeHtml(deal.description)}</div>
-                    <div class="course-card-footer">
-                      <span class="course-price" style="color: #ef4444;">$${deal.newPrice} <small style="text-decoration: line-through; color: #999;">$${deal.originalPrice}</small></span>
-                      <span class="course-level" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;">${deal.discount}</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      
-      let courseCarouselPosition = 0;
-      let dealsCarouselPosition = 0;
-      const cardWidth = 296; // 280px + 16px gap
-      
-      function scrollCarousel(direction, type = 'course') {
-        const trackId = type === 'course' ? 'course-carousel-track' : 'deals-carousel-track';
-        const prevBtnId = type === 'course' ? 'course-prev-btn' : 'deals-prev-btn';
-        const nextBtnId = type === 'course' ? 'course-next-btn' : 'deals-next-btn';
-        
-        const track = document.getElementById(trackId);
-        if (!track) return;
-        
-        const container = track.parentElement;
-        const maxScroll = (track.children.length * cardWidth) - container.offsetWidth;
-        
-        let currentPosition = type === 'course' ? courseCarouselPosition : dealsCarouselPosition;
-        
-        if (direction === 'next') {
-          currentPosition = Math.min(currentPosition + cardWidth * 2, maxScroll);
-        } else {
-          currentPosition = Math.max(currentPosition - cardWidth * 2, 0);
-        }
-        
-        if (type === 'course') {
-          courseCarouselPosition = currentPosition;
-        } else {
-          dealsCarouselPosition = currentPosition;
-        }
-        
-        track.style.transform = `translateX(-${currentPosition}px)`;
-        
-        // Update button states
-        const prevBtn = document.getElementById(prevBtnId);
-        const nextBtn = document.getElementById(nextBtnId);
-        if (prevBtn && nextBtn) {
-          prevBtn.disabled = currentPosition === 0;
-          nextBtn.disabled = currentPosition >= maxScroll;
-        }
-      }
-      
-      function renderFeed(items) {
-        const feedContainer = document.getElementById('feed-items');
-        if (!feedContainer) return;
-        
-        if (items.length === 0) {
-          feedContainer.innerHTML = '<div class="loading-state">No content found. Try adjusting your filters.</div>';
-          return;
-        }
-        
-        let feedHtml = '';
-        let visibleItemCount = 0;
-        items.forEach((item, index) => {
-          const itemHtml = renderFeedItem(item.data, item.type);
-          if (itemHtml) { // Only count items that actually render
-            feedHtml += itemHtml;
-            visibleItemCount++;
-            
-            // Insert carousels after every 4 visible items
-            if (currentFilter === 'all') {
-              if (visibleItemCount % 4 === 0) {
-                feedHtml += renderCourseCarousel();
-              } else if (visibleItemCount % 7 === 0) {
-                feedHtml += renderDealsCarousel();
-              }
-            }
-          }
-        });
-        
-        feedContainer.innerHTML = feedHtml;
-        
-        // Initialize carousel buttons
-        setTimeout(() => {
-          const coursePrevBtn = document.getElementById('course-prev-btn');
-          const courseNextBtn = document.getElementById('course-next-btn');
-          const dealsPrevBtn = document.getElementById('deals-prev-btn');
-          const dealsNextBtn = document.getElementById('deals-next-btn');
-          
-          if (coursePrevBtn && courseNextBtn) {
-            coursePrevBtn.disabled = true; // Start at beginning
-          }
-          if (dealsPrevBtn && dealsNextBtn) {
-            dealsPrevBtn.disabled = true; // Start at beginning
-          }
-        }, 100);
+        return samples[type]?.slice(0, count) || [];
       }
       
       function filterFeed(filter) {
         currentFilter = filter;
         
-        let filtered = allFeedItems;
-        if (filter !== 'all') {
-          filtered = allFeedItems.filter(item => item.type === filter);
-        } else {
-          // For "For You" tab, apply AI personalization
-          filtered = personalizeContent(allFeedItems);
-        }
+        // Update active filter visual state
+        document.querySelectorAll('.feed-filter').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
         
+        // Filter and render items
+        const filtered = filter === 'all' ? allFeedItems : allFeedItems.filter(item => item.type === filter);
         renderFeed(filtered);
-        
-        // Update active filter
-        document.querySelectorAll('.feed-filter').forEach(f => f.classList.remove('active'));
-        document.querySelector(`[data-filter="${filter}"]`)?.classList.add('active');
-      }
-      
-      function personalizeContent(items) {
-        // AI-powered personalization based on user behavior
-        // For now, we'll simulate this with intelligent sorting
-        const userInterests = getUserInterests();
-        
-        return items.sort((a, b) => {
-          const scoreA = calculatePersonalizationScore(a, userInterests);
-          const scoreB = calculatePersonalizationScore(b, userInterests);
-          return scoreB - scoreA;
-        });
-      }
-      
-      function getUserInterests() {
-        // Simulate user interest tracking
-        // In real implementation, this would come from user behavior, clicks, bookmarks
-        return {
-          categories: ['productivity', 'writing', 'development'],
-          contentTypes: ['tools', 'prompts'],
-          recentActivity: ['ai-tools', 'prompt-engineering']
-        };
-      }
-      
-      function calculatePersonalizationScore(item, interests) {
-        let score = Math.random() * 10; // Base random score
-        
-        // Boost score based on user's preferred content types
-        if (interests.contentTypes.includes(item.type)) {
-          score += 20;
-        }
-        
-        // Boost score for user's interested categories
-        if (item.data.categories) {
-          const matchingCategories = item.data.categories.filter(cat => 
-            interests.categories.some(userCat => 
-              cat.toLowerCase().includes(userCat.toLowerCase())
-            )
-          );
-          score += matchingCategories.length * 15;
-        }
-        
-        // Boost newer content
-        if (item.type === 'tools' || item.type === 'news') {
-          score += 5;
-        }
-        
-        return score;
       }
       
       function setSortOrder(sort) {
         currentSort = sort;
         
-        // Update active sort tab
-        document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector(`[data-sort="${sort}"]`)?.classList.add('active');
+        // Update active sort visual state
+        document.querySelectorAll('.sort-tab').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
         
-        // Apply current filter with new sort
-        filterFeed(currentFilter);
+        // Sort and render items
+        const sortedItems = [...allFeedItems];
+        if (sort === 'new') {
+          sortedItems.sort((a, b) => new Date(b.data.createdAt || 0) - new Date(a.data.createdAt || 0));
+        } else if (sort === 'top') {
+          sortedItems.sort((a, b) => (b.data.votes || 0) - (a.data.votes || 0));
+        } else {
+          // Hot sorting (default)
+          sortedItems.sort((a, b) => (b.data.votes || 0) + Math.random() - (a.data.votes || 0) + Math.random());
+        }
+        
+        renderFeed(currentFilter === 'all' ? sortedItems : sortedItems.filter(item => item.type === currentFilter));
       }
       
-      function handleVote(itemId, type) {
-        console.log(`Voting for ${type}:`, itemId);
-        // TODO: Implement actual voting API call
+      function handleVote(itemId, voteType) {
+        console.log(`Vote ${voteType} for item ${itemId}`);
+        // Handle voting logic here
       }
       
-      function handleBookmark(itemId, type) {
-        console.log(`Bookmarking ${type}:`, itemId);
-        // TODO: Implement actual bookmarking API call
+      function handleBookmark(itemId) {
+        console.log(`Bookmark item ${itemId}`);
+        // Handle bookmarking logic here
+      }
+      
+      function scrollCarousel(direction) {
+        const carousel = document.querySelector('.courses-carousel');
+        const scrollAmount = 300;
+        carousel.scrollBy({
+          left: direction === 'right' ? scrollAmount : -scrollAmount,
+          behavior: 'smooth'
+        });
+      }
+      
+      function renderFeed(items) {
+        const feedContainer = document.getElementById('feed-items');
+        if (!items || items.length === 0) {
+          feedContainer.innerHTML = '<div class="loading-state">No items found for this filter.</div>';
+          return;
+        }
+        
+        const feedHtml = items.map((item, index) => {
+          const data = item.data;
+          
+          if (item.type === 'tools') {
+            const logoUrl = data.logoUrl || '/api/placeholder/48/48';
+            const votes = data.votes || Math.floor(Math.random() * 100);
+            const rating = data.rating || (Math.random() * 2 + 3).toFixed(1);
+            
+            return `
+              <div class="tool-card" data-testid="tool-card-${data.id}">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                  <img src="${logoUrl}" alt="${escapeHtml(data.name)}" class="tool-logo" onerror="this.style.display='none'">
+                  <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                      <h3 style="font-size: 16px; font-weight: 600; color: #333; margin: 0;">${escapeHtml(data.name)}</h3>
+                      <div class="tool-votes">
+                        <button onclick="handleVote('${data.id}', 'up')" class="vote-button" data-testid="vote-up-${data.id}">▲</button>
+                        <span>${votes}</span>
+                        <img src="https://cdn-icons-png.flaticon.com/512/102/102279.png" class="bookmark-icon" onclick="handleBookmark('${data.id}')" data-testid="bookmark-${data.id}">
+                      </div>
+                    </div>
+                    <p style="font-size: 14px; color: #666; line-height: 1.4; margin: 0 0 8px 0;">${escapeHtml(data.description)}</p>
+                    <div class="tool-meta">
+                      <div class="tool-rating">⭐ ${rating}</div>
+                      <span>${escapeHtml(data.category)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (item.type === 'courses' && index % 6 === 5) {
+            // Insert courses carousel every 6 items
+            const courseCards = generateSampleContent('courses', 3).map(course => `
+              <div class="course-card">
+                <div class="course-price">$${course.price}</div>
+                <div class="course-title">${escapeHtml(course.name)}</div>
+                <div class="course-instructor">${escapeHtml(course.description)}</div>
+              </div>
+            `).join('');
+            
+            return `
+              <div class="courses-section">
+                <div class="courses-header">
+                  <h3 class="courses-title">📚 Courses for You</h3>
+                </div>
+                <div class="courses-carousel">${courseCards}</div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="feed-item" data-testid="feed-item-${item.type}-${index}">
+                <div class="feed-item-content">
+                  <span class="feed-item-type ${item.type}">${item.type.toUpperCase()}</span>
+                  <h3 class="feed-item-title">${escapeHtml(data.title || data.name)}</h3>
+                  <p class="feed-item-description">${escapeHtml(data.description)}</p>
+                  <div class="feed-item-meta">
+                    <button onclick="handleVote('${data.id}', 'up')" class="vote-button" data-testid="vote-up-${data.id}">▲ ${data.votes || 0}</button>
+                    <span>${data.category || 'General'}</span>
+                    <img src="https://cdn-icons-png.flaticon.com/512/102/102279.png" class="bookmark-icon" onclick="handleBookmark('${data.id}')" data-testid="bookmark-${data.id}">
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        }).join('');
+        
+        feedContainer.innerHTML = feedHtml;
       }
       
       async function loadFeedData() {
         try {
-          // Load tools (working endpoint)
-          const toolsRes = await fetch('/api/tools');
-          const tools = await toolsRes.json();
+          document.getElementById('feed-items').innerHTML = '<div class="loading-state">Loading amazing AI tools...</div>';
+          
+          // Load tools from API
+          const toolsResponse = await fetch('/api/tools');
+          const tools = await toolsResponse.json();
           
           // Load stats
-          const statsRes = await fetch('/api/stats');
-          const stats = await statsRes.json();
+          const statsResponse = await fetch('/api/stats');
+          const stats = await statsResponse.json();
           
-          // Update stats display
-          if (stats.toolsCount) document.getElementById('tools-count').textContent = stats.toolsCount;
-          if (stats.coursesCount) document.getElementById('courses-count').textContent = stats.coursesCount;
-          if (stats.jobsCount) document.getElementById('jobs-count').textContent = stats.jobsCount;
-          if (stats.promptsCount) document.getElementById('prompts-count').textContent = stats.promptsCount;
+          // Update community stats
+          document.getElementById('community-stats').innerHTML = `
+            <div class="stat-item">
+              <span class="stat-number">${stats.toolsCount}</span>
+              <span class="stat-label">AI Tools</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.promptsCount}</span>
+              <span class="stat-label">Prompts</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.coursesCount}</span>
+              <span class="stat-label">Courses</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.jobsCount}</span>
+              <span class="stat-label">Jobs</span>
+            </div>
+          `;
           
-          // Create mixed feed from all content types
+          // Process and combine feed items
           allFeedItems = [];
           
-          // Add tools (real data)
-          if (tools && tools.length > 0) {
-            tools.slice(0, 10).forEach(tool => {
-              allFeedItems.push({ type: 'tools', data: tool });
+          // Only add tools with logos to maintain quality
+          tools.filter(tool => tool.logoUrl).forEach(tool => {
+            allFeedItems.push({
+              type: 'tools',
+              data: tool
             });
-          }
+          });
           
-          // Add sample content for feed types (excluding jobs/deals - they're in sidebar)
-          const contentTypes = ['prompts', 'news'];
-          contentTypes.forEach(type => {
-            const samples = generateSampleContent(type);
-            samples.forEach((sample, index) => {
-              allFeedItems.push({ 
-                type, 
-                data: { ...sample, id: `${type}-${index}` }
-              });
+          // Add sample content for other types
+          generateSampleContent('prompts', 5).forEach((prompt, index) => {
+            allFeedItems.push({
+              type: 'prompts',
+              data: { ...prompt, id: `prompt-${index}`, votes: Math.floor(Math.random() * 50) }
+            });
+          });
+          
+          generateSampleContent('news', 5).forEach((news, index) => {
+            allFeedItems.push({
+              type: 'news',
+              data: { ...news, id: `news-${index}`, votes: Math.floor(Math.random() * 30) }
             });
           });
           
