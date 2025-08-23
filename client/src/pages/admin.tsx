@@ -1685,8 +1685,9 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
 
   const updateFormData = useCallback((field: string, value: any) => {
     // Prevent null/undefined field names and provide proper defaults
-    if (!field || field === 'null' || field === 'undefined') {
-      console.warn(`⚠️ Invalid field name '${field}' skipped for tool ${tool.id}`);
+    if (!field || field === 'null' || field === 'undefined' || typeof field !== 'string') {
+      console.warn(`⚠️ Invalid field name '${field}' (type: ${typeof field}) skipped for tool ${tool.id}`);
+      console.trace('Stack trace for invalid field name');
       return;
     }
     
