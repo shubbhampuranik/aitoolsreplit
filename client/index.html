@@ -96,6 +96,9 @@
         </div>
         
         <div class="auth-buttons">
+          <button id="admin-btn" class="btn btn-ghost" onclick="openAdmin()" style="display: none;">
+            ⚙️ Admin
+          </button>
           <a href="/auth" class="btn btn-ghost">Sign In</a>
           <a href="/auth" class="btn btn-primary">Sign Up</a>
         </div>
@@ -563,6 +566,23 @@
         loadFeedData();
       });
       
+      // Admin functionality
+      window.openAdmin = function() {
+        window.location.href = '/admin';
+      };
+
+      // Show admin button for testing (in real app, check user role)
+      document.addEventListener('DOMContentLoaded', function() {
+        // For testing purposes, show admin button immediately
+        // In production, this would check if user is admin
+        setTimeout(() => {
+          const adminBtn = document.getElementById('admin-btn');
+          if (adminBtn) {
+            adminBtn.style.display = 'inline-block';
+          }
+        }, 1000);
+      });
+
       // Global functions for onclick handlers
       window.filterFeed = filterFeed;
       window.setSortOrder = setSortOrder;
