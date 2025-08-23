@@ -8,7 +8,7 @@ export const createUserRoutes = (storageInstance: any = storage): Router => {
   const userService = new UserService(storageInstance);
 
   // Get user interactions for a specific item
-  router.get('/interactions/:itemId', isAuthenticated, async (req, res) => {
+  router.get('/interactions/:itemId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const interactions = await userService.getUserInteractions(userId, req.params.itemId);
@@ -19,8 +19,26 @@ export const createUserRoutes = (storageInstance: any = storage): Router => {
     }
   });
 
+  // Bulk user interactions endpoint
+  router.post('/interactions/bulk', isAuthenticated, async (req: any, res) => {
+    try {
+      const { toolIds } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!toolIds || !Array.isArray(toolIds)) {
+        return res.status(400).json({ message: "toolIds array is required" });
+      }
+      
+      const interactions = await storageInstance.getUserInteractionsBulk(userId, 'tool', toolIds);
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching bulk user interactions:", error);
+      res.status(500).json({ message: "Failed to fetch bulk user interactions" });
+    }
+  });
+
   // Get user bookmarks
-  router.get('/bookmarks', isAuthenticated, async (req, res) => {
+  router.get('/bookmarks', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const { itemType } = req.query;
@@ -33,7 +51,7 @@ export const createUserRoutes = (storageInstance: any = storage): Router => {
   });
 
   // Get current user profile
-  router.get('/profile', isAuthenticated, async (req, res) => {
+  router.get('/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await userService.getUser(userId);
@@ -48,7 +66,7 @@ export const createUserRoutes = (storageInstance: any = storage): Router => {
   });
 
   // Update user profile
-  router.put('/profile', isAuthenticated, async (req, res) => {
+  router.put('/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await userService.updateUser(userId, req.body);
