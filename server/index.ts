@@ -55,7 +55,7 @@ app.use((req, res, next) => {
   // Serve node_modules for React app dependencies
   app.use('/node_modules', express.static(path.resolve(process.cwd(), 'node_modules')));
   
-  // Handle TypeScript module imports
+  // Handle TypeScript module imports for React app
   app.get('/src/*', (req, res, next) => {
     const filePath = path.join(process.cwd(), 'client', req.path);
     if (fs.existsSync(filePath)) {
