@@ -1612,6 +1612,10 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
 
   // Reset form data and clear stale AI cache when tool changes
   useEffect(() => {
+    console.log('🔄 Tool data received for editing:', tool.id);
+    console.log('📂 Tool categories in props:', tool.categories);
+    console.log('📂 Tool categoryId (legacy):', tool.categoryId);
+    
     setFormData({
       name: tool.name || "",
       shortDescription: tool.shortDescription || "",
@@ -1621,7 +1625,7 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       pricingType: tool.pricingType || "freemium",
       pricingDetails: tool.pricingDetails || "",
       categoryId: tool.categoryId || "",
-      categories: tool.categories || [],
+      categories: Array.isArray(tool.categories) ? tool.categories : [],
       status: tool.status || "pending",
       featured: tool.featured || false,
       features: tool.features || [],
@@ -1631,6 +1635,8 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
       alternatives: tool.alternatives || [],
       faqs: tool.faqs || [],
     });
+    
+    console.log('✅ Form data set with categories:', Array.isArray(tool.categories) ? tool.categories : []);
     
     // Clear any stale AI data for other tools when switching tools
     const currentToolKey = `editToolAIData_${tool.id}`;
@@ -1723,20 +1729,31 @@ function ToolEditor({ tool, onBack, onSetUpdateFormData, fetchingData, onFetchAI
         
         // Schedule state updates for after render cycle
         setTimeout(() => {
-          updateFormData('name', aiData.name);
-          updateFormData('description', aiData.description);
-          updateFormData('shortDescription', aiData.shortDescription);
-          updateFormData('pricingType', aiData.pricingType);
-          updateFormData('pricingDetails', aiData.pricingDetails || '');
+          // Only apply non-null fields with valid field names
+          if (aiData.name && typeof aiData.name === 'string') {
+            updateFormData('name', aiData.name);
+          }
+          if (aiData.description && typeof aiData.description === 'string') {
+            updateFormData('description', aiData.description);
+          }
+          if (aiData.shortDescription && typeof aiData.shortDescription === 'string') {
+            updateFormData('shortDescription', aiData.shortDescription);
+          }
+          if (aiData.pricingType && typeof aiData.pricingType === 'string') {
+            updateFormData('pricingType', aiData.pricingType);
+          }
+          if (aiData.pricingDetails !== undefined) {
+            updateFormData('pricingDetails', aiData.pricingDetails || '');
+          }
           
-          if (aiData.features && aiData.features.length > 0) {
+          if (aiData.features && Array.isArray(aiData.features) && aiData.features.length > 0) {
             console.log('📋 Applying features data:', aiData.features);
             updateFormData('features', aiData.features);
           } else {
             console.log('⚠️ No features data to apply');
           }
 
-          if (aiData.pros && aiData.cons) {
+          if (aiData.pros && aiData.cons && Array.isArray(aiData.pros) && Array.isArray(aiData.cons)) {
             updateFormData('prosAndCons', {
               pros: aiData.pros,
               cons: aiData.cons
