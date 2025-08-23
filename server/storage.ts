@@ -323,8 +323,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: string): Promise<boolean> {
+    console.log(`🔍 Storage: Attempting to delete category with ID: ${id}`);
+    
+    // First check if the category exists
+    const existingCategory = await db.select().from(categories).where(eq(categories.id, id));
+    console.log(`🔍 Storage: Category exists check:`, existingCategory.length > 0 ? 'YES' : 'NO');
+    
+    if (existingCategory.length === 0) {
+      console.log(`🔍 Storage: Category ${id} not found in database`);
+      return false;
+    }
+    
     const result = await db.delete(categories).where(eq(categories.id, id));
-    return result.rowCount > 0;
+    console.log(`🔍 Storage: Delete result:`, result);
+    console.log(`🔍 Storage: Row count:`, result.rowCount);
+    
+    const success = (result.rowCount || 0) > 0;
+    console.log(`🔍 Storage: Deletion ${success ? 'successful' : 'failed'}`);
+    return success;
   }
 
   // Tool Categories methods
