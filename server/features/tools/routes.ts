@@ -24,7 +24,7 @@ export const createToolRoutes = (storageInstance: any = storage): Router => {
         search: search as string,
         category: category as string,
         status: status as string,
-        featured: featured === 'true',
+        featured: featured ? featured === 'true' : undefined,
         limit: parseInt(limit as string),
         offset: parseInt(offset as string),
         sort: sort as string

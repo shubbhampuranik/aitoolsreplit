@@ -409,16 +409,14 @@ export class DatabaseStorage implements IStorage {
 
     if (search && search.trim()) {
       const searchTerm = search.trim();
-      console.log(`🔍 Search: Looking for tools with search term: "${searchTerm}"`);
-      
-      conditions.push(
-        or(
-          ilike(tools.name, `%${searchTerm}%`),
-          ilike(tools.description, `%${searchTerm}%`)
-        )!
+      const searchCondition = or(
+        ilike(tools.name, `%${searchTerm}%`),
+        ilike(tools.description, `%${searchTerm}%`)
       );
       
-      console.log(`🔍 Search: Applied search conditions for name and description`);
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     const result = await query
@@ -427,12 +425,6 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
     
-    if (search) {
-      console.log(`🔍 Search: Query completed, found ${result.length} tools for "${search}"`);
-      if (result.length > 0) {
-        console.log(`🔍 Search: First result: "${result[0].name}"`);
-      }
-    }
     
     return result;
   }
